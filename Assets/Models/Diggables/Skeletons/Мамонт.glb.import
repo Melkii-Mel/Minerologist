@@ -2,12 +2,12 @@
 
 importer="scene"
 type="PackedScene"
-path="res://.import/Мамонт.glb-8314e0f89179af8ef34d4d3530a3ad21.scn"
+path="res://.import/Мамонт.glb-5c6e38dcec04e2f8076fb9aa09c54722.scn"
 
 [deps]
 
-source_file="res://Assets/Models/Мамонт.glb"
-dest_files=[ "res://.import/Мамонт.glb-8314e0f89179af8ef34d4d3530a3ad21.scn" ]
+source_file="res://Assets/Models/Diggables/Skeletons/Мамонт.glb"
+dest_files=[ "res://.import/Мамонт.glb-5c6e38dcec04e2f8076fb9aa09c54722.scn" ]
 
 [params]
 

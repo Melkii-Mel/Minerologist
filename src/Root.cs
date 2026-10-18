@@ -9,13 +9,18 @@ public class Root : Node
 
     public override void _Ready()
     {
+        Console.WriteLine("Initialized entities collection...");
+        MeshCollection.Initialize();
+        GD.Print("Setting up session dispatcher...");
         var joypadSessionDispatcher = new JoypadSessionDispatcher<SessionContainer>(
             this,
-            id => new SessionContainer(id, this)
+            id => new SessionContainer(id, this),
+            includeKeyboardInput: true
         );
         joypadSessionDispatcher.SessionAdded += (sessions, _) =>
             SessionResizer.ResizeAllSessions(sessions, this);
         joypadSessionDispatcher.AssignSessions();
+        GD.Print("Initial sessions assigned");
         joypadSessionDispatcher.ListenForChanges();
     }
 

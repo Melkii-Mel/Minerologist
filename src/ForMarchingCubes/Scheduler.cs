@@ -55,6 +55,8 @@ public class Scheduler
             throw new ArgumentException("`worload` parameter must be in range (0, 1]");
         }
         WorkersCount = Math.Max(1, (int)Math.Round(TotalCpuCores() * workload));
+        Godot.GD.Print("Total CPU cores: ", TotalCpuCores());
+        Godot.GD.Print("Workers: ", WorkersCount);
     }
 
     private void AddWorker()
@@ -184,15 +186,6 @@ public class Scheduler
                         ? int.MinValue
                         : _jobPriorities.Values.Max();
                 }
-            }
-            if (_semaphore.CurrentCount < 10)
-            {
-                Godot.GD.Print(
-                    "I now have ",
-                    _jobs.SelectMany(j => j.Value).Count(),
-                    " jobs. Semaphore count is ",
-                    _semaphore.CurrentCount
-                );
             }
             return true;
         }

@@ -37,15 +37,18 @@ using Path = System.IO.Path;
 /// identified by their path within the scene.
 ///
 /// </summary>
-public static class EntitiesCollection
+public static class MeshCollection
 {
     public static bool Initialized { get; private set; }
 
-    public static EntityPrefabGroups Skeletons = [];
-    public static EntityPrefabGroups Others = [];
+    public static MeshGroups Skeletons { get; private set; } = [];
+    public static MeshGroups OtherDiggables { get; private set; } = [];
+    public static MeshGroup OtherMeshes { get; private set; } = [];
 
-    public const string MODELS_PATH = "res://Assets/Models";
-    public const string SKELETONS_PATH = "res://Assets/Models/Skeletons";
+    public const string OTHER_MESHES_PATH = "res://Assets/Models/Others";
+    public const string OTHER_DIGGABLES_PATH = "res://Assets/Models/Diggables/Others";
+    public const string SKELETONS_PATH = "res://Assets/Models/Diggables/Skeletons";
+    public const string MODELS_EXTENSION = ".glb";
 
     public static void Initialize()
     {
@@ -55,22 +58,29 @@ public static class EntitiesCollection
         }
         Initialized = true;
 
-        LoadDir(SKELETONS_PATH, groupByFile: true, Skeletons, isSkeleton: true);
-        LoadDir(MODELS_PATH, groupByFile: false, Others, isSkeleton: false, except: ["Skeletons"]);
+        LoadDir(SKELETONS_PATH, groupByFile: true, Skeletons);
+        LoadDir(OTHER_DIGGABLES_PATH, groupByFile: false, OtherDiggables);
+        var otherMeshes = new MeshGroups { [OTHER_MESHES_PATH] = [] };
+        LoadDir(OTHER_MESHES_PATH, groupByFile: false, otherMeshes, groupName: OTHER_MESHES_PATH);
+        OtherMeshes = otherMeshes[OTHER_MESHES_PATH];
+        GD.Print("Other loaded meshes: ", string.Join(", ", OtherMeshes.Keys));
     }
 
     private static void LoadDir(
         string path,
         bool groupByFile,
-        EntityPrefabGroups destination,
-        bool isSkeleton,
+        MeshGroups destination,
         string? prefix = null,
         string? groupName = null,
         HashSet<string>? except = null
     )
     {
-        var directory =
-            DirAccess.Open(path) ?? throw new Exception($"Path `{path}` does not exist.");
+        var directory = DirAccess.Open(path);
+        if (directory == null)
+        {
+            GD.PrintErr($"Path `{path}` does not exist.");
+            return;
+        }
         foreach (var subDir in directory.GetDirectories())
         {
             if (except?.Contains(subDir) ?? false)
@@ -81,7 +91,6 @@ public static class EntitiesCollection
                 Path.Combine(path, subDir),
                 groupByFile,
                 destination,
-                isSkeleton,
                 prefix: groupName == null ? null : JoinName(prefix, subDir),
                 groupName: groupName ?? subDir,
                 except
@@ -89,6 +98,10 @@ public static class EntitiesCollection
         }
         foreach (var file in directory.GetFiles())
         {
+            if (Path.GetExtension(file) != MODELS_EXTENSION)
+            {
+                continue;
+            }
             var filename = Path.GetFileNameWithoutExtension(file);
             var key = groupByFile
                 ? filename
@@ -97,36 +110,21 @@ public static class EntitiesCollection
             {
                 destination[key] = [];
             }
-            LoadFile(
-                Path.Combine(path, file),
-                destination[key],
-                JoinName(prefix, filename),
-                isSkeleton
-            );
+            LoadFile(Path.Combine(path, file), destination[key], JoinName(prefix, filename));
         }
     }
 
-    private static void LoadFile(
-        string filePath,
-        EntityPrefabGroup destination,
-        string? prefix,
-        bool isSkeleton
-    )
+    private static void LoadFile(string filePath, MeshGroup destination, string? prefix)
     {
         var scene = GD.Load<PackedScene>(filePath);
         var spatial = (Spatial)scene.Instance();
         foreach (var child in spatial.GetChildren())
         {
-            HandleNode((Node)child, destination, prefix, isSkeleton);
+            HandleNode((Node)child, destination, prefix);
         }
     }
 
-    private static void HandleNode(
-        Node node,
-        EntityPrefabGroup container,
-        string? prefix,
-        bool isSkeleton
-    )
+    private static void HandleNode(Node node, MeshGroup container, string? prefix)
     {
         if (node is MeshInstance mesh)
         {
@@ -135,8 +133,8 @@ public static class EntitiesCollection
             {
                 var item = container[id];
                 container.Remove(id);
-                item = new EntityPrefab(JoinName(item.Id, "0"), item.MeshInstance, isSkeleton);
-                container.Add(item.Id, item);
+                var newId = JoinName(id, "0");
+                container.Add(newId, item);
             }
             var i = 0;
             while (container.ContainsKey(JoinName(id, i.ToString())))
@@ -147,13 +145,12 @@ public static class EntitiesCollection
             {
                 id = JoinName(id, i.ToString());
             }
-            var prefab = new EntityPrefab(id, mesh, isSkeleton);
-            container.Add(prefab.Id, prefab);
+            container.Add(id, mesh);
         }
         foreach (var child in node.GetChildren())
         {
             var childNode = (Node)child;
-            HandleNode((Node)child, container, JoinName(prefix, childNode.Name), isSkeleton);
+            HandleNode((Node)child, container, JoinName(prefix, childNode.Name));
         }
     }
 
@@ -163,6 +160,6 @@ public static class EntitiesCollection
     }
 }
 
-public class EntityPrefabGroup : Dictionary<string, EntityPrefab> { }
+public class MeshGroup : Dictionary<string, MeshInstance> { }
 
-public class EntityPrefabGroups : Dictionary<string, EntityPrefabGroup> { }
+public class MeshGroups : Dictionary<string, MeshGroup> { }

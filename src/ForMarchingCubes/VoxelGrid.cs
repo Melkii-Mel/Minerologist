@@ -4,7 +4,8 @@ using System.Linq;
 
 public class VoxelGrid : IScalarField
 {
-    public Vector3I ChunkPosition => _container.WorldToChunk(WorldPosition);
+    private const int NEIGHBORS_COUNT = 26;
+    public readonly Vector3I ChunkPosition;
     public readonly Vector3I WorldPosition;
     public Vector3I Size { get; }
 
@@ -23,22 +24,36 @@ public class VoxelGrid : IScalarField
 
     public VoxelGrid(Vector3I chunkPosition, IVoxelGridContainer container, float[]? data = null)
     {
-        var dataLength = Size.X * Size.Y * Size.Z;
-
         _container = container;
-        WorldPosition = container.WorldToChunk(chunkPosition);
+
+        ChunkPosition = chunkPosition;
+        WorldPosition = container.ChunkToWorld(chunkPosition);
         Size = container.ChunkSize;
+        var dataLength = Size.X * Size.Y * Size.Z;
 
         if (data != null && data.Length != dataLength)
         {
-            throw new ArgumentException("Data length must be equal to Size.X * Size.Y * Size.Z");
+            throw new ArgumentException(
+                $"Data length must be equal to Size.X * Size.Y * Size.Z, i.e. {dataLength}. Actual Data length is {data.Length}"
+            );
         }
 
         _data = data ?? new float[Size.X * Size.Y * Size.Z];
-        _neighbors = new VoxelGrid?[26];
+        _neighbors = new VoxelGrid?[NEIGHBORS_COUNT];
         _borderSnapshot = new float[
-            Size.Y * Size.Z + Size.X * Size.Z + Size.X * Size.Y + Size.X + Size.Y + Size.X + 1
+            Size.Y * Size.Z + Size.X * Size.Z + Size.X * Size.Y + Size.X + Size.Y + Size.Z + 1
         ];
+
+        if (data != null)
+        {
+            Min = data.Min();
+            Max = data.Max();
+        }
+    }
+
+    public float Sample(Vector3I pos)
+    {
+        return Sample(pos.X, pos.Y, pos.Z);
     }
 
     public float Sample(int x, int y, int z)
@@ -47,6 +62,11 @@ public class VoxelGrid : IScalarField
         {
             return _data[GetIndex(x, y, z)];
         }
+
+        // if (_isSnapshot)
+        // {
+        //     return _borderSnapshot[PositionToBorderIndex(x, y, z)];
+        // }
 
         var neighborX = 0;
         var neighborY = 0;
@@ -233,6 +253,48 @@ public class VoxelGrid : IScalarField
         return new(Size.X, Size.Y, Size.Z);
     }
 
+    private int PositionToBorderIndex(int x, int y, int z)
+    {
+        return PositionToBorderIndex(new(x, y, z));
+    }
+
+    private int PositionToBorderIndex(Vector3I pos)
+    {
+        var xs = Size.Y * Size.Z;
+        var ys = xs + Size.X * Size.Z;
+        var zs = ys + Size.X * Size.Y;
+        var xys = zs + Size.Z;
+        var xzs = xys + Size.Y;
+        var yzs = xzs + Size.X;
+
+        if (pos.X == Size.X && pos.Y < Size.Y && pos.Z < Size.Z)
+            return pos.Y * Size.Z + pos.Z;
+
+        if (pos.Y == Size.Y && pos.X < Size.X && pos.Z < Size.Z)
+            return xs + pos.X * Size.Z + pos.Z;
+
+        if (pos.Z == Size.Z && pos.X < Size.X && pos.Y < Size.Y)
+            return ys + pos.X * Size.Y + pos.Y;
+
+        if (pos.X == Size.X && pos.Y == Size.Y && pos.Z < Size.Z)
+            return zs + pos.Z;
+
+        if (pos.X == Size.X && pos.Z == Size.Z && pos.Y < Size.Y)
+            return xys + pos.Y;
+
+        if (pos.Y == Size.Y && pos.Z == Size.Z && pos.X < Size.X)
+            return xzs + pos.X;
+
+        if (pos.X == Size.X && pos.Y == Size.Y && pos.Z == Size.Z)
+            return yzs;
+
+        throw new ArgumentOutOfRangeException(
+            nameof(pos),
+            pos,
+            "Position is not part of the border snapshot."
+        );
+    }
+
     private int GetIndex(int x, int y, int z)
     {
         return x + y * Size.X + z * Size.X * Size.Y;
@@ -245,17 +307,19 @@ public class VoxelGrid : IScalarField
 
     private VoxelGrid GetOrCreateNeighbor(Vector3I offset)
     {
-        return TryGetNeighbor(offset)
-            ?? (
-                _neighbors[NeighborIndex(offset)] = _container.GetOrCreateVoxelGrid(
-                    ChunkPosition + offset
-                )
-            );
+        return _neighbors[NeighborIndex(offset)] = _container.GetOrCreateVoxelGrid(
+            ChunkPosition + offset
+        );
     }
 
     private VoxelGrid? TryGetNeighbor(Vector3I offset)
     {
-        return _neighbors[NeighborIndex(offset)];
+        return _neighbors[NeighborIndex(offset)]
+            ?? (
+                _neighbors[NeighborIndex(offset)] = _container.TryGetVoxelGrid(
+                    ChunkPosition + offset
+                )
+            );
     }
 
     private static int NeighborIndex(Vector3I offset)
@@ -289,15 +353,23 @@ public class VoxelGrid : IScalarField
 
     public IEnumerable<VoxelGrid> Neighbors()
     {
-        for (int i = 0; i < 26; i++)
+        for (int i = 0; i < NEIGHBORS_COUNT; i++)
         {
             yield return GetOrCreateNeighbor(FlatNeighborPositionToOffset(i));
         }
     }
 
+    public IEnumerable<VoxelGrid?> ExistingNeighbors()
+    {
+        for (int i = 0; i < NEIGHBORS_COUNT; i++)
+        {
+            yield return TryGetNeighbor(FlatNeighborPositionToOffset(i));
+        }
+    }
+
     public VoxelGrid CreateSnapshot()
     {
-        return new(WorldPosition, _container, (float[])_data.Clone())
+        return new(ChunkPosition, _container, (float[])_data.Clone())
         {
             BorderSnapshotMin = BorderSnapshotMin,
             BorderSnapshotMax = BorderSnapshotMax,
@@ -314,8 +386,6 @@ public class VoxelGrid : IScalarField
     {
         return _data[GetIndex(localPosition)];
     }
-
-    public void ListenToChanges(Action<IReadOnlyList<float>> values) { }
 }
 
 public interface IVoxelGridContainer
@@ -323,11 +393,13 @@ public interface IVoxelGridContainer
     Vector3I ChunkSize { get; }
     int ChunkSizeFlat { get; }
 
-    public VoxelGrid GetOrCreateVoxelGrid(Vector3I chunkPosition);
+    public VoxelGrid CreateVoxelGrid(Vector3I chunkPosition);
     public VoxelGrid? TryGetVoxelGrid(Vector3I chunkPosition);
     public Vector3I WorldToChunk(Vector3I worldPosition);
     public Vector3I ChunkToWorld(Vector3I chunkPosition);
 
-    public static int ChunkSizeFlatDefault(Vector3I chunkSize) =>
-        chunkSize.X + chunkSize.Y + chunkSize.Z;
+    /// <summary>
+    /// An atomic operation for either getting or initializing a voxel grid
+    /// </summary>
+    public VoxelGrid GetOrCreateVoxelGrid(Vector3I chunkPosition);
 }

@@ -22,6 +22,12 @@ public static class RandomUtils
         throw new InvalidOperationException();
     }
 
+    public static T ChooseWeighted<T>(IReadOnlyList<(T Item, int Weight)> itemWeights, Random rng)
+    {
+        int itemIndex = ChooseWeighted([.. itemWeights.Select(iw => iw.Weight)], rng);
+        return itemWeights[itemIndex].Item;
+    }
+
     public static T ChooseRandomItem<T>(IReadOnlyList<T> remainingPieces, Random rng)
     {
         var roll = rng.Next(remainingPieces.Count);

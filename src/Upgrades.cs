@@ -1,5 +1,3 @@
-using System;
-
 public class Upgrades
 {
     private readonly Session _session;
@@ -11,6 +9,6 @@ public class Upgrades
 
     internal void Reset()
     {
-        throw new NotImplementedException();
+        Godot.GD.PrintErr("Upgrades reset is not implemented");
     }
 }

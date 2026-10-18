@@ -2,12 +2,14 @@ using System.Collections.Generic;
 
 public sealed record Config(
     PlayerStatsConfig PlayerStatsConfig,
+    PlayerVisualsConfig PlayerVisualsConfig,
     UpgradesConfig UpgradesConfig,
     GenerationConfig GenerationConfig,
     ControlsConfig ControlsConfig,
     WorldConfig WorldConfig,
     RemnantsConfig RemnantsConfig,
-    RemnantsSizeConfig RemnantsSizeConfig
+    RemnantsSizeConfig RemnantsSizeConfig,
+    MarchingCubesOptions MarchingCubesOptions
 )
 {
     private static ConfigLoader? _configLoader;
@@ -22,14 +24,14 @@ public sealed record Config(
     {
         get
         {
-            _configLoader ??= new ConfigLoader("NOT_IMPLEMENTED", x => _instance = x);
+            _configLoader ??= new ConfigLoader("Assets/config.toml", x => _instance = x);
             _instance ??= _configLoader.LoadConfig();
             return _instance;
         }
     }
 }
 
-public record RemnantsSizeConfig(Size Skeleton, Size Others);
+public record RemnantsSizeConfig(Dictionary<string, Size> Sizes);
 
 public record Size(float Min, float Max);
 
@@ -38,7 +40,15 @@ public sealed record RemnantsConfig(
     int SkeletonPieceProbabilityWeight
 );
 
-public sealed record ControlsConfig(float CameraSensitivityX, float CameraSensitivityY);
+public sealed record ControlsConfig(
+    float DiggingCameraSensitivityMultiplier,
+    float CameraSensitivityX,
+    float CameraSensitivityY,
+    int CameraMinAngleDegreesY,
+    int CameraMaxAngleDegreesY,
+    int CoyoteTime,
+    int BufferTime
+);
 
 public sealed record GenerationConfig(
     NoiseConfig NoiseConfig,
@@ -46,7 +56,8 @@ public sealed record GenerationConfig(
     bool XRay,
     Vector3I ChunkSize,
     float CellHealth,
-    float CellHealthScaling
+    float CellHealthScaling,
+    int VerticalGenerationDistanceChunks
 );
 
 public sealed record UpgradesConfig();
@@ -55,8 +66,21 @@ public sealed record PlayerStatsConfig(
     float Acceleration,
     float MaxVelocity,
     float Deceleration,
-    FallingObjectConfig FallingObjectConfig
+    FallingObjectConfig FallingObjectConfig,
+    float JumpVelocity,
+    float DigRange,
+    float DigRadius
 );
+
+public sealed record PlayerVisualsConfig(
+    string ToolModel,
+    Vector3I ToolOffset,
+    float SwingAmplitudeX,
+    float SwingAmplitudeY,
+    float SwingFrequency
+);
+
+public sealed record PlayerDiggingStats();
 
 public sealed record NoiseConfig(
     int Octaves,
@@ -65,6 +89,6 @@ public sealed record NoiseConfig(
     float SpawnThreshold
 );
 
-public sealed record WorldConfig(float Gravity, float CellSize);
+public sealed record WorldConfig(float Gravity, float CellSize, string TerrainColor);
 
 public sealed record FallingObjectConfig(float GravityScale, float TerminalVelocity);

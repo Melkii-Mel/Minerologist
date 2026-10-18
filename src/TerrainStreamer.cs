@@ -9,75 +9,84 @@ public interface IMeshContainer
     void Defer(Action action);
 }
 
-public interface ITerrainGenerator
+public interface ITerrain<TUpdateSnapshot, TUpdateResult>
 {
-    public VoxelGrid Generate(IVoxelGridContainer container, Vector3I chunkPosition);
+    public event Action<Vector3I>? ChunkChanged;
+
+    public void Generate(Vector3I chunkPosition);
+    public void Load(Vector3I chunkPosition);
+    public void Unload(Vector3I chunkPosition);
+    public bool IsGenerated(Vector3I chunkPosition);
+    TUpdateSnapshot PrepareUpdate(Vector3I chunkPosition);
+    TUpdateResult ExecuteUpdate(Vector3I chunkPosition, TUpdateSnapshot snapshot);
+    void FinalizeUpdate(Vector3I chunkPosition, TUpdateResult result);
 }
 
-public class TerrainStreamer<TMeshContainer> : IVoxelGridContainer
-    where TMeshContainer : Node, IMeshContainer
+public class TerrainStreamer<TTerrainUpdateSnapshot, TTerrainUpdateResult>
 {
     public const int CHUNK_UPDATE_PRIORITY = 999;
 
     public int IsoLevel { get; private set; } = 0;
 
     public Vector3I ChunkSize { get; private set; }
-    public int ChunkSizeFlat => IVoxelGridContainer.ChunkSizeFlatDefault(ChunkSize);
-
-    private readonly TMeshContainer _meshContainer;
-    private readonly Material _material;
 
     private readonly int _loadRadius;
+    private readonly int _loadHeight;
 
-    private readonly Dictionary<Vector3I, VoxelGrid> _grids = [];
-    private readonly Dictionary<Vector3I, MeshInstance?> _instances = [];
-    private readonly Scheduler _dispatcher = new(0.5f);
+    private readonly Scheduler _scheduler = new(0.75f);
+
+    private readonly ConcurrentDictionary<Vector3I, bool> _instantiatedChunks = [];
     private readonly Dictionary<Vector3I, int> _queuedChunks = [];
 
-    private readonly HashSet<Vector3I> _dirty = [];
-    private volatile int _lastUpdateChunkCount;
-    private readonly ConcurrentBag<(Vector3I position, GodotMeshBuilder builder)> _finishedMeshes =
-    [];
-    private readonly ConcurrentDictionary<Vector3I, VoxelGrid> _snapshots = [];
-    private readonly ITerrainGenerator _terrainGenerator;
+    private readonly List<Vector3I> _dirty = [];
+    private int _lastUpdateChunkCount;
+    private readonly ConcurrentBag<(
+        Vector3I position,
+        TTerrainUpdateResult updateResult
+    )> _updateResults = [];
+
+    private readonly ITerrain<TTerrainUpdateSnapshot, TTerrainUpdateResult> _terrain;
+
+    private readonly WorldChunkCoordinatesConverter _worldChunkCoordinatesConverter;
 
     public TerrainStreamer(
-        TMeshContainer meshContainer,
-        Material material,
         Vector3I chunkSize,
         int loadRadius,
-        ITerrainGenerator terrainGenerator
+        int loadHeight,
+        ITerrain<TTerrainUpdateSnapshot, TTerrainUpdateResult> terrain
     )
     {
-        _meshContainer = meshContainer;
-        _material = material;
         ChunkSize = chunkSize;
-        _loadRadius = loadRadius;
-        _terrainGenerator = terrainGenerator;
+        _worldChunkCoordinatesConverter = new(chunkSize);
 
-        return;
+        _loadRadius = loadRadius;
+        _loadHeight = loadHeight;
+
+        _terrain = terrain;
+        terrain.ChunkChanged += MarkDirty;
     }
 
     public void Update(Vector3 worldPosition)
     {
-        var centerChunk = WorldToChunk(worldPosition);
+        Update(_worldChunkCoordinatesConverter.WorldToChunk(new Vector3I(worldPosition)));
+    }
 
-        var required = new HashSet<Vector3I>();
+    private int _framesBetweenUpdates = 0;
 
-        if (_lastUpdateChunkCount == _finishedMeshes.Count)
+    public void Update(Vector3I centerChunk)
+    {
+        var requiredChunks = new HashSet<Vector3I>();
+
+        if (_lastUpdateChunkCount == _updateResults.Count)
         {
-            ApplyChunkUpdate();
-            _lastUpdateChunkCount = 0;
-            _snapshots.Clear();
-            foreach (var chunk in _dirty)
-            {
-                _lastUpdateChunkCount++;
-                _snapshots[chunk] = _grids[chunk].CreateSnapshot();
-                _dispatcher.QueueJob(() => BuildChunkToBag(chunk), CHUNK_UPDATE_PRIORITY);
-            }
+            // GD.Print("Frames between last updates: ", _framesBetweenUpdates);
+            _framesBetweenUpdates = 0;
+            UpdateDirtyChunks();
         }
-
-        _dirty.Clear();
+        else
+        {
+            _framesBetweenUpdates++;
+        }
 
         var loadRadiusSquared = _loadRadius * _loadRadius;
 
@@ -85,37 +94,52 @@ public class TerrainStreamer<TMeshContainer> : IVoxelGridContainer
         {
             for (var x = -_loadRadius; x <= _loadRadius; x++)
             {
-                for (var y = -_loadRadius; y <= _loadRadius; y++)
+                for (var y = -_loadHeight; y <= _loadHeight; y++)
                 {
                     for (var z = -_loadRadius; z <= _loadRadius; z++)
                     {
                         var vec = new Vector3I(x, y, z);
+
                         var chunk = centerChunk + vec;
-                        var distanceSquared = (int)vec.ToGdVector3().LengthSquared();
+
+                        var distanceSquared = (int)new Vector2(x, z).LengthSquared();
+
+                        var chunkIsClose =
+                            (
+                                chunk.X == centerChunk.X
+                                && chunk.Z == centerChunk.Z
+                                && chunk.Y == centerChunk.Y
+                            ) || chunk.IsNeighborOf(centerChunk);
+
                         if (distanceSquared > loadRadiusSquared)
                         {
                             continue;
                         }
 
-                        required.Add(chunk);
+                        requiredChunks.Add(chunk);
 
-                        if (_instances.ContainsKey(chunk))
+                        if (_instantiatedChunks.ContainsKey(chunk))
                         {
                             continue;
                         }
+
+                        if (!_terrain.IsGenerated(chunk))
+                        {
+                            _terrain.Generate(chunk);
+                        }
+
                         QueueChunkLoadOrUpdatePriority(
                             chunk,
-                            urgent: (chunk.X == centerChunk.X && chunk.Z == centerChunk.Z)
-                                || chunk.IsNeighborOf(centerChunk),
+                            urgent: chunkIsClose,
                             priority: _loadRadius - distanceSquared
                         );
                     }
                 }
             }
 
-            foreach (var chunk in _instances.Keys.Concat(_queuedChunks.Keys).ToList())
+            foreach (var chunk in _instantiatedChunks.Keys.Concat(_queuedChunks.Keys).ToList())
             {
-                if (!required.Contains(chunk))
+                if (!requiredChunks.Contains(chunk))
                 {
                     UnloadOrDequeue(chunk);
                 }
@@ -123,109 +147,54 @@ public class TerrainStreamer<TMeshContainer> : IVoxelGridContainer
         }
     }
 
-    private void BuildChunkToBag(Vector3I chunk)
-    {
-        var builder = new GodotMeshBuilder();
-        Generate(chunk, () => _finishedMeshes.Add((chunk, builder)), builder);
-    }
-
-    private void ApplyChunkUpdate()
-    {
-        while (_finishedMeshes.TryTake(out var mesh))
-        {
-            Commit(mesh.position, mesh.builder);
-        }
-    }
-
     private readonly object _lock = new();
+
+    private void UpdateDirtyChunks()
+    {
+        while (_updateResults.TryTake(out var chunk))
+        {
+            _terrain.FinalizeUpdate(chunk.position, chunk.updateResult);
+        }
+        _lastUpdateChunkCount = 0;
+        foreach (var chunk in _dirty)
+        {
+            if (!_instantiatedChunks.ContainsKey(chunk))
+            {
+                continue;
+            }
+            _lastUpdateChunkCount++;
+            var preparedValue = _terrain.PrepareUpdate(chunk);
+            _scheduler.QueueJob(
+                () => _updateResults.Add((chunk, _terrain.ExecuteUpdate(chunk, preparedValue))),
+                CHUNK_UPDATE_PRIORITY
+            );
+        }
+        _dirty.Clear();
+    }
 
     private void QueueChunkLoadOrUpdatePriority(Vector3I chunkPosition, bool urgent, int priority)
     {
-        var builder = new GodotMeshBuilder();
         if (urgent)
         {
             TryDequeue(chunkPosition);
-            Generate(chunkPosition, CommitOrDefer, builder);
+            _terrain.Load(chunkPosition);
+            _instantiatedChunks.TryAdd(chunkPosition, true);
             return;
         }
-        if (!_queuedChunks.ContainsKey(chunkPosition))
+        if (_queuedChunks.ContainsKey(chunkPosition))
         {
-            var id = _dispatcher.QueueJob(
-                () => Generate(chunkPosition, CommitOrDefer, builder),
-                priority
-            );
-            _queuedChunks[chunkPosition] = id;
-        }
-        else
-        {
-            if (_queuedChunks.ContainsKey(chunkPosition))
-            {
-                _dispatcher.TryUpdatePriority(_queuedChunks[chunkPosition], priority);
-            }
-        }
-        void CommitOrDefer()
-        {
-            if (!urgent)
-            {
-                _meshContainer.Defer(() => Commit(chunkPosition, builder));
-            }
-            else
-            {
-                Commit(chunkPosition, builder);
-            }
-        }
-    }
-
-    private void Commit(Vector3I chunkPosition, GodotMeshBuilder builder)
-    {
-        lock (_lock)
-        {
-            if (_instances.ContainsKey(chunkPosition))
-            {
-                var chunk = _instances[chunkPosition];
-                _instances.Remove(chunkPosition);
-                chunk?.QueueFree();
-            }
-        }
-        var mesh = builder.Commit();
-        if (mesh is null)
-        {
-            SetLoaded(chunkPosition, null);
+            _scheduler.TryUpdatePriority(_queuedChunks[chunkPosition], priority);
             return;
         }
-        var instance = new MeshInstance
-        {
-            Mesh = mesh,
-            MaterialOverride = _material,
-            Translation = ChunkToWorld(chunkPosition).ToGdVector3(),
-        };
-        var body = new StaticBody();
-        body.AddChild(new CollisionShape { Shape = mesh.CreateTrimeshShape() });
-        instance.AddChild(body);
-        _meshContainer.AddChild(instance);
-
-        SetLoaded(chunkPosition, instance);
-    }
-
-    private void Generate(Vector3I chunkPosition, Action commit, GodotMeshBuilder builder)
-    {
-        var grid = GetOrGenerateGrid(chunkPosition);
-        if (grid.IsEmpty(IsoLevel))
-        {
-            commit();
-            return;
-        }
-        MarchingCubes.Generate(
-            grid,
-            builder,
-            new()
+        var id = _scheduler.QueueJob(
+            () =>
             {
-                IsoLevel = IsoLevel,
-                GenerateNormals = true,
-                WeldVertices = true,
-            }
+                _terrain.Load(chunkPosition);
+                _instantiatedChunks.TryAdd(chunkPosition, true);
+            },
+            priority
         );
-        commit();
+        _queuedChunks[chunkPosition] = id;
     }
 
     private Action? TryDequeue(Vector3I chunk)
@@ -236,7 +205,7 @@ public class TerrainStreamer<TMeshContainer> : IVoxelGridContainer
             {
                 var id = _queuedChunks[chunk];
                 _queuedChunks.Remove(chunk);
-                if (_dispatcher.TryCancelJob(id, out var action))
+                if (_scheduler.TryCancelJob(id, out var action))
                 {
                     return action;
                 }
@@ -248,131 +217,17 @@ public class TerrainStreamer<TMeshContainer> : IVoxelGridContainer
     private void UnloadOrDequeue(Vector3I chunk)
     {
         TryDequeue(chunk);
-        UnloadChunk(chunk);
-    }
-
-    private void SetLoaded(Vector3I chunk, MeshInstance? instance)
-    {
-        lock (_lock)
+        if (_instantiatedChunks.TryRemove(chunk, out _))
         {
-            _queuedChunks.Remove(chunk);
-            _instances.Add(chunk, instance);
+            _terrain.Unload(chunk);
         }
     }
 
-    private MeshInstance? SetUnloaded(Vector3I chunk)
+    private void MarkDirty(Vector3I chunkPosition)
     {
-        lock (_lock)
+        if (!_dirty.Contains(chunkPosition))
         {
-            if (_instances.ContainsKey(chunk))
-            {
-                var instance = _instances[chunk];
-                _instances.Remove(chunk);
-                return instance;
-            }
-            return null;
+            _dirty.Add(chunkPosition);
         }
-    }
-
-    private VoxelGrid? TryGetGrid(Vector3I chunkPosition)
-    {
-        lock (_lock)
-        {
-            if (_grids.TryGetValue(chunkPosition, out var grid))
-                return grid;
-            return null;
-        }
-    }
-
-    private VoxelGrid GetOrGenerateGrid(Vector3I chunkPosition)
-    {
-        lock (_lock)
-        {
-            if (_snapshots.TryGetValue(chunkPosition, out var grid))
-            {
-                return grid;
-            }
-            if (_grids.TryGetValue(chunkPosition, out grid))
-            {
-                return grid;
-            }
-        }
-
-        var generated = _terrainGenerator.Generate(this, chunkPosition);
-
-        lock (_lock)
-        {
-            if (_grids.TryGetValue(chunkPosition, out var grid))
-            {
-                return grid;
-            }
-            _grids[chunkPosition] = generated;
-            return generated;
-        }
-    }
-
-    private void UnloadChunk(Vector3I chunkPosition)
-    {
-        var instance = SetUnloaded(chunkPosition);
-        instance?.QueueFree();
-    }
-
-    public Vector3I WorldToChunk(Vector3 worldPosition)
-    {
-        return new Vector3I(
-            Mathf.FloorToInt(worldPosition.x / ChunkSize.X),
-            Mathf.FloorToInt(worldPosition.y / ChunkSize.Y),
-            Mathf.FloorToInt(worldPosition.z / ChunkSize.Z)
-        );
-    }
-
-    public Vector3I WorldToChunk(Vector3I worldPosition)
-    {
-        return new Vector3I(
-            Mathf.FloorToInt((float)worldPosition.X / ChunkSize.X),
-            Mathf.FloorToInt((float)worldPosition.Y / ChunkSize.Y),
-            Mathf.FloorToInt((float)worldPosition.Z / ChunkSize.Z)
-        );
-    }
-
-    public Vector3I ChunkToWorld(Vector3I chunkPosition)
-    {
-        return new Vector3I(
-            chunkPosition.X * ChunkSize.X,
-            chunkPosition.Y * ChunkSize.Y,
-            chunkPosition.Z * ChunkSize.Z
-        );
-    }
-
-    public void Clear()
-    {
-        lock (_lock)
-        {
-            foreach (var instance in _instances.Values)
-                instance?.QueueFree();
-
-            _instances.Clear();
-            _grids.Clear();
-        }
-    }
-
-    VoxelGrid IVoxelGridContainer.GetOrCreateVoxelGrid(Vector3I chunkPosition)
-    {
-        return GetOrGenerateGrid(chunkPosition);
-    }
-
-    VoxelGrid? IVoxelGridContainer.TryGetVoxelGrid(Vector3I chunkPosition)
-    {
-        return TryGetGrid(chunkPosition);
-    }
-
-    public VoxelGrid GetChunk(Vector3I chunkPosition)
-    {
-        return _grids[chunkPosition];
-    }
-
-    public void MarkDirty(Vector3I chunkPosition)
-    {
-        _dirty.Add(chunkPosition);
     }
 }

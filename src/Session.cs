@@ -9,11 +9,13 @@ public class Session
     public readonly Inventory Inventory;
     public readonly Player Player;
     public readonly Upgrades Upgrades;
-    public float TimeScale { get; set; }
-    private TerrainStreamer<MeshContainer> _terrainStreamer;
+    public float TimeScale { get; set; } = 1;
+    public readonly TerrainStreamer<VoxelGrid, GodotMeshBuilder> TerrainStreamer;
+    public readonly Terrain Terrain;
 
-    public event Action<float>? OnUpdate;
-    public event Action<float>? OnPhysicsUpdate;
+    public event Action<float>? Update;
+    public event Action<float>? PhysicsUpdate;
+    public event Action<InputEvent>? Input;
 
     public Session(
         SessionContainer container,
@@ -24,37 +26,54 @@ public class Session
     )
     {
         SessionContainer = container;
+
         Root3d = root3d;
         RootUi = rootUi;
-        Player = new(this, Root3d);
+
+        Terrain = new Terrain(root3d);
+
+        Player = new(this, Root3d, Vector3.Zero, Terrain);
+
         Inventory = new(this);
+
         Upgrades = new(this);
-        bindUpdate(Update);
-        bindPhysicsUpdate(PhysicsUpdate);
-        _terrainStreamer = new(
-            new MeshContainer(),
-            new SpatialMaterial(),
-            Config.Instance.GenerationConfig.ChunkSize,
-            Config.Instance.GenerationConfig.HoleRadiusChunks,
-            new TerrainGenerator()
+
+        bindUpdate(OnUpdate);
+        bindPhysicsUpdate(OnPhysicsUpdate);
+
+        var genConfig = Config.Instance.GenerationConfig;
+
+        TerrainStreamer = new(
+            genConfig.ChunkSize,
+            genConfig.HoleRadiusChunks,
+            genConfig.VerticalGenerationDistanceChunks,
+            Terrain
         );
+
+        Update += _ =>
+        {
+            var duration = new DurationDebug();
+            TerrainStreamer.Update(Player.VerticalOriginPosition);
+            //GD.Print(duration.TotalMilliseconds());
+        };
+
         RestartSession();
     }
 
-    private void Update(float delta)
+    private void OnUpdate(float delta)
     {
         delta *= TimeScale;
         if (delta == 0)
             return;
-        OnUpdate?.Invoke(delta);
+        Update?.Invoke(delta);
     }
 
-    private void PhysicsUpdate(float delta)
+    private void OnPhysicsUpdate(float delta)
     {
         delta *= TimeScale;
         if (delta == 0)
             return;
-        OnPhysicsUpdate?.Invoke(delta);
+        PhysicsUpdate?.Invoke(delta);
     }
 
     public void RestartSession()

@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using Godot;
 
-public record EntityPrefab(string Id, MeshInstance MeshInstance, bool IsSkeleton)
+public record EntityPrefab(string Type, MeshInstance MeshInstance)
 {
     public static EntityPrefab Random(Random rng)
     {
@@ -21,7 +21,7 @@ public record EntityPrefab(string Id, MeshInstance MeshInstance, bool IsSkeleton
 
     public static EntityPrefab RandomSkeletonPiece(Random rng)
     {
-        var skeletonPieces = EntitiesCollection.Skeletons[Server.CurrentSkeleton];
+        var skeletonPieces = MeshCollection.Skeletons[Server.CurrentSkeleton];
         var remainingPieces = skeletonPieces
             .Where(p => !Server.CollectedSkeletonPieces.Contains(p.Key))
             .Select(p => p.Value)
@@ -30,19 +30,19 @@ public record EntityPrefab(string Id, MeshInstance MeshInstance, bool IsSkeleton
         {
             remainingPieces = [.. skeletonPieces.Select(p => p.Value)];
         }
-        return RandomUtils.ChooseRandomItem(remainingPieces, rng);
+        return new("Skeleton", RandomUtils.ChooseRandomItem(remainingPieces, rng));
     }
 
     public static EntityPrefab RandomOfType(string type, Random rng)
     {
-        var pieces = EntitiesCollection.Others[type];
-        return RandomUtils.ChooseRandomItem([.. pieces.Values], rng);
+        var pieces = MeshCollection.OtherDiggables[type];
+        return new(type, RandomUtils.ChooseRandomItem([.. pieces.Values], rng));
     }
 }
 
 public record Entity(
     EntityPrefab Prefab,
-    EntitiesChunk Chunk,
+    MeshInstance GloballyPositionedTransformedInstanceWithCollisionShape,
     Vector3I LocalPosition,
     Vector3 Rotation,
     float Scale

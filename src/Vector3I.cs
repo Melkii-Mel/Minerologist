@@ -3,6 +3,9 @@ using Godot;
 
 public record struct Vector3I(int X, int Y, int Z)
 {
+    public Vector3I(Vector3 gdVector3)
+        : this((int)gdVector3.x, (int)gdVector3.y, (int)gdVector3.z) { }
+
     public static Vector3I operator +(Vector3I a, Vector3I b) =>
         new(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
 
@@ -48,6 +51,16 @@ public record struct Vector3I(int X, int Y, int Z)
         var dz = Math.Abs(Z - other.Z);
 
         return dx <= 1 && dy <= 1 && dz <= 1 && (dx != 0 || dy != 0 || dz != 0);
+    }
+
+    public readonly int Product()
+    {
+        return X * Y * Z;
+    }
+
+    public readonly int LengthSquared()
+    {
+        return X * X + Y * Y + Z * Z;
     }
 
     public Vector3I(int[] values)

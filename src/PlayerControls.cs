@@ -1,4 +1,3 @@
-using System;
 using Godot;
 
 public class PlayerControls
@@ -6,16 +5,93 @@ public class PlayerControls
     private readonly Player _player;
     private readonly Session _session;
     private int ControllerId => _session.SessionContainer.ControllerId;
+    private bool _handleInputs = false;
 
-    public PlayerControls(Player player, Action<Action<InputEvent>> subscribe)
+    public PlayerControls(Player player)
     {
         _session = player.Session;
         _player = player;
 
-        subscribe(Input);
+        _session.SessionContainer.Root.Input += OnInput;
     }
 
-    private void Input(InputEvent e)
+    public void StartInputHandling()
+    {
+        _handleInputs = true;
+        if (ControllerId == -1)
+        {
+            Input.MouseMode = Input.MouseModeEnum.Captured;
+        }
+    }
+
+    public void StopInputHandling()
+    {
+        _handleInputs = false;
+        if (ControllerId == -1)
+        {
+            Input.MouseMode = Input.MouseModeEnum.Visible;
+        }
+    }
+
+    private void OnInput(InputEvent e)
+    {
+        if (!_handleInputs)
+        {
+            return;
+        }
+        // If session controls are bound to the keyboard
+        if (ControllerId == -1)
+        {
+            OnMouseKeyboardInput(e);
+        }
+        else
+        {
+            OnJoypadInput(e);
+        }
+    }
+
+    private void OnMouseKeyboardInput(InputEvent e)
+    {
+        var directionX = 0;
+        var directionY = 0;
+        if (Input.IsKeyPressed((int)KeyList.A))
+        {
+            directionX -= 1;
+        }
+        if (Input.IsKeyPressed((int)KeyList.W))
+        {
+            directionY -= 1;
+        }
+        if (Input.IsKeyPressed((int)KeyList.S))
+        {
+            directionY += 1;
+        }
+        if (Input.IsKeyPressed((int)KeyList.D))
+        {
+            directionX += 1;
+        }
+        var jumping =
+            e is InputEventKey keyEvent
+            && keyEvent.Pressed
+            && !keyEvent.Echo
+            && keyEvent.Scancode == (int)KeyList.Space;
+
+        var digging = Input.IsMouseButtonPressed((int)ButtonList.Left);
+        var spin = Vector2.Zero;
+        if (e is InputEventMouseMotion mouseMotion)
+        {
+            spin = mouseMotion.Relative;
+        }
+
+        _player.Jumping = jumping;
+        _player.Digging = digging;
+        _player.Direction = new Vector2(directionX, directionY).Normalized();
+        _player.Spin =
+            spin
+            * (digging ? Config.Instance.ControlsConfig.DiggingCameraSensitivityMultiplier : 1);
+    }
+
+    private void OnJoypadInput(InputEvent e)
     {
         var leftStick = Vector2.Zero;
         var rightStick = Vector2.Zero;
@@ -80,6 +156,8 @@ public class PlayerControls
         _player.Direction = leftStick + dPad;
         if (_player.Direction.LengthSquared() > 1)
             _player.Direction = _player.Direction.Normalized();
-        _player.Spin = rightStick;
+        _player.Spin =
+            rightStick
+            * (digging ? Config.Instance.ControlsConfig.DiggingCameraSensitivityMultiplier : 1);
     }
 }

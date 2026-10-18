@@ -9,12 +9,19 @@ public interface ISession
     void Resume(int deviceId);
 }
 
-public class JoypadSessionDispatcher<TSession>(Node root, Func<int, TSession> createSession)
+public class JoypadSessionDispatcher<TSession>(
+    Node root,
+    Func<int, TSession> createSession,
+    bool includeKeyboardInput
+)
     where TSession : ISession
 {
     private readonly List<TSession> _disconnectedSessions = [];
     private readonly Dictionary<int, TSession> _deviceIdSessionMap = [];
     private readonly List<TSession> _sessions = [];
+    private readonly Node _root = root;
+    private readonly Func<int, TSession> _createSession = createSession;
+    private readonly bool _includeKeyboardInput = includeKeyboardInput;
 
     public event Action<TSession[], TSession>? SessionAdded;
 
@@ -24,11 +31,15 @@ public class JoypadSessionDispatcher<TSession>(Node root, Func<int, TSession> cr
         {
             AssignToNextSession((int)deviceId);
         }
+        if (_includeKeyboardInput)
+        {
+            AssignToNextSession(-1);
+        }
     }
 
     public void ListenForChanges()
     {
-        Input.Singleton.Connect("joy_connection_changed", root, nameof(OnJoyConnectionChanged));
+        Input.Singleton.Connect("joy_connection_changed", _root, nameof(OnJoyConnectionChanged));
     }
 
     private void OnJoyConnectionChanged(int deviceId, bool connected)
@@ -62,7 +73,7 @@ public class JoypadSessionDispatcher<TSession>(Node root, Func<int, TSession> cr
         }
         else
         {
-            session = createSession(deviceId);
+            session = _createSession(deviceId);
             _sessions.Add(session);
             SessionAdded?.Invoke([.. _sessions], session);
         }
