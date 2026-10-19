@@ -38,8 +38,12 @@ public class TerrainMeshContainer(Material material) : GodotNodeContainer
 
     public void UpdateMesh(MeshInstance node, ArrayMesh? mesh)
     {
-        node.Mesh = mesh;
         ((CollisionShape)node.GetChild(0).GetChild(0)).Shape = mesh?.CreateTrimeshShape() ?? null;
+        if (Config.Instance.GenerationConfig.XRay)
+        {
+            mesh = null;
+        }
+        node.Mesh = mesh;
     }
 
     public void Unload(Vector3I chunkPosition)

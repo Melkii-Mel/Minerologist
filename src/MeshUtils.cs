@@ -4,11 +4,8 @@ using Godot;
 
 public static class MeshUtils
 {
-    public static Bounds FindAabb(MeshInstance meshInstance)
+    public static Bounds FindAabb(Mesh mesh, Transform transform)
     {
-        Mesh mesh = meshInstance.Mesh;
-        Transform transform = meshInstance.GlobalTransform;
-
         Vector3 min = new(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
 
         Vector3 max = new(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
@@ -143,11 +140,11 @@ public static class MeshUtils
         return min > radius || max < -radius;
     }
 
-    public static IEnumerable<(Vector3, Vector3, Vector3)> GetTriangles(MeshInstance meshInstance)
+    public static IEnumerable<(Vector3, Vector3, Vector3)> GetTriangles(
+        Mesh mesh,
+        Transform globalTransform
+    )
     {
-        Mesh mesh = meshInstance.Mesh;
-        Transform globalTransform = meshInstance.Transform;
-
         for (int surface = 0; surface < mesh.GetSurfaceCount(); surface++)
         {
             Godot.Collections.Array arrays = mesh.SurfaceGetArrays(surface);

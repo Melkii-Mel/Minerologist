@@ -1,5 +1,7 @@
 .idea/
 Builds/
+.editorocnfig
+*.import
 
 # Created by https://www.toptal.com/developers/gitignore/api/jetbrains,vim,windows,godot,csharp
 # Edit at https://www.toptal.com/developers/gitignore?templates=jetbrains,vim,windows,godot,csharp

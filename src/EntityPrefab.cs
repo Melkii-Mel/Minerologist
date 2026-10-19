@@ -40,10 +40,35 @@ public record EntityPrefab(string Type, MeshInstance MeshInstance)
     }
 }
 
-public record Entity(
-    EntityPrefab Prefab,
-    MeshInstance GloballyPositionedTransformedInstanceWithCollisionShape,
-    Vector3I LocalPosition,
-    Vector3 Rotation,
-    float Scale
-);
+public record Entity(EntityPrefab Prefab, Vector3I GlobalPosition, Vector3 Rotation, float Scale)
+{
+    private MeshInstance? _globallyPositionedTransformedInstanceWithCollisionShape;
+
+    public Vector3I LocalPosition =>
+        GlobalPosition
+        - _coordinatesConverter.ChunkToWorld(_coordinatesConverter.WorldToChunk(GlobalPosition));
+
+    private readonly WorldChunkCoordinatesConverter _coordinatesConverter = new();
+
+    // Must be called on Godot's main thread
+    public MeshInstance GetGloballyPositionedTransformedInstanceWithCollisionShape()
+    {
+        if (_globallyPositionedTransformedInstanceWithCollisionShape == null)
+        {
+            var meshInstance = new MeshInstance
+            {
+                Position = GlobalPosition.ToGdVector3(),
+                Rotation = Rotation,
+                Mesh = Prefab.MeshInstance.Mesh,
+                Scale = new(Scale, Scale, Scale),
+            };
+            var staticBody = new StaticBody();
+            staticBody.AddChild(
+                new CollisionShape() { Shape = meshInstance.Mesh.CreateTrimeshShape() }
+            );
+            meshInstance.AddChild(staticBody);
+            _globallyPositionedTransformedInstanceWithCollisionShape = meshInstance;
+        }
+        return _globallyPositionedTransformedInstanceWithCollisionShape;
+    }
+}

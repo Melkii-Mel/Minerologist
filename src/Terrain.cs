@@ -215,7 +215,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
             : Chunk.MapEachCellInChunk(localPos =>
             {
                 var globalCellPos = globalPos + localPos;
-                var sample = _noise.GetNoise3dv(globalCellPos.ToGdVector3());
+                var sample = _noise.GetNoise3dv(globalCellPos.ToGdVector3()) / 2 + 0.5;
                 if (sample > Config.Instance.GenerationConfig.NoiseConfig.SpawnThreshold)
                 {
                     return CreateRandomEntity(globalCellPos);
@@ -315,7 +315,6 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         var sizeRange = sizeConfig.Sizes[prefab.Type];
         var rotation = RandomUtils.Rotation(_rng);
         var scale = RandomUtils.FromRange(sizeRange.Min, sizeRange.Max, _rng);
-
         var meshInstance = new MeshInstance
         {
             Position = globalPos.ToGdVector3(),

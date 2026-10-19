@@ -63,6 +63,11 @@ public record struct Vector3I(int X, int Y, int Z)
         return X * X + Y * Y + Z * Z;
     }
 
+    public readonly float Length()
+    {
+        return Mathf.Sqrt(LengthSquared());
+    }
+
     public Vector3I(int[] values)
         : this(values[0], values[1], values[2]) { }
 }

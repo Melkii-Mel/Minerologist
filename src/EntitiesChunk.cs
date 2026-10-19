@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Godot;
 
 public class EntitiesChunk
 {
@@ -26,13 +27,17 @@ public class EntitiesChunk
 
     public IEnumerable<Vector3I> CalculateSupportingTiles(Entity entity)
     {
-        var meshInstance = entity.GloballyPositionedTransformedInstanceWithCollisionShape;
-        var meshAabb = MeshUtils.FindAabb(meshInstance);
+        var mesh = entity.Prefab.MeshInstance.Mesh;
+        var transform = new Transform(
+            new Basis(entity.Rotation).Scaled(new(entity.Scale, entity.Scale, entity.Scale)),
+            entity.GlobalPosition.ToGdVector3()
+        );
+        var meshAabb = MeshUtils.FindAabb(mesh, transform);
         var candidateVoxelPositions = MeshUtils.GetCandidatePoints(meshAabb);
         foreach (var candidateVoxelPosition in candidateVoxelPositions)
         {
             var voxelBounds = new Bounds(candidateVoxelPosition, Vector3I.One);
-            foreach (var triangle in MeshUtils.GetTriangles(meshInstance))
+            foreach (var triangle in MeshUtils.GetTriangles(mesh, transform))
             {
                 if (MeshUtils.TestTriangleAabb(triangle, voxelBounds))
                 {
@@ -51,7 +56,7 @@ public class EntitiesChunk
                 continue;
             }
             RemoveEntity(entity);
-            entity.GloballyPositionedTransformedInstanceWithCollisionShape.QueueFree();
+            entity.GetGloballyPositionedTransformedInstanceWithCollisionShape().QueueFree();
             AddToInventory(entity);
         }
     }
