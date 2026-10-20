@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using Godot;
 
-public record EntityPrefab(string Type, MeshInstance MeshInstance)
+public record EntityPrefab(string Type, string Id, MeshInstance MeshInstance)
 {
     public static EntityPrefab Random(Random rng)
     {
@@ -24,19 +24,20 @@ public record EntityPrefab(string Type, MeshInstance MeshInstance)
         var skeletonPieces = MeshCollection.Skeletons[Server.CurrentSkeleton];
         var remainingPieces = skeletonPieces
             .Where(p => !Server.CollectedSkeletonPieces.Contains(p.Key))
-            .Select(p => p.Value)
             .ToList();
         if (remainingPieces.Count == 0)
         {
-            remainingPieces = [.. skeletonPieces.Select(p => p.Value)];
+            remainingPieces = [.. skeletonPieces];
         }
-        return new("Skeleton", RandomUtils.ChooseRandomItem(remainingPieces, rng));
+        var piece = RandomUtils.ChooseRandomItem(remainingPieces, rng);
+        return new("Skeleton", piece.Key, piece.Value);
     }
 
     public static EntityPrefab RandomOfType(string type, Random rng)
     {
         var pieces = MeshCollection.OtherDiggables[type];
-        return new(type, RandomUtils.ChooseRandomItem([.. pieces.Values], rng));
+        var piece = RandomUtils.ChooseRandomItem([.. pieces], rng);
+        return new(type, piece.Key, piece.Value);
     }
 }
 

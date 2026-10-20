@@ -25,17 +25,17 @@ public class Inventory
         InventoryUpdated?.Invoke(new SlotAdded(_itemStacks.Count - 1));
     }
 
-    public bool FlushItem()
+    public ItemStack? FlushItem()
     {
         if (_itemStacks.Count == 0)
         {
-            return false;
+            return null;
         }
         ShiftItemsToFillFirstSlot();
         var removed = _itemStacks[0];
         InventoryUpdated?.Invoke(new SlotRemoved(0, removed!.Value));
         ShiftItemsToFillFirstSlot();
-        return true;
+        return removed;
     }
 
     public void ShiftItemsToFillFirstSlot()

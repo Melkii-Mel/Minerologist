@@ -1,0 +1,98 @@
+[ConfigConfig]
+WriteConfigTemplate = true
+WriteMergedConfig = true
+ConfigTemplatePath = "Assets/config.template.toml"
+MergedConfigPath = "Assets/config.merged.toml"
+
+[PlayerStatsConfig]
+Acceleration = 200.0
+Deceleration = 400.0
+
+[PlayerStatsConfig.FallingObjectConfig]
+GravityScale = 1.0
+TerminalVelocity = 200.0
+
+[PlayerVisualsConfig]
+ToolModel = "Tools/Default"
+SwingAmplitudeX = 0.0
+SwingAmplitudeY = 0.0
+SwingFrequency = 1.0
+
+[PlayerVisualsConfig.ToolOffset]
+X = 0
+Y = 0
+Z = 0
+
+[UpgradesConfig]
+
+[GenerationConfig]
+HoleRadiusChunks = 6
+XRay = false
+CellHealth = 100.0
+CellHealthScaling = 0.3
+VerticalGenerationDistanceChunks = 3
+
+[GenerationConfig.NoiseConfig]
+Octaves = 2
+Period = 0.5
+Persistence = 0.8
+SpawnThreshold = 0.8
+Lacunarity = 10.0
+
+[GenerationConfig.ChunkSize]
+X = 8
+Y = 8
+Z = 8
+
+[ControlsConfig]
+DiggingCameraSensitivityMultiplier = 0.5
+CameraSensitivityX = 0.002
+CameraSensitivityY = 0.002
+CameraMinAngleDegreesY = -90
+CameraMaxAngleDegreesY = 90
+CoyoteTime = 250
+BufferTime = 250
+
+[WorldConfig]
+Gravity = 98.0
+CellSize = 1.0
+TerrainColor = "#75553A"
+
+[RemnantsConfig]
+SkeletonPieceProbabilityWeight = 10
+
+[RemnantsConfig.TypeWeights]
+
+[RemnantsSizeConfig]
+
+[RemnantsSizeConfig.Sizes]
+
+[RemnantsSizeConfig.Sizes.Skeleton]
+Min = 10.0
+Max = 12.0
+
+[RemnantsSizeConfig.Sizes.Others]
+Min = 0.5
+Max = 1.5
+
+[MarchingCubesOptions]
+IsoLevel = 0.0
+GenerateNormals = true
+GenerateUvs = false
+WeldVertices = true
+
+[ExpConfig]
+ExpReq = "30 * pow(lvl, 1.5)"
+DigDamage = "100 * lvl"
+DigArea = "2 + log(lvl, 2)"
+DigRange = "5 + lvl * 2"
+DigOutSpeed = "1 + log(lvl, 2)"
+ExpMultiplier = "1"
+JumpVelocity = "25 + lvl * 2"
+MaxVelocity = "15 + lvl * 2"
+
+[ExpConfig.ExpPerType]
+Skeleton = 10.0
+Others = 20.0
+
+[ExpConfig.ExpOverrides]

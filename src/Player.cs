@@ -34,6 +34,9 @@ public class Player
     private PlayerStatsConfig PlayerStatsConfig => Config.Instance.PlayerStatsConfig;
     private ControlsConfig ControlsConfig => Config.Instance.ControlsConfig;
 
+    public event Action? DepositItemsStart;
+    public event Action? DepositItemsStop;
+
     public Vector3 DefaultPlayerPosition { get; private set; } = new(0, 10, 0);
 
     public Player(Session session, Node parent, Vector3 origin, Terrain terrain)
@@ -49,7 +52,9 @@ public class Player
 
         _horizontalOrigin = origin;
 
-        _digger = new PlayerDigger(_playerNode, _playerCameraNode, _playerNode, terrain);
+        _digger = new PlayerDigger(_playerNode, _playerCameraNode, _playerNode, terrain, Session);
+        _digger.DepositItemsStart += () => DepositItemsStart?.Invoke();
+        _digger.DepositItemsStop += () => DepositItemsStop?.Invoke();
     }
 
     public void PhysicsUpdate(float delta)
@@ -62,6 +67,10 @@ public class Player
         if (Digging)
         {
             _digger.Dig(delta);
+        }
+        else
+        {
+            _digger.Idle(delta);
         }
     }
 
@@ -129,12 +138,15 @@ public class Player
             isOppositeDirection ? PlayerStatsConfig.Deceleration : 0
         );
         HVelocity += direction * acceleration * delta;
-        if (
-            HVelocity.LengthSquared()
-            > PlayerStatsConfig.MaxVelocity * PlayerStatsConfig.MaxVelocity
-        )
+        var config = Config.Instance;
+        var expConfig = config.ExpConfig;
+        var f = expConfig.F;
+        var maxVelocityy = f.MaxVelocity;
+
+        var maxVelocity = Config.Instance.ExpConfig.F.MaxVelocity.Calculate(Session.Upgrades.Level);
+        if (HVelocity.LengthSquared() > maxVelocity * maxVelocity)
         {
-            HVelocity = HVelocity.Normalized() * PlayerStatsConfig.MaxVelocity;
+            HVelocity = HVelocity.Normalized() * (float)maxVelocity;
         }
     }
 
@@ -148,7 +160,8 @@ public class Player
         if (Jumping && IsOnGround)
         {
             _lastActualJump = DateTime.Now;
-            VVelocity = PlayerStatsConfig.JumpVelocity;
+            VVelocity = (float)
+                Config.Instance.ExpConfig.F.JumpVelocity.Calculate(Session.Upgrades.Level);
         }
     }
 

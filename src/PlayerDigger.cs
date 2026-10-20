@@ -6,12 +6,16 @@ public class PlayerDigger
 {
     public Config Config => Config.Instance;
     public PlayerVisualsConfig VisualsConfig => Config.PlayerVisualsConfig;
-    public float DigRange => Config.PlayerStatsConfig.DigRange;
+    public int Level => Session.Upgrades.Level;
+    public ExpConfig ExpConfig => Config.ExpConfig;
+    public float DigRange => (float)ExpConfig.F.DigRange.Calculate(Level);
     public Vector3 ToolOffset => VisualsConfig.ToolOffset.ToGdVector3() / 100f;
-    public float DigRadius => Config.PlayerStatsConfig.DigRadius;
+    public float DigRadius => (float)ExpConfig.F.DigArea.Calculate(Level);
 
-    // TODO: Add to config
-    public float DigDamage => 500;
+    public event Action? DepositItemsStart;
+    public event Action? DepositItemsStop;
+
+    public float DigDamage => (float)ExpConfig.F.DigDamage.Calculate(Level);
     public float DistanceDamageScaling => 0.7f;
     public float DamageChance => 0.5f;
     public float DamageScaleMin => 0.5f;
@@ -28,14 +32,18 @@ public class PlayerDigger
 
     private readonly Random _rng;
 
+    public readonly Session Session;
+
     public PlayerDigger(
         Node parent,
         Camera camera,
         CollisionObject player,
         Terrain terrain,
+        Session session,
         Random? rng = null
     )
     {
+        Session = session;
         _rng = rng ?? new();
 
         _parent = parent;
@@ -51,6 +59,7 @@ public class PlayerDigger
         var rayFrom = _camera.GlobalPosition;
         var direction = -_camera.GlobalTransform.basis.z.Normalized();
         var rayTo = rayFrom + direction * DigRange;
+        var pipeHit = false;
 
         foreach (
             var rayHit in RayCaster.Cast(
@@ -71,9 +80,19 @@ public class PlayerDigger
             }
             else if (rayHit.Collider.IsInGroup(NodeGroups.PIPE))
             {
-                throw new NotImplementedException();
+                DepositItemsStart?.Invoke();
+                pipeHit = true;
             }
         }
+        if (!pipeHit)
+        {
+            DepositItemsStop?.Invoke();
+        }
+    }
+
+    public void Idle(float _)
+    {
+        DepositItemsStop?.Invoke();
     }
 
     private void DigDiggable(RayHit rayHit, float delta)
@@ -84,8 +103,10 @@ public class PlayerDigger
                 (MeshInstance)rayHit.Collider.GetParent()
             ];
             var entitySupportingTiles = _terrain.GlobalEntitySupportingTilesIndex[entity];
-            // TODO : 5 -> Config + Upgrade
-            var count = Mathf.Min(1, entitySupportingTiles.Count);
+            var count = Mathf.Min(
+                (float)ExpConfig.F.DigOutSpeed.Calculate(Level),
+                entitySupportingTiles.Count
+            );
             for (var i = 0; i < count; i++)
             {
                 Dig(

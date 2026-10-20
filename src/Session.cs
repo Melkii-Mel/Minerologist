@@ -15,6 +15,7 @@ public class Session
     public readonly TerrainStreamer<VoxelGrid, GodotMeshBuilder> TerrainStreamer;
     public readonly Terrain Terrain;
     public readonly Border Border;
+    public readonly ItemsDepositor ItemsDepositor;
 
     public event Action<float>? Update;
     public event Action<float>? PhysicsUpdate;
@@ -39,6 +40,8 @@ public class Session
         Border = new Border(root3d, MeshCollection.OtherMeshes["границы.Cylinder"]);
 
         Player = new(this, Root3d, Vector3.Zero, Terrain);
+        Player.DepositItemsStart += OnDepositItemsStart;
+        Player.DepositItemsStop += OnDepositItemsStop;
 
         Inventory = new();
 
@@ -47,6 +50,8 @@ public class Session
         InventoryUi = new();
 
         Upgrades = new(this);
+
+        ItemsDepositor = new(bindUpdate, Inventory, Upgrades);
 
         bindUpdate(OnUpdate);
         bindPhysicsUpdate(OnPhysicsUpdate);
@@ -69,6 +74,16 @@ public class Session
         };
 
         RestartSession();
+    }
+
+    private void OnDepositItemsStart()
+    {
+        ItemsDepositor.DepositEnable();
+    }
+
+    private void OnDepositItemsStop()
+    {
+        ItemsDepositor.DepositDisable();
     }
 
     private void OnEntityRemove(Entity entity)

@@ -1,5 +1,7 @@
 using System;
+using System.Globalization;
 using System.IO;
+using System.Text.RegularExpressions;
 using Tomlyn;
 
 public class ConfigLoader : IDisposable
@@ -13,7 +15,17 @@ public class ConfigLoader : IDisposable
         _configPath = Path.GetFullPath(configPath);
         _configSetter = configSetter;
 
-        LoadConfig();
+        var config = LoadConfig();
+        config.Initialize();
+        var configConfig = config.ConfigConfig;
+        if (configConfig.WriteConfigTemplate)
+        {
+            CreateConfigTemplate(configConfig.ConfigTemplatePath);
+        }
+        if (configConfig.WriteMergedConfig)
+        {
+            CreateMergedConfig(configConfig.MergedConfigPath, config);
+        }
 
         _watcher = new FileSystemWatcher(
             Path.GetDirectoryName(_configPath),
@@ -27,13 +39,6 @@ public class ConfigLoader : IDisposable
         ListenForFileChanges();
     }
 
-    private void ListenForFileChanges()
-    {
-        _watcher.Changed += (_, _) => LoadConfig();
-        _watcher.Created += (_, _) => LoadConfig();
-        _watcher.Renamed += (_, _) => LoadConfig();
-    }
-
     public Config LoadConfig()
     {
         var toml = File.ReadAllText(_configPath);
@@ -42,6 +47,43 @@ public class ConfigLoader : IDisposable
             ?? throw new InvalidDataException("Config file cannot represent null");
         _configSetter(config);
         return config;
+    }
+
+    public void CreateConfigTemplate(string path)
+    {
+        var config = new Config();
+        config.Initialize();
+        WriteConfigToFile(path, config);
+    }
+
+    public void CreateMergedConfig(string path, Config config)
+    {
+        WriteConfigToFile(path, config);
+    }
+
+    public void WriteConfigToFile(string path, Config config)
+    {
+        var toml = TomlSerializer.Serialize(
+            config,
+            new TomlSerializerOptions() { WriteIndented = true, IndentSize = 2 }
+        );
+
+        toml = Regex.Replace(toml, @"(?m)(?<!\A)^(\[)", "\n$1");
+
+        toml = Regex.Replace(
+            toml,
+            @"(?<![\w.])([+-]?\d+\.\d*?[1-9])0{5,}\d*(?:[eE][+-]?\d+)?",
+            "$1"
+        );
+
+        File.WriteAllText(path, toml);
+    }
+
+    private void ListenForFileChanges()
+    {
+        _watcher.Changed += (_, _) => LoadConfig();
+        _watcher.Created += (_, _) => LoadConfig();
+        _watcher.Renamed += (_, _) => LoadConfig();
     }
 
     public void Dispose()
