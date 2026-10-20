@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Godot;
 
 public class PlayerDigger
@@ -9,9 +11,9 @@ public class PlayerDigger
     public float DigRadius => Config.PlayerStatsConfig.DigRadius;
 
     // TODO: Add to config
-    public float DigDamage => 1000;
+    public float DigDamage => 500;
     public float DistanceDamageScaling => 0.7f;
-    public float DamageChange => 0.8f;
+    public float DamageChance => 0.5f;
     public float DamageScaleMin => 0.5f;
     public float DamageScaleMax => 2f;
 
@@ -22,14 +24,16 @@ public class PlayerDigger
     private readonly CollisionObject _playerCollider;
     private readonly Terrain _terrain;
 
-    private System.Random _rng;
+    private readonly WorldChunkCoordinatesConverter _coordinatesConverter = new();
+
+    private readonly Random _rng;
 
     public PlayerDigger(
         Node parent,
         Camera camera,
         CollisionObject player,
         Terrain terrain,
-        System.Random? rng = null
+        Random? rng = null
     )
     {
         _rng = rng ?? new();
@@ -49,7 +53,7 @@ public class PlayerDigger
         var rayTo = rayFrom + direction * DigRange;
 
         foreach (
-            var collisionObject in RayCaster.Cast(
+            var rayHit in RayCaster.Cast(
                 _camera.GetWorld(),
                 rayFrom,
                 rayTo,
@@ -57,10 +61,42 @@ public class PlayerDigger
             )
         )
         {
-            if (collisionObject.Collider.IsInGroup(NodeGroups.DIGGABLE))
+            if (rayHit.Collider.IsInGroup(NodeGroups.TERRAIN))
             {
-                Dig(collisionObject.Position, delta);
+                Dig(rayHit.Position, delta);
             }
+            else if (rayHit.Collider.IsInGroup(NodeGroups.DIGGABLE))
+            {
+                DigDiggable(rayHit, delta);
+            }
+            else if (rayHit.Collider.IsInGroup(NodeGroups.PIPE))
+            {
+                throw new NotImplementedException();
+            }
+        }
+    }
+
+    private void DigDiggable(RayHit rayHit, float delta)
+    {
+        try
+        {
+            var entity = _terrain.GlobalMeshInstanceEntityMap[
+                (MeshInstance)rayHit.Collider.GetParent()
+            ];
+            var entitySupportingTiles = _terrain.GlobalEntitySupportingTilesIndex[entity];
+            // TODO : 5 -> Config + Upgrade
+            var count = Mathf.Min(1, entitySupportingTiles.Count);
+            for (var i = 0; i < count; i++)
+            {
+                Dig(
+                    entitySupportingTiles[_rng.Next(entitySupportingTiles.Count())].ToGdVector3(),
+                    delta
+                );
+            }
+        }
+        catch (Exception e)
+        {
+            GD.PrintErr(e);
         }
     }
 
@@ -95,7 +131,7 @@ public class PlayerDigger
                 for (int x = -radius; x <= radius; x++)
                 {
                     var offsetDistanceSquared = x * x + y * y + z * z;
-                    if (offsetDistanceSquared > radiusSquared || _rng.NextDouble() > DamageChange)
+                    if (offsetDistanceSquared > radiusSquared || _rng.NextDouble() > DamageChance)
                     {
                         continue;
                     }

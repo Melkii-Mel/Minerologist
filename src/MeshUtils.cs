@@ -2,9 +2,60 @@ using System;
 using System.Collections.Generic;
 using Godot;
 
+public record Surface(Triangle[] Triangles, Vector3[] Vertices);
+
+public record struct Triangle(Vector3 A, Vector3 B, Vector3 C);
+
 public static class MeshUtils
 {
-    public static Bounds FindAabb(Mesh mesh, Transform transform)
+    public static Surface[] GetMeshData(MeshInstance meshInstance)
+    {
+        var mesh = meshInstance.Mesh;
+        var transform = meshInstance.Transform;
+        var surfaces = new Surface[mesh.GetSurfaceCount()];
+        for (int surface = 0; surface < surfaces.Length; surface++)
+        {
+            Godot.Collections.Array arrays = mesh.SurfaceGetArrays(surface);
+
+            var vertices = (Vector3[])arrays[(int)Mesh.ArrayType.Vertex];
+            var indices = (int[])arrays[(int)Mesh.ArrayType.Index];
+
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] = transform.Xform(vertices[i]);
+            }
+
+            Triangle[] triangles;
+
+            if (indices.Length == 0)
+            {
+                triangles = new Triangle[vertices.Length / 3];
+
+                for (int i = 0; i < vertices.Length; i += 3)
+                {
+                    triangles[i / 3] = new(vertices[i], vertices[i + 1], vertices[i + 2]);
+                }
+            }
+            else
+            {
+                triangles = new Triangle[indices.Length / 3];
+
+                for (int i = 0; i < indices.Length; i += 3)
+                {
+                    triangles[i / 3] = new(
+                        vertices[indices[i]],
+                        vertices[indices[i + 1]],
+                        vertices[indices[i + 2]]
+                    );
+                }
+            }
+
+            surfaces[surface] = new(triangles, vertices);
+        }
+        return surfaces;
+    }
+
+    public static Bounds FindAabb(Surface[] meshData)
     {
         Vector3 min = new(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
 
@@ -12,29 +63,27 @@ public static class MeshUtils
 
         bool foundVertex = false;
 
-        for (int surface = 0; surface < mesh.GetSurfaceCount(); surface++)
+        foreach (var surface in meshData)
         {
-            var arrays = mesh.SurfaceGetArrays(surface);
-            var vertices = (Vector3[])arrays[(int)Mesh.ArrayType.Vertex];
-
-            foreach (Vector3 vertex in vertices)
+            var vertices = surface.Vertices;
+            foreach (Vector3 v in vertices)
             {
-                Vector3 p = transform.Xform(vertex);
+                min.x = Math.Min(min.x, v.x);
+                min.y = Math.Min(min.y, v.y);
+                min.z = Math.Min(min.z, v.z);
 
-                min.x = Math.Min(min.x, p.x);
-                min.y = Math.Min(min.y, p.y);
-                min.z = Math.Min(min.z, p.z);
-
-                max.x = Math.Max(max.x, p.x);
-                max.y = Math.Max(max.y, p.y);
-                max.z = Math.Max(max.z, p.z);
+                max.x = Math.Max(max.x, v.x);
+                max.y = Math.Max(max.y, v.y);
+                max.z = Math.Max(max.z, v.z);
 
                 foundVertex = true;
             }
         }
 
         if (!foundVertex)
+        {
             return new Bounds(Vector3I.Zero, Vector3I.Zero);
+        }
 
         var position = new Vector3I(
             (int)Math.Floor(min.x),
@@ -64,14 +113,11 @@ public static class MeshUtils
         }
     }
 
-    public static bool TestTriangleAabb(
-        (Vector3, Vector3, Vector3) globalTriangle,
-        Bounds globalAabb
-    )
+    public static bool TestTriangleAabb(Triangle globalTriangle, Bounds globalAabb)
     {
-        Vector3 a = globalTriangle.Item1;
-        Vector3 b = globalTriangle.Item2;
-        Vector3 c = globalTriangle.Item3;
+        Vector3 a = globalTriangle.A;
+        Vector3 b = globalTriangle.B;
+        Vector3 c = globalTriangle.C;
 
         Vector3 boxMin = globalAabb.Position.ToGdVector3();
         Vector3 boxMax = (globalAabb.Position + globalAabb.Size).ToGdVector3();
@@ -138,42 +184,5 @@ public static class MeshUtils
             + halfSize.z * Math.Abs(axis.z);
 
         return min > radius || max < -radius;
-    }
-
-    public static IEnumerable<(Vector3, Vector3, Vector3)> GetTriangles(
-        Mesh mesh,
-        Transform globalTransform
-    )
-    {
-        for (int surface = 0; surface < mesh.GetSurfaceCount(); surface++)
-        {
-            Godot.Collections.Array arrays = mesh.SurfaceGetArrays(surface);
-
-            var vertices = (Vector3[])arrays[(int)Mesh.ArrayType.Vertex];
-            var indices = (int[])arrays[(int)Mesh.ArrayType.Index];
-
-            if (indices.Length == 0)
-            {
-                for (int i = 0; i < vertices.Length; i += 3)
-                {
-                    Vector3 a = globalTransform.Xform(vertices[i]);
-                    Vector3 b = globalTransform.Xform(vertices[i + 1]);
-                    Vector3 c = globalTransform.Xform(vertices[i + 2]);
-
-                    yield return (a, b, c);
-                }
-            }
-            else
-            {
-                for (int i = 0; i < indices.Length; i += 3)
-                {
-                    Vector3 a = globalTransform.Xform(vertices[indices[i]]);
-                    Vector3 b = globalTransform.Xform(vertices[indices[i + 1]]);
-                    Vector3 c = globalTransform.Xform(vertices[indices[i + 2]]);
-
-                    yield return (a, b, c);
-                }
-            }
-        }
     }
 }

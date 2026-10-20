@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Godot;
 
@@ -14,7 +15,13 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
 
     private readonly OpenSimplexNoise _noise;
 
-    private readonly Dictionary<Vector3I, Chunk> Chunks = [];
+    private readonly ConcurrentDictionary<Vector3I, Chunk> _chunks = [];
+
+    // TODO : Cleanup when entity is removed
+    public readonly Dictionary<Vector3I, List<Entity>> GlobalTileSupportedEntitiesIndex = [];
+    public readonly Dictionary<Entity, List<Vector3I>> GlobalEntitySupportingTilesIndex = [];
+    public readonly Dictionary<MeshInstance, Entity> GlobalMeshInstanceEntityMap = [];
+
     private readonly object _lock = new();
 
     private readonly WorldChunkCoordinatesConverter _worldChunkCoordinatesConverter;
@@ -27,6 +34,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
     public int ChunkSizeFlat => ChunkSize.Product();
 
     public event Action<Vector3I>? ChunkChanged;
+    public event Action<Entity>? EntityRemoved;
 
     public Terrain(Node parent, int? seed = null)
     {
@@ -41,11 +49,11 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
             Octaves = noiseConfig.Octaves,
             Period = noiseConfig.Period,
             Persistence = noiseConfig.Persistence,
+            Lacunarity = noiseConfig.Lacunarity,
         };
 
         _terrainMeshContainer = new(MaterialProvider.CreateTerrainMaterial());
         _entityNodesContainer = new();
-        GD.Print(_terrainMeshContainer.Name);
         parent.AddChild(_terrainMeshContainer);
         parent.AddChild(_entityNodesContainer);
     }
@@ -83,6 +91,11 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
             return false;
         }
 
+        var currentHealth = chunk.VoxelGrid.Sample(localPos);
+
+        // TODO : var minHealth = Config.Instance.GenerationConfig.MinCellHealth;
+        var minHealth = -100;
+
         if (onlyIfContactsAir)
         {
             for (var x = -1; x < 2; x++)
@@ -113,24 +126,23 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         }
         BREAK:
 
-        var currentHealth = chunk.VoxelGrid.Sample(localPos);
-
-        // TODO : var minHealth = Config.Instance.GenerationConfig.MinCellHealth;
-        var minHealth = -100;
-
-        if (currentHealth <= minHealth)
-        {
-            return false;
-        }
-
         var newHealth = currentHealth + delta;
+
         // TODO : if (newHealth < Config.Instance.GenerationConfig.CellHealthThreshold) {
-        if (newHealth < 10)
+        var healthDepleted = newHealth < 10;
+
+        if (healthDepleted)
         {
-            newHealth = Mathf.Min(minHealth, Mathf.Min(newHealth, 0));
+            newHealth = Mathf.Clamp(
+                newHealth,
+                minHealth - 1,
+                Config.Instance.MarchingCubesOptions.IsoLevel
+            );
         }
+
         chunk.VoxelGrid.Set(localPos, newHealth);
         InvokeOrCollectChunkChange(chunk.VoxelGrid.ChunkPosition, notify);
+
         foreach (var neighbor in chunk.VoxelGrid.ExistingNeighbors())
         {
             if (
@@ -139,6 +151,31 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
             )
             {
                 InvokeOrCollectChunkChange(neighbor.ChunkPosition, notify);
+            }
+        }
+
+        if (
+            healthDepleted
+            && GlobalTileSupportedEntitiesIndex.TryGetValue(worldPosition, out var entities)
+        )
+        {
+            for (int i = entities.Count - 1; i >= 0; i--)
+            {
+                var e = entities[i];
+                if (e.Chunk.UpdateEntity(e))
+                {
+                    EntityRemoved?.Invoke(e);
+                    foreach (var tile in GlobalEntitySupportingTilesIndex[e])
+                    {
+                        var list = GlobalTileSupportedEntitiesIndex[tile];
+                        list.Remove(e);
+                        if (list.Count == 0)
+                        {
+                            GlobalTileSupportedEntitiesIndex.Remove(tile);
+                        }
+                    }
+                    GlobalEntitySupportingTilesIndex.Remove(e);
+                }
             }
         }
 
@@ -181,7 +218,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         {
             return _cache;
         }
-        if (Chunks.TryGetValue(chunkPosition, out var chunk))
+        if (_chunks.TryGetValue(chunkPosition, out var chunk))
         {
             _cache = chunk;
             return chunk;
@@ -191,15 +228,19 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
 
     public void Generate(Vector3I chunkPosition)
     {
-        GD.Print("Thread: ", System.Environment.CurrentManagedThreadId);
-        var voxelGrid = GenerateVoxelGrid(chunkPosition);
+        if (!_chunks.TryGetValue(chunkPosition, out _))
+        {
+            new Chunk(GetOrGenerateVoxelGrid(chunkPosition), null);
+        }
+
+        var chunk = _chunks[chunkPosition];
+
         var entitiesChunk = GenerateEntitiesChunk(
             chunkPosition,
-            empty: chunkPosition.Y > SurfaceChunkYLevel,
-            voxelGrid
+            empty: chunkPosition.Y >= SurfaceChunkYLevel
         );
-        var chunk = new Chunk(voxelGrid, entitiesChunk);
-        Chunks[chunkPosition] = chunk;
+
+        chunk.Entities = entitiesChunk;
     }
 
     public Vector3I ChunkToWorld(Vector3I chunkPosition)
@@ -207,12 +248,12 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         return _worldChunkCoordinatesConverter.ChunkToWorld(chunkPosition);
     }
 
-    public EntitiesChunk GenerateEntitiesChunk(Vector3I chunkPos, bool empty, VoxelGrid voxelGrid)
+    public EntitiesChunk GenerateEntitiesChunk(Vector3I chunkPos, bool empty)
     {
         var globalPos = ChunkToWorld(chunkPos);
         var entities = empty
             ? []
-            : Chunk.MapEachCellInChunk(localPos =>
+            : Chunk.ForEachCellInChunk(localPos =>
             {
                 var globalCellPos = globalPos + localPos;
                 var sample = _noise.GetNoise3dv(globalCellPos.ToGdVector3()) / 2 + 0.5;
@@ -222,18 +263,39 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
                 }
                 return null;
             });
-        var result = new EntitiesChunk(chunkPos, entities, voxelGrid);
+        var result = new EntitiesChunk(chunkPos, entities, this);
+        foreach (var kvp in result.EntitySupportingTiles)
+        {
+            GlobalEntitySupportingTilesIndex.Add(kvp.Key, kvp.Value);
+            kvp.Key.Chunk = result;
+            GlobalMeshInstanceEntityMap.Add(kvp.Key.MeshInstance, kvp.Key);
+        }
+        foreach (var kvp in result.SupportingTileEntities)
+        {
+            if (GlobalTileSupportedEntitiesIndex.TryGetValue(kvp.Key, out var e))
+            {
+                e.AddRange(kvp.Value);
+            }
+            else
+            {
+                GlobalTileSupportedEntitiesIndex.Add(kvp.Key, [.. kvp.Value]);
+            }
+        }
         return result;
     }
 
     public void Load(Vector3I chunkPosition)
     {
-        var chunk = Chunks[chunkPosition];
+        var chunk = _chunks[chunkPosition];
         _terrainMeshContainer.Commit(
             chunkPosition,
             CreatePreparedMeshBuilderForVoxelGrid(chunk.VoxelGrid)
         );
-        _entityNodesContainer.Load(chunkPosition, chunk.Entities);
+        if (chunk.Entities == null)
+        {
+            Generate(chunkPosition);
+        }
+        _entityNodesContainer.Load(chunkPosition, chunk.Entities!);
     }
 
     public void Unload(Vector3I chunkPosition)
@@ -244,7 +306,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
 
     public bool IsGenerated(Vector3I chunkPosition)
     {
-        return Chunks.ContainsKey(chunkPosition);
+        return _chunks.ContainsKey(chunkPosition);
     }
 
     public Vector3I WorldToChunk(Vector3I worldPosition)
@@ -254,7 +316,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
 
     public VoxelGrid PrepareUpdate(Vector3I chunkPosition)
     {
-        var chunk = Chunks[chunkPosition];
+        var chunk = _chunks[chunkPosition];
         return chunk.VoxelGrid.CreateSnapshot();
     }
 
@@ -273,9 +335,13 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         _terrainMeshContainer.Commit(chunkPosition, meshBuilder);
     }
 
-    private VoxelGrid GenerateVoxelGrid(Vector3I chunkPosition)
+    private VoxelGrid GetOrGenerateVoxelGrid(Vector3I chunkPosition)
     {
-        return new VoxelGrid(
+        if (_chunks.TryGetValue(chunkPosition, out var chunk))
+        {
+            return chunk.VoxelGrid;
+        }
+        var grid = new VoxelGrid(
             chunkPosition,
             this,
             ChunkOfValues(
@@ -289,6 +355,8 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
                 ChunkSizeFlat
             )
         );
+        _chunks[chunkPosition] = new Chunk(grid, null);
+        return grid;
     }
 
     private float[] ChunkOfValues(float value, int size)
@@ -315,28 +383,15 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         var sizeRange = sizeConfig.Sizes[prefab.Type];
         var rotation = RandomUtils.Rotation(_rng);
         var scale = RandomUtils.FromRange(sizeRange.Min, sizeRange.Max, _rng);
-        var meshInstance = new MeshInstance
-        {
-            Position = globalPos.ToGdVector3(),
-            Rotation = rotation,
-            Mesh = prefab.MeshInstance.Mesh,
-            Scale = new(scale, scale, scale),
-        };
-        var staticBody = new StaticBody();
-        staticBody.AddChild(
-            new CollisionShape() { Shape = meshInstance.Mesh.CreateTrimeshShape() }
-        );
-        meshInstance.AddChild(staticBody);
 
-        return new Entity(prefab, meshInstance, globalPos, rotation, scale);
+        return new Entity(prefab, globalPos, rotation, scale);
     }
 
     public VoxelGrid CreateVoxelGrid(Vector3I chunkPosition)
     {
         lock (_lock)
         {
-            Generate(chunkPosition);
-            return Chunks[chunkPosition].VoxelGrid;
+            return GetOrGenerateVoxelGrid(chunkPosition);
         }
     }
 
@@ -344,7 +399,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
     {
         lock (_lock)
         {
-            if (Chunks.TryGetValue(chunkPosition, out var chunk))
+            if (_chunks.TryGetValue(chunkPosition, out var chunk))
             {
                 return chunk.VoxelGrid;
             }
@@ -361,12 +416,14 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
     }
 }
 
-public record Chunk(VoxelGrid VoxelGrid, EntitiesChunk Entities)
+public class Chunk(VoxelGrid voxelGrid, EntitiesChunk? entities)
 {
-    public static Vector3I Size { get; } = Config.Instance.GenerationConfig.ChunkSize;
-    public static int SizeFlat { get; } = Size.Product();
+    public EntitiesChunk? Entities { get; set; } = entities;
+    public VoxelGrid VoxelGrid { get; } = voxelGrid;
+    public static Vector3I Size => Config.Instance.GenerationConfig.ChunkSize;
+    public static int SizeFlat => Size.Product();
 
-    public static IEnumerable<T> MapEachCellInChunk<T>(Func<Vector3I, T?> map)
+    public static IEnumerable<T> ForEachCellInChunk<T>(Func<Vector3I, T?> map)
     {
         for (var x = 0; x < Size.X; x++)
         {

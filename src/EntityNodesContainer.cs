@@ -22,9 +22,11 @@ public class EntityNodesContainer : GodotNodeContainer
             var chunkParent = new Spatial();
             foreach (var entity in entities.Entities.Values)
             {
-                var meshInstance = entity.GloballyPositionedTransformedInstanceWithCollisionShape;
-                GD.Print(meshInstance != null);
-                chunkParent.AddChild(meshInstance);
+                var meshInstance = entity.MeshInstance;
+                if (entity.MeshInstance.GetParent() == null)
+                {
+                    chunkParent.AddChild(meshInstance);
+                }
             }
             _chunkEntitiesCache[chunkPosition] = chunkParent;
             if (!_queueRemove.Remove(chunkPosition))

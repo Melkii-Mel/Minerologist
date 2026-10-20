@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -7,71 +6,75 @@ public class EntitiesChunk
 {
     public Vector3I ChunkPosition { get; }
     public Vector3I GlobalPosition => ChunkPosition * Config.Instance.GenerationConfig.ChunkSize;
+    public readonly HashSet<Vector3I> ChunksToObserve = [];
+    public readonly Dictionary<MeshInstance, Entity> MeshInstanceEntities = [];
     public readonly Dictionary<Vector3I, Entity> Entities;
-    public readonly Dictionary<Entity, HashSet<Vector3I>> EntitySupportingTiles;
-    public readonly Dictionary<Vector3I, HashSet<Entity>> SupportingTileEntities;
+    public readonly Dictionary<Entity, List<Vector3I>> EntitySupportingTiles;
+    public readonly Dictionary<Vector3I, List<Entity>> SupportingTileEntities;
 
-    private readonly VoxelGrid _voxelGrid;
+    private readonly Terrain _terrain;
+    private readonly WorldChunkCoordinatesConverter _coordinatesConverter = new();
 
-    public EntitiesChunk(Vector3I chunkPosition, IEnumerable<Entity> entities, VoxelGrid voxelGrid)
+    public EntitiesChunk(Vector3I chunkPosition, IEnumerable<Entity> entities, Terrain terrain)
     {
-        _voxelGrid = voxelGrid;
+        _terrain = terrain;
         ChunkPosition = chunkPosition;
         Entities = entities.ToDictionary(v => v.LocalPosition, v => v);
+        MeshInstanceEntities = entities.ToDictionary(v => v.MeshInstance, v => v);
         EntitySupportingTiles = Entities.Values.ToDictionary(
             v => v,
-            v => CalculateSupportingTiles(v).ToHashSet()
+            v => CalculateSupportingTiles(v).ToList()
         );
         SupportingTileEntities = MapSupportingTilesToEntities();
     }
 
     public IEnumerable<Vector3I> CalculateSupportingTiles(Entity entity)
     {
-        var mesh = entity.Prefab.MeshInstance.Mesh;
-        var transform = new Transform(
-            new Basis(entity.Rotation).Scaled(new(entity.Scale, entity.Scale, entity.Scale)),
-            entity.GlobalPosition.ToGdVector3()
-        );
-        var meshAabb = MeshUtils.FindAabb(mesh, transform);
+        var meshAabb = MeshUtils.FindAabb(entity.MeshData);
         var candidateVoxelPositions = MeshUtils.GetCandidatePoints(meshAabb);
         foreach (var candidateVoxelPosition in candidateVoxelPositions)
         {
             var voxelBounds = new Bounds(candidateVoxelPosition, Vector3I.One);
-            foreach (var triangle in MeshUtils.GetTriangles(mesh, transform))
+            if (
+                entity
+                    .MeshData.SelectMany(d => d.Triangles)
+                    .Any(t => MeshUtils.TestTriangleAabb(t, voxelBounds))
+            )
             {
-                if (MeshUtils.TestTriangleAabb(triangle, voxelBounds))
-                {
-                    yield return candidateVoxelPosition;
-                }
+                yield return candidateVoxelPosition;
+                ChunksToObserve.Add(_coordinatesConverter.WorldToChunk(candidateVoxelPosition));
             }
         }
     }
 
-    public void CheckTileUpdate(Vector3I globalPosition)
+    public void OnTileUpdate(Vector3I globalPosition)
     {
-        foreach (var entity in SupportingTileEntities[globalPosition])
+        if (!SupportingTileEntities.ContainsKey(globalPosition))
         {
-            if (!IsEntityUnsupported(entity))
-            {
-                continue;
-            }
-            RemoveEntity(entity);
-            entity.GetGloballyPositionedTransformedInstanceWithCollisionShape().QueueFree();
-            AddToInventory(entity);
+            return;
+        }
+        foreach (var entity in SupportingTileEntities[globalPosition].ToArray())
+        {
+            UpdateEntity(entity);
         }
     }
 
-    private void AddToInventory(Entity entity)
+    public bool UpdateEntity(Entity entity)
     {
-        throw new NotImplementedException();
+        if (IsEntitySupported(entity))
+        {
+            return false;
+        }
+        RemoveEntity(entity);
+        entity.MeshInstance.QueueFree();
+        return true;
     }
 
-    public bool IsEntityUnsupported(Entity entity)
+    public bool IsEntitySupported(Entity entity)
     {
         return EntitySupportingTiles[entity]
-            .All(tile =>
-                _voxelGrid.Sample(tile - GlobalPosition)
-                < Config.Instance.MarchingCubesOptions.IsoLevel
+            .Any(tile =>
+                _terrain.TryGetCellValue(tile) > Config.Instance.MarchingCubesOptions.IsoLevel
             );
     }
 
@@ -90,17 +93,23 @@ public class EntitiesChunk
         Entities.Remove(entity.LocalPosition);
     }
 
-    private Dictionary<Vector3I, HashSet<Entity>> MapSupportingTilesToEntities()
+    private Dictionary<Vector3I, List<Entity>> MapSupportingTilesToEntities()
     {
-        var result = new Dictionary<Vector3I, HashSet<Entity>>();
+        var result = new Dictionary<Vector3I, List<Entity>>();
         foreach (var kvp in EntitySupportingTiles)
         {
             var entity = kvp.Key;
             var tiles = kvp.Value;
             foreach (var tile in tiles)
             {
-                result[tile] ??= [];
-                result[tile].Add(entity);
+                if (!result.ContainsKey(tile))
+                {
+                    result[tile] = [];
+                }
+                if (!result[tile].Contains(entity))
+                {
+                    result[tile].Add(entity);
+                }
             }
         }
         return result;

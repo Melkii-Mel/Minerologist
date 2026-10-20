@@ -10,8 +10,11 @@ public class Session
     public readonly Player Player;
     public readonly Upgrades Upgrades;
     public float TimeScale { get; set; } = 1;
+    public InventoryUi InventoryUi { get; }
+
     public readonly TerrainStreamer<VoxelGrid, GodotMeshBuilder> TerrainStreamer;
     public readonly Terrain Terrain;
+    public readonly Border Border;
 
     public event Action<float>? Update;
     public event Action<float>? PhysicsUpdate;
@@ -31,10 +34,17 @@ public class Session
         RootUi = rootUi;
 
         Terrain = new Terrain(root3d);
+        Terrain.EntityRemoved += OnEntityRemove;
+        // TODO : Use configurable mesh path
+        Border = new Border(root3d, MeshCollection.OtherMeshes["границы.Cylinder"]);
 
         Player = new(this, Root3d, Vector3.Zero, Terrain);
 
-        Inventory = new(this);
+        Inventory = new();
+
+        Inventory.InventoryUpdated += OnInventoryUpdate;
+
+        InventoryUi = new();
 
         Upgrades = new(this);
 
@@ -54,10 +64,21 @@ public class Session
         {
             var duration = new DurationDebug();
             TerrainStreamer.Update(Player.VerticalOriginPosition);
+            Border.Update(Player.VerticalOriginPosition);
             //GD.Print(duration.TotalMilliseconds());
         };
 
         RestartSession();
+    }
+
+    private void OnEntityRemove(Entity entity)
+    {
+        Inventory.AddItem(entity);
+    }
+
+    private void OnInventoryUpdate(IInventoryAction action)
+    {
+        InventoryUi.Update(action);
     }
 
     private void OnUpdate(float delta)

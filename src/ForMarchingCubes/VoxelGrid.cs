@@ -63,10 +63,10 @@ public class VoxelGrid : IScalarField
             return _data[GetIndex(x, y, z)];
         }
 
-        // if (_isSnapshot)
-        // {
-        //     return _borderSnapshot[PositionToBorderIndex(x, y, z)];
-        // }
+        if (_isSnapshot)
+        {
+            return _borderSnapshot[PositionToBorderIndex(x, y, z)];
+        }
 
         var neighborX = 0;
         var neighborY = 0;
@@ -367,6 +367,8 @@ public class VoxelGrid : IScalarField
         }
     }
 
+    private bool _isSnapshot = false;
+
     public VoxelGrid CreateSnapshot()
     {
         return new(ChunkPosition, _container, (float[])_data.Clone())
@@ -379,6 +381,7 @@ public class VoxelGrid : IScalarField
             _borderSnapshotValueInitialized = _borderSnapshotValueInitialized,
             _neighbors = (VoxelGrid?[])_neighbors.Clone(),
             _valueInitialized = _valueInitialized,
+            _isSnapshot = true,
         };
     }
 

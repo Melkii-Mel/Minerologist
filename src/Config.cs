@@ -86,7 +86,8 @@ public sealed record NoiseConfig(
     int Octaves,
     float Period,
     float Persistence,
-    float SpawnThreshold
+    float SpawnThreshold,
+    float Lacunarity
 );
 
 public sealed record WorldConfig(float Gravity, float CellSize, string TerrainColor);

@@ -6,7 +6,7 @@ MaxVelocity = 25.0
 Deceleration = 400.0
 JumpVelocity = 35.0
 DigRange = 30.0
-DigRadius = 4.0
+DigRadius = 2.0
 
 [PlayerStatsConfig.FallingObjectConfig]
 GravityScale = 1.0
@@ -25,18 +25,19 @@ SwingFrequency = 1.0
 
 # World generation
 [GenerationConfig]
-HoleRadiusChunks = 1
-XRay = true
-ChunkSize = { X = 4, Y = 4, Z = 4 }
+HoleRadiusChunks = 6
+XRay = false
+ChunkSize = { X = 8, Y = 8, Z = 8 }
 CellHealth = 100.0
 CellHealthScaling = 0.3
-VerticalGenerationDistanceChunks = 10
+VerticalGenerationDistanceChunks = 3
 
 [GenerationConfig.NoiseConfig]
-Octaves = 4
-Period = 1.0
-Persistence = 0.5
-SpawnThreshold = 0.8325
+Octaves = 2
+Period = 0.5
+Persistence = 0.8
+Lacunarity = 10
+SpawnThreshold = 0.8
 
 # Controls
 [ControlsConfig]
@@ -53,7 +54,7 @@ BufferTime = 250
 [WorldConfig]
 Gravity = 98.0
 CellSize = 1.0
-TerrainColor = "#808080"
+TerrainColor = "#75553A"
 
 # Remnants
 [RemnantsConfig]
@@ -67,8 +68,8 @@ SkeletonPieceProbabilityWeight = 10
 
 # Remnant sizes
 [RemnantsSizeConfig.Sizes.Skeleton]
-Min = 0.8
-Max = 1.2
+Min = 10
+Max = 12
 
 [RemnantsSizeConfig.Sizes.Others]
 Min = 0.5

@@ -27,7 +27,7 @@ public class TerrainMeshContainer(Material material) : GodotNodeContainer
             Translation = _worldChunkCoordinatesConverter.ChunkToWorld(chunkPosition).ToGdVector3(),
         };
         var body = new StaticBody();
-        body.AddToGroup(NodeGroups.DIGGABLE);
+        body.AddToGroup(NodeGroups.TERRAIN);
         var collisionShape = new CollisionShape();
         body.AddChild(collisionShape);
         chunk.AddChild(body);

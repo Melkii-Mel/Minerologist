@@ -40,9 +40,13 @@ public record EntityPrefab(string Type, MeshInstance MeshInstance)
     }
 }
 
-public record Entity(EntityPrefab Prefab, Vector3I GlobalPosition, Vector3 Rotation, float Scale)
+public class Entity
 {
-    private MeshInstance? _globallyPositionedTransformedInstanceWithCollisionShape;
+    public MeshInstance MeshInstance { get; }
+    public Surface[] MeshData { get; }
+    public Vector3I GlobalPosition { get; }
+    public EntityPrefab Prefab { get; }
+    public EntitiesChunk Chunk { get; set; } = null!;
 
     public Vector3I LocalPosition =>
         GlobalPosition
@@ -51,24 +55,23 @@ public record Entity(EntityPrefab Prefab, Vector3I GlobalPosition, Vector3 Rotat
     private readonly WorldChunkCoordinatesConverter _coordinatesConverter = new();
 
     // Must be called on Godot's main thread
-    public MeshInstance GetGloballyPositionedTransformedInstanceWithCollisionShape()
+    public Entity(EntityPrefab prefab, Vector3I globalPosition, Vector3 rotation, float scale)
     {
-        if (_globallyPositionedTransformedInstanceWithCollisionShape == null)
+        Prefab = prefab;
+        GlobalPosition = globalPosition;
+        MeshInstance = new MeshInstance
         {
-            var meshInstance = new MeshInstance
-            {
-                Position = GlobalPosition.ToGdVector3(),
-                Rotation = Rotation,
-                Mesh = Prefab.MeshInstance.Mesh,
-                Scale = new(Scale, Scale, Scale),
-            };
-            var staticBody = new StaticBody();
-            staticBody.AddChild(
-                new CollisionShape() { Shape = meshInstance.Mesh.CreateTrimeshShape() }
-            );
-            meshInstance.AddChild(staticBody);
-            _globallyPositionedTransformedInstanceWithCollisionShape = meshInstance;
-        }
-        return _globallyPositionedTransformedInstanceWithCollisionShape;
+            Position = globalPosition.ToGdVector3(),
+            Rotation = rotation,
+            Mesh = prefab.MeshInstance.Mesh,
+            Scale = new(scale, scale, scale),
+        };
+        var staticBody = new StaticBody();
+        staticBody.AddChild(
+            new CollisionShape() { Shape = MeshInstance.Mesh.CreateTrimeshShape() }
+        );
+        staticBody.AddToGroup(NodeGroups.DIGGABLE);
+        MeshInstance.AddChild(staticBody);
+        MeshData = MeshUtils.GetMeshData(MeshInstance);
     }
 }
