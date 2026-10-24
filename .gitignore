@@ -4,6 +4,8 @@ Builds/
 *.import
 /Assets/Models/*.material
 /Assets/Models/**/*.material
+*.merged.toml
+*.template.toml
 
 # Created by https://www.toptal.com/developers/gitignore/api/jetbrains,vim,windows,godot,csharp
 # Edit at https://www.toptal.com/developers/gitignore?templates=jetbrains,vim,windows,godot,csharp
