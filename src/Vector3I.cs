@@ -3,6 +3,9 @@ using Godot;
 
 public record struct Vector3I(int X, int Y, int Z)
 {
+    public Vector3I(int x)
+        : this(x, x, x) { }
+
     public Vector3I(Vector3 gdVector3)
         : this((int)gdVector3.x, (int)gdVector3.y, (int)gdVector3.z) { }
 
