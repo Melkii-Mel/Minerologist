@@ -160,7 +160,9 @@ public sealed record PlayerStatsConfig
 
 public sealed record PlayerVisualsConfig
 {
-    public string ToolModel { get; init; } = "Tools/Default";
+    public string ToolModel { get; init; } = "Tools.Default.Plane";
+    public Vector3I ToolRotationDegrees { get; init; } = new(180, 0, 0);
+    public float ToolScale { get; init; } = 0.8f;
     public Vector3I ToolOffset { get; init; } = Vector3I.Zero;
     public float SwingAmplitudeX { get; init; } = 0.0f;
     public float SwingAmplitudeY { get; init; } = 0.0f;
