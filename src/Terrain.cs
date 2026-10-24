@@ -400,17 +400,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
     private Entity CreateRandomEntity(Vector3I globalPos)
     {
         var prefab = EntityPrefab.Random(_rng);
-
-        var entityConfiguration = RandomUtils.ChooseRandomItem(
-            EntityVariantsContainer.EntityConfigurations,
-            _rng
-        );
-
-        var bakedEntityData = EntityVariantsContainer.BakedEntityData[
-            (prefab, entityConfiguration)
-        ];
-
-        return new Entity(globalPos, bakedEntityData, prefab);
+        return Entity.RandomFromPrefab(globalPos, prefab);
     }
 
     public VoxelGrid? TryGetVoxelGrid(Vector3I chunkPosition)

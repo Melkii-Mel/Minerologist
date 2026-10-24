@@ -1,9 +1,9 @@
 using System;
+using Godot;
 
 public class ItemsDepositor
 {
     private readonly Inventory _inventory;
-    private readonly Session _session;
 
     private bool _depositEnabled = false;
 
@@ -16,21 +16,20 @@ public class ItemsDepositor
 
     public Upgrades Upgrades { get; }
 
-    public ItemsDepositor(
-        Action<Action<float>> bindUpdate,
-        Inventory inventory,
-        Upgrades upgrades,
-        Session session
-    )
+    public event Action<EntityPrefab>? Deposited;
+
+    public MeshInstance? CurrentPipe { get; private set; }
+
+    public ItemsDepositor(Action<Action<float>> bindUpdate, Inventory inventory, Upgrades upgrades)
     {
         _inventory = inventory;
-        Upgrades = upgrades;
-        _session = session;
         bindUpdate(Update);
+        Upgrades = upgrades;
     }
 
-    public void DepositEnable()
+    public void DepositEnable(MeshInstance pipe)
     {
+        CurrentPipe = pipe;
         if (_depositEnabled)
         {
             return;
@@ -71,12 +70,6 @@ public class ItemsDepositor
         var entityPrefab = itemStack.Value.Item;
         Upgrades.Upgrade(entityPrefab);
         Server.SendItem(entityPrefab);
-        var mesh = Animations.AddAnimation(
-            new AnimationEntityFlyWithArc(),
-            onFinish: () =>
-            {
-                mesh.QueueFree();
-            }
-        );
+        Deposited?.Invoke(entityPrefab);
     }
 }

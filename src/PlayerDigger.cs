@@ -14,7 +14,7 @@ public class PlayerDigger
     public float DigDamage => (float)ExpConfig.F.DigDamage.Calculate(Level);
     public float DigConeRadius => (float)ExpConfig.F.DigConeRadius.Calculate(Level);
 
-    public event Action? DepositItemsStart;
+    public event Action<MeshInstance>? DepositItemsStart;
     public event Action? DepositItemsStop;
 
     public DiggerConfig DiggerConfig => Config.DiggerConfig;
@@ -96,7 +96,7 @@ public class PlayerDigger
             }
             else if (rayHit.Collider.IsInGroup(NodeGroups.PIPE))
             {
-                DepositItemsStart?.Invoke();
+                DepositItemsStart?.Invoke((MeshInstance)rayHit.Collider.GetParent());
                 pipeHit = true;
             }
             else if (rayHit.Collider.IsInGroup(NodeGroups.BORDER))

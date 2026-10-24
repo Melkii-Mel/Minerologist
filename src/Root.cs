@@ -17,6 +17,9 @@ public class Root : Node
         Console.WriteLine("Baking entity variants");
         EntityVariantsContainer.Init();
 
+        AudioCollection.Init();
+        SoundPlayer.Init(this);
+
         GD.Print("Setting up session dispatcher...");
         var joypadSessionDispatcher = new JoypadSessionDispatcher<SessionContainer>(
             this,

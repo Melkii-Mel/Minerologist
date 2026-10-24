@@ -28,10 +28,10 @@ public static class RandomUtils
         return itemWeights[itemIndex].Item;
     }
 
-    public static T ChooseRandomItem<T>(IReadOnlyList<T> remainingPieces, Random rng)
+    public static T ChooseRandomItem<T>(IReadOnlyList<T> items, Random rng)
     {
-        var roll = rng.Next(remainingPieces.Count);
-        return remainingPieces[roll];
+        var roll = rng.Next(items.Count);
+        return items[roll];
     }
 
     public static Vector3 Rotation(Random rng)

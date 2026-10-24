@@ -3,18 +3,11 @@ using Godot;
 /// <summary>
 /// Animates `from` towards `to`'s current global position.
 /// </summary>
-public class AnimationEntityFlyTowards : AnimationInstance
+public class AnimationEntityFlyTowards(Spatial from, Spatial to) : AnimationInstance
 {
-    private readonly Vector3 _initialPosition;
-    private readonly Spatial from;
-    private readonly Spatial to;
-
-    public AnimationEntityFlyTowards(Spatial from, Spatial to)
-    {
-        this.from = from;
-        this.to = to;
-        _initialPosition = from.GlobalPosition;
-    }
+    private readonly Vector3 _initialPosition = from.GlobalPosition;
+    private readonly Spatial from = from;
+    private readonly Spatial to = to;
 
     protected override void ApplyInternal(float completion)
     {

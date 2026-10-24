@@ -34,7 +34,7 @@ public class Player
     private PlayerStatsConfig PlayerStatsConfig => Config.Instance.PlayerStatsConfig;
     private ControlsConfig ControlsConfig => Config.Instance.ControlsConfig;
 
-    public event Action? DepositItemsStart;
+    public event Action<MeshInstance>? DepositItemsStart;
     public event Action? DepositItemsStop;
 
     public Vector3 DefaultPlayerPosition { get; private set; } = new(0, 10, 0);
@@ -53,7 +53,7 @@ public class Player
         _horizontalOrigin = origin;
 
         _digger = new PlayerDigger(PlayerNode, _playerCameraNode, PlayerNode, terrain, Session);
-        _digger.DepositItemsStart += () => DepositItemsStart?.Invoke();
+        _digger.DepositItemsStart += pipe => DepositItemsStart?.Invoke(pipe);
         _digger.DepositItemsStop += () => DepositItemsStop?.Invoke();
     }
 

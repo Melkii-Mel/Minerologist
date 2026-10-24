@@ -118,14 +118,15 @@ public class FileSystemNode(string name, FileSystemDir? parent = null)
         Parent = parent;
     }
 
-    public string PathRelativeTo(FileSystemDir dir)
+    public string PathRelativeTo(FileSystemDir dir, bool withoutExtension = false)
     {
-        return PathOrDefaultRelativeTo(dir)!;
+        return PathOrDefaultRelativeTo(dir, withoutExtension)!;
     }
 
-    public string? PathOrDefaultRelativeTo(FileSystemDir dir)
+    public string? PathOrDefaultRelativeTo(FileSystemDir dir, bool withoutExtension)
     {
-        var result = Name;
+        var result =
+            withoutExtension && this is FileSystemFile file ? file.NameWithoutExtension : Name;
         FileSystemDir? parent = Parent;
         while (parent != dir)
         {

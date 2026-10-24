@@ -94,7 +94,7 @@ public class Entity
 
     private readonly WorldChunkCoordinatesConverter _coordinatesConverter = new();
 
-    private StaticBody _staticBody;
+    private readonly StaticBody _staticBody;
 
     // Must be called on Godot's main thread
     public Entity(Vector3I globalPosition, BakedEntityData entityData, EntityPrefab prefab)
@@ -127,5 +127,15 @@ public class Entity
     public void DestroyCollider()
     {
         _staticBody.QueueFree();
+    }
+
+    public static Entity RandomFromPrefab(
+        Vector3I globalPosition,
+        EntityPrefab prefab,
+        Random? rng = default
+    )
+    {
+        var bakedEntityData = EntityVariantsContainer.RandomForPrefab(prefab, rng);
+        return new(globalPosition, bakedEntityData, prefab);
     }
 }

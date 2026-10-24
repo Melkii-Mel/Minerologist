@@ -28,6 +28,13 @@ public static class EntityVariantsContainer
         MapConfigurationsToEntities();
     }
 
+    public static BakedEntityData RandomForPrefab(EntityPrefab entityPrefab, Random? rng = default)
+    {
+        rng ??= _rng;
+        var entityConfiguration = RandomUtils.ChooseRandomItem(EntityConfigurations, rng);
+        return BakedEntityData[(entityPrefab, entityConfiguration)];
+    }
+
     private static void MapConfigurationsToEntities()
     {
         foreach (var prefab in EntityPrefabs.All())

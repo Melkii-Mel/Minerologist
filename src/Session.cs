@@ -17,6 +17,7 @@ public class Session
     public readonly Border Border;
     public readonly Pipes Pipes;
     public readonly ItemsDepositor ItemsDepositor;
+    public readonly ItemsDepositorAnimator ItemsDepositorAnimator;
 
     public event Action<float>? Update;
     public event Action<float>? PhysicsUpdate;
@@ -55,6 +56,7 @@ public class Session
         Upgrades = new();
 
         ItemsDepositor = new(bindUpdate, Inventory, Upgrades);
+        ItemsDepositorAnimator = new(root3d, ItemsDepositor, Player.PlayerNode.Center);
 
         bindUpdate(OnUpdate);
         bindPhysicsUpdate(OnPhysicsUpdate);
@@ -78,11 +80,13 @@ public class Session
         };
 
         RestartSession();
+
+        AudioCollection.PlayRandomSound(Sounds.Spawn);
     }
 
-    private void OnDepositItemsStart()
+    private void OnDepositItemsStart(MeshInstance pipe)
     {
-        ItemsDepositor.DepositEnable();
+        ItemsDepositor.DepositEnable(pipe);
     }
 
     private void OnDepositItemsStop()
@@ -95,7 +99,7 @@ public class Session
         Root3d.AddChild(entity.MeshInstance);
         entity.DestroyCollider();
         Animations.AddAnimation(
-            new AnimationEntityFlyTowards(entity.MeshInstance, Player.PlayerNode),
+            new AnimationEntityFlyTowards(entity.MeshInstance, Player.PlayerNode.Center),
             onFinish: () =>
             {
                 entity.MeshInstance.QueueFree();
@@ -106,6 +110,7 @@ public class Session
             new AnimationRotateRandomly(entity.MeshInstance),
             easingFunction: new EFLinear()
         );
+        Animations.AddAnimation(new AnimationScale(entity.MeshInstance, 0.05f));
     }
 
     private void OnInventoryUpdate(IInventoryAction action)
