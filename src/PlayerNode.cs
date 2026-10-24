@@ -7,7 +7,7 @@ public class PlayerNode : KinematicBody
     public Spatial Center { get; private set; } = null!;
     public Spatial Collector { get; private set; } = null!;
 
-    private int? _freefalSoundIdx = null;
+    private int? _freefallSoundIdx = null;
 
     private const float STEP_DELAY = 0.5f;
     private const float STEP_SOUND_SPEED_THRESHOLD = 1;
@@ -41,10 +41,10 @@ public class PlayerNode : KinematicBody
             ).LengthSquared() / delta;
         if (IsOnFloor())
         {
-            if (_freefalSoundIdx.HasValue)
+            if (_freefallSoundIdx.HasValue)
             {
-                AudioCollection.StopPlayingSound(_freefalSoundIdx.Value);
-                _freefalSoundIdx = null;
+                AudioCollection.StopPlayingSound(_freefallSoundIdx.Value);
+                _freefallSoundIdx = null;
             }
             if (_verticalVelocity > FALL_SOUND_VERTICAL_VELOCITY_THRESHOLD)
             {
@@ -65,9 +65,9 @@ public class PlayerNode : KinematicBody
         {
             if (_verticalVelocity > FREEFALL_SOUND_VERTICAL_VELOCITY_THRESHOLD)
             {
-                if (!_freefalSoundIdx.HasValue)
+                if (!_freefallSoundIdx.HasValue)
                 {
-                    _freefalSoundIdx = AudioCollection.PlayRandomSound(Sounds.Freefall);
+                    _freefallSoundIdx = AudioCollection.PlayRandomSound(Sounds.Freefall);
                 }
             }
         }
