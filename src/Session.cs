@@ -102,6 +102,7 @@ public class Session
             {
                 entity.MeshInstance.QueueFree();
                 Inventory.AddItem(entity);
+                AudioCollection.PlayRandomSound(Sounds.Collect);
             }
         );
         Animations.AddAnimation(
