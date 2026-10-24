@@ -80,8 +80,6 @@ public class Session
         };
 
         RestartSession();
-
-        AudioCollection.PlayRandomSound(Sounds.Spawn);
     }
 
     private void OnDepositItemsStart(MeshInstance pipe)
