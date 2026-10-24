@@ -9,8 +9,14 @@ public class Root : Node
 
     public override void _Ready()
     {
-        Console.WriteLine("Initialized entities collection...");
+        Manifest.Root = "Assets";
+
+        Console.WriteLine("Initializing entities collection...");
         MeshCollection.Initialize();
+
+        Console.WriteLine("Baking entity variants");
+        EntityVariantsContainer.Init();
+
         GD.Print("Setting up session dispatcher...");
         var joypadSessionDispatcher = new JoypadSessionDispatcher<SessionContainer>(
             this,
@@ -21,7 +27,10 @@ public class Root : Node
             SessionResizer.ResizeAllSessions(sessions, this);
         joypadSessionDispatcher.AssignSessions();
         GD.Print("Initial sessions assigned");
+
         joypadSessionDispatcher.ListenForChanges();
+
+        Animations.Init(a => Update += a);
     }
 
     public override void _Process(float delta)

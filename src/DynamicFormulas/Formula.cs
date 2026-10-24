@@ -1,11 +1,12 @@
 using System;
+using System.Linq;
 using DynamicExpresso;
 
-public sealed class DynamicFormula
+public abstract class AbstractDynamicFormula
 {
-    private readonly Func<int, double> _calculate;
+    private readonly Lambda _lambda;
 
-    public DynamicFormula(string expression)
+    public AbstractDynamicFormula(string expression, params string[] names)
     {
         var interpreter = new Interpreter()
             .SetFunction("pow", Math.Pow)
@@ -21,10 +22,13 @@ public sealed class DynamicFormula
             .SetFunction("max", (Func<double, double, double>)Math.Max)
             .SetFunction("clamp", Clamp);
 
-        _calculate = interpreter.ParseAsDelegate<Func<int, double>>(expression, "lvl");
+        var parameters = names.Select(name => new Parameter(name, typeof(double))).ToArray();
+
+        _lambda = interpreter.Parse(expression, typeof(double), parameters);
     }
 
-    public double Calculate(int level) => _calculate(level);
+    protected double Evaluate(params double[] arguments) =>
+        (double)_lambda.Invoke(arguments.Cast<object>().ToArray());
 
     private static double Clamp(double x, double min, double max) =>
         Math.Min(Math.Max(x, min), max);

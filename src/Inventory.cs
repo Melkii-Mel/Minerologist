@@ -33,6 +33,7 @@ public class Inventory
         }
         ShiftItemsToFillFirstSlot();
         var removed = _itemStacks[0];
+        _itemStacks[0] = null;
         InventoryUpdated?.Invoke(new SlotRemoved(0, removed!.Value));
         ShiftItemsToFillFirstSlot();
         return removed;
@@ -40,17 +41,17 @@ public class Inventory
 
     public void ShiftItemsToFillFirstSlot()
     {
-        if (_itemStacks.Count == 0)
+        var removedCount = 0;
+
+        while (_itemStacks.Count > 0 && _itemStacks[0] == null)
         {
-            return;
+            _itemStacks.RemoveAt(0);
+            removedCount++;
         }
-        while (_itemStacks[0] == null)
+
+        for (var i = 0; i < _itemStacks.Count; i++)
         {
-            for (int i = 0; i < _itemStacks.Count - 1; i++)
-            {
-                _itemStacks[i] = _itemStacks[i + 1];
-                InventoryUpdated?.Invoke(new SlotMoved(i + 1, i));
-            }
+            InventoryUpdated?.Invoke(new SlotMoved(i + removedCount, i));
         }
     }
 }

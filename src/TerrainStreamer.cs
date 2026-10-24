@@ -14,7 +14,8 @@ public interface ITerrain<TUpdateSnapshot, TUpdateResult>
     public event Action<Vector3I>? ChunkChanged;
 
     public void Generate(Vector3I chunkPosition);
-    public void Load(Vector3I chunkPosition);
+    public void PrepareLoad(Vector3I chunkPosition);
+    public void ExecuteLoad(Vector3I chunkPosition);
     public void Unload(Vector3I chunkPosition);
     public bool IsGenerated(Vector3I chunkPosition);
     TUpdateSnapshot PrepareUpdate(Vector3I chunkPosition);
@@ -71,21 +72,13 @@ public class TerrainStreamer<TTerrainUpdateSnapshot, TTerrainUpdateResult>
         Update(_worldChunkCoordinatesConverter.WorldToChunk(new Vector3I(worldPosition)));
     }
 
-    private int _framesBetweenUpdates = 0;
-
     public void Update(Vector3I centerChunk)
     {
         var requiredChunks = new HashSet<Vector3I>();
 
         if (_lastUpdateChunkCount == _updateResults.Count)
         {
-            // GD.Print("Frames between last updates: ", _framesBetweenUpdates);
-            _framesBetweenUpdates = 0;
             UpdateDirtyChunks();
-        }
-        else
-        {
-            _framesBetweenUpdates++;
         }
 
         var loadRadiusSquared = _loadRadius * _loadRadius;
@@ -174,22 +167,23 @@ public class TerrainStreamer<TTerrainUpdateSnapshot, TTerrainUpdateResult>
 
     private void QueueChunkLoadOrUpdatePriority(Vector3I chunkPosition, bool urgent, int priority)
     {
-        if (urgent)
-        {
-            TryDequeue(chunkPosition);
-            _terrain.Load(chunkPosition);
-            _instantiatedChunks.TryAdd(chunkPosition, true);
-            return;
-        }
         if (_queuedChunks.ContainsKey(chunkPosition))
         {
             _scheduler.TryUpdatePriority(_queuedChunks[chunkPosition], priority);
             return;
         }
+        _terrain.PrepareLoad(chunkPosition);
+        if (urgent)
+        {
+            TryDequeue(chunkPosition);
+            _terrain.ExecuteLoad(chunkPosition);
+            _instantiatedChunks.TryAdd(chunkPosition, true);
+            return;
+        }
         var id = _scheduler.QueueJob(
             () =>
             {
-                _terrain.Load(chunkPosition);
+                _terrain.ExecuteLoad(chunkPosition);
                 _instantiatedChunks.TryAdd(chunkPosition, true);
             },
             priority

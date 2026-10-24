@@ -15,6 +15,7 @@ public class Session
     public readonly TerrainStreamer<VoxelGrid, GodotMeshBuilder> TerrainStreamer;
     public readonly Terrain Terrain;
     public readonly Border Border;
+    public readonly Pipes Pipes;
     public readonly ItemsDepositor ItemsDepositor;
 
     public event Action<float>? Update;
@@ -25,6 +26,7 @@ public class Session
         SessionContainer container,
         Spatial root3d,
         Control rootUi,
+        Random rng,
         Action<Action<float>> bindUpdate,
         Action<Action<float>> bindPhysicsUpdate
     )
@@ -36,8 +38,9 @@ public class Session
 
         Terrain = new Terrain(root3d);
         Terrain.EntityRemoved += OnEntityRemove;
-        // TODO : Use configurable mesh path
-        Border = new Border(root3d, MeshCollection.OtherMeshes["границы.Cylinder"]);
+        GD.Print(string.Join(", ", MeshCollection.OtherMeshes.Keys));
+        Border = new Border(root3d, MeshCollection.OtherMeshes["границы.Cylinder001"]);
+        Pipes = new Pipes(root3d, MeshCollection.OtherMeshes["труба.Cylinder"], rng);
 
         Player = new(this, Root3d, Vector3.Zero, Terrain);
         Player.DepositItemsStart += OnDepositItemsStart;
@@ -49,7 +52,7 @@ public class Session
 
         InventoryUi = new();
 
-        Upgrades = new(this);
+        Upgrades = new();
 
         ItemsDepositor = new(bindUpdate, Inventory, Upgrades);
 
@@ -70,6 +73,7 @@ public class Session
             var duration = new DurationDebug();
             TerrainStreamer.Update(Player.VerticalOriginPosition);
             Border.Update(Player.VerticalOriginPosition);
+            Pipes.Update(Player.VerticalOriginPosition);
             //GD.Print(duration.TotalMilliseconds());
         };
 
@@ -88,7 +92,20 @@ public class Session
 
     private void OnEntityRemove(Entity entity)
     {
-        Inventory.AddItem(entity);
+        Root3d.AddChild(entity.MeshInstance);
+        entity.DestroyCollider();
+        Animations.AddAnimation(
+            new AnimationEntityFlyTowards(entity.MeshInstance, Player.PlayerNode),
+            onFinish: () =>
+            {
+                entity.MeshInstance.QueueFree();
+                Inventory.AddItem(entity);
+            }
+        );
+        Animations.AddAnimation(
+            new AnimationRotateRandomly(entity.MeshInstance),
+            easingFunction: new EFLinear()
+        );
     }
 
     private void OnInventoryUpdate(IInventoryAction action)

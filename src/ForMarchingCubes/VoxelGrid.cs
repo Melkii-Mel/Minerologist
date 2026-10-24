@@ -396,7 +396,6 @@ public interface IVoxelGridContainer
     Vector3I ChunkSize { get; }
     int ChunkSizeFlat { get; }
 
-    public VoxelGrid CreateVoxelGrid(Vector3I chunkPosition);
     public VoxelGrid? TryGetVoxelGrid(Vector3I chunkPosition);
     public Vector3I WorldToChunk(Vector3I worldPosition);
     public Vector3I ChunkToWorld(Vector3I chunkPosition);

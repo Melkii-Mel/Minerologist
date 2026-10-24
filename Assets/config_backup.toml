@@ -1,33 +1,33 @@
+[ConfigConfig]
+WriteConfigTemplate = true
+WriteMergedConfig = true
+ConfigTemplatePath = "Assets/config.template.toml"
+MergedConfigPath = "Assets/config.merged.toml"
 
-# Player stats
 [PlayerStatsConfig]
 Acceleration = 200.0
-MaxVelocity = 25.0
 Deceleration = 400.0
-JumpVelocity = 35.0
-DigRange = 30.0
-DigRadius = 2.0
 
 [PlayerStatsConfig.FallingObjectConfig]
 GravityScale = 1.0
 TerminalVelocity = 200.0
 
-# Player visuals
 [PlayerVisualsConfig]
 ToolModel = "Tools/Default"
-ToolOffset = { X = 0, Y = 0, Z = 0 }
 SwingAmplitudeX = 0.0
 SwingAmplitudeY = 0.0
 SwingFrequency = 1.0
 
-# Upgrades
+[PlayerVisualsConfig.ToolOffset]
+X = 0
+Y = 0
+Z = 0
+
 [UpgradesConfig]
 
-# World generation
 [GenerationConfig]
 HoleRadiusChunks = 6
 XRay = false
-ChunkSize = { X = 8, Y = 8, Z = 8 }
 CellHealth = 100.0
 CellHealthScaling = 0.3
 VerticalGenerationDistanceChunks = 3
@@ -36,48 +36,63 @@ VerticalGenerationDistanceChunks = 3
 Octaves = 2
 Period = 0.5
 Persistence = 0.8
-Lacunarity = 10
 SpawnThreshold = 0.8
+Lacunarity = 10.0
 
-# Controls
+[GenerationConfig.ChunkSize]
+X = 8
+Y = 8
+Z = 8
+
 [ControlsConfig]
 DiggingCameraSensitivityMultiplier = 0.5
 CameraSensitivityX = 0.002
 CameraSensitivityY = 0.002
 CameraMinAngleDegreesY = -90
 CameraMaxAngleDegreesY = 90
-# Time in milliseconds
 CoyoteTime = 250
 BufferTime = 250
 
-# World
 [WorldConfig]
 Gravity = 98.0
 CellSize = 1.0
 TerrainColor = "#75553A"
 
-# Remnants
 [RemnantsConfig]
 SkeletonPieceProbabilityWeight = 10
 
 [RemnantsConfig.TypeWeights]
-# Example weights; uncomment or modify to enable types
-# Skeleton = 10
-# Fossil = 5
-# Ore = 3
 
-# Remnant sizes
+[RemnantsSizeConfig]
+
+[RemnantsSizeConfig.Sizes]
+
 [RemnantsSizeConfig.Sizes.Skeleton]
-Min = 10
-Max = 12
+Min = 10.0
+Max = 12.0
 
 [RemnantsSizeConfig.Sizes.Others]
 Min = 0.5
 Max = 1.5
 
-# Marching cubes
 [MarchingCubesOptions]
-IsoLevel = 0
+IsoLevel = 0.0
 GenerateNormals = true
-GenerateUVs = false
+GenerateUvs = false
 WeldVertices = true
+
+[ExpConfig]
+ExpReq = "30 * pow(lvl, 1.5)"
+DigDamage = "400 * lvl"
+DigArea = "2 + log(lvl, 2)"
+DigRange = "5 + lvl * 2"
+DigOutSpeed = "1 + log(lvl, 2)"
+ExpMultiplier = "1"
+JumpVelocity = "25 + lvl * 2"
+MaxVelocity = "15 + lvl * 2"
+
+[ExpConfig.ExpPerType]
+Skeleton = 10.0
+Others = 20.0
+
+[ExpConfig.ExpOverrides]

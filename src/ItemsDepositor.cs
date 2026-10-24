@@ -2,58 +2,61 @@ using System;
 
 public class ItemsDepositor
 {
-    public Inventory _inventory;
+    private readonly Inventory _inventory;
+    private readonly Session _session;
 
     private bool _depositEnabled = false;
 
-    private float _currentDepositSpeed;
-    private float _currentDepositTimer;
+    private float _depositDuration;
+    private float _depositTimer;
 
-    private float CurrentDepositDelay
-    {
-        get => 1 / _currentDepositSpeed;
-        set => _currentDepositSpeed = 1 / value;
-    }
+    private double CurrentDepositDelay => 1 / DepositPerSecond.Calculate(_depositDuration);
 
-    // TODO : Move to config
-    public float MinDepositItemsPerSecond => 1;
-    public float MaxDepositItemsPerSecond => 5;
-    public float DeltaDepositItemsPerSecond => 1;
+    public DepositFormula DepositPerSecond => Config.Instance.DepositConfig.F.DepositPerSecond;
 
     public Upgrades Upgrades { get; }
 
-    public ItemsDepositor(Action<Action<float>> bindUpdate, Inventory inventory, Upgrades upgrades)
+    public ItemsDepositor(
+        Action<Action<float>> bindUpdate,
+        Inventory inventory,
+        Upgrades upgrades,
+        Session session
+    )
     {
         _inventory = inventory;
         Upgrades = upgrades;
+        _session = session;
         bindUpdate(Update);
     }
 
     public void DepositEnable()
     {
+        if (_depositEnabled)
+        {
+            return;
+        }
         _depositEnabled = true;
-        _currentDepositSpeed = MinDepositItemsPerSecond;
-        _currentDepositTimer = 0;
+        _depositTimer = 0;
+        _depositDuration = 0;
     }
 
     public void DepositDisable()
     {
         _depositEnabled = false;
-        _currentDepositSpeed = 0;
-        _currentDepositTimer = 0;
     }
 
     public void Update(float delta)
     {
-        if (_depositEnabled)
+        if (!_depositEnabled)
         {
-            _currentDepositTimer += delta;
-            while (_currentDepositTimer > CurrentDepositDelay)
-            {
-                _currentDepositTimer -= CurrentDepositDelay;
-                Deposit();
-            }
-            _currentDepositSpeed += DeltaDepositItemsPerSecond * delta;
+            return;
+        }
+        _depositTimer += delta;
+        _depositDuration += delta;
+        while (_depositTimer > CurrentDepositDelay)
+        {
+            _depositTimer -= (float)CurrentDepositDelay;
+            Deposit();
         }
     }
 
@@ -68,5 +71,12 @@ public class ItemsDepositor
         var entityPrefab = itemStack.Value.Item;
         Upgrades.Upgrade(entityPrefab);
         Server.SendItem(entityPrefab);
+        var mesh = Animations.AddAnimation(
+            new AnimationEntityFlyWithArc(),
+            onFinish: () =>
+            {
+                mesh.QueueFree();
+            }
+        );
     }
 }

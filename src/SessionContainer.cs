@@ -33,6 +33,7 @@ public class SessionContainer : ISession
             this,
             _localRoot3d,
             _localRootUi,
+            new Random(),
             action => Root.Update += action,
             action => Root.PhysicsUpdate += action
         );

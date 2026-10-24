@@ -38,7 +38,6 @@ public static class RayCaster
 
             if (hit.Count == 0)
             {
-                GD.Print("No collisions");
                 break;
             }
 

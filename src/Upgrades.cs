@@ -2,8 +2,6 @@ using System;
 
 public class Upgrades
 {
-    private readonly Session _session;
-    public UpgradesConfig UpgradesConfig => Config.Instance.UpgradesConfig;
     public ExpConfig ExpConfig => Config.Instance.ExpConfig;
 
     public int Level { get; private set; } = 1;
@@ -16,11 +14,6 @@ public class Upgrades
 
     public event Action? LevelChanged;
     public event Action? CurrentExpChanged;
-
-    public Upgrades(Session session)
-    {
-        _session = session;
-    }
 
     public void Reset()
     {

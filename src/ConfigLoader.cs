@@ -1,11 +1,13 @@
 using System;
-using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using Tomlyn;
 
 public class ConfigLoader : IDisposable
 {
+    public const bool USE_FALLBACK_CONFIG = true;
+    public const bool WRITE_FALLBACK_CONFIG = false;
+
     private readonly string _configPath;
     private readonly Action<Config> _configSetter;
     private readonly FileSystemWatcher _watcher;
@@ -16,7 +18,6 @@ public class ConfigLoader : IDisposable
         _configSetter = configSetter;
 
         var config = LoadConfig();
-        config.Initialize();
         var configConfig = config.ConfigConfig;
         if (configConfig.WriteConfigTemplate)
         {
@@ -41,11 +42,24 @@ public class ConfigLoader : IDisposable
 
     public Config LoadConfig()
     {
-        var toml = File.ReadAllText(_configPath);
-        var config =
-            TomlSerializer.Deserialize<Config>(toml)
-            ?? throw new InvalidDataException("Config file cannot represent null");
+        Config config;
+        if (File.Exists(_configPath) || !USE_FALLBACK_CONFIG)
+        {
+            var toml = File.ReadAllText(_configPath);
+            config =
+                TomlSerializer.Deserialize<Config>(toml)
+                ?? throw new InvalidDataException("Config file cannot represent null");
+        }
+        else
+        {
+            config = new Config();
+            if (WRITE_FALLBACK_CONFIG)
+            {
+                WriteConfigToFile(_configPath, config);
+            }
+        }
         _configSetter(config);
+        config.Initialize();
         return config;
     }
 

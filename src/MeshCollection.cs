@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Godot;
-using Path = System.IO.Path;
 
 /// <summary>
 /// Represents all diggable entities dynamically loaded from the model assets.
@@ -45,9 +46,10 @@ public static class MeshCollection
     public static MeshGroups OtherDiggables { get; private set; } = [];
     public static MeshGroup OtherMeshes { get; private set; } = [];
 
-    public const string OTHER_MESHES_PATH = "res://Assets/Models/Others";
-    public const string OTHER_DIGGABLES_PATH = "res://Assets/Models/Diggables/Others";
-    public const string SKELETONS_PATH = "res://Assets/Models/Diggables/Skeletons";
+    public const string MODELS = "Models";
+    public const string OTHERS = "Others";
+    public const string DIGGABLES = "Diggables";
+    public const string SKELETONS = "Skeletons";
     public const string MODELS_EXTENSION = ".glb";
 
     public static void Initialize()
@@ -58,59 +60,78 @@ public static class MeshCollection
         }
         Initialized = true;
 
-        LoadDir(SKELETONS_PATH, groupByFile: true, Skeletons);
-        LoadDir(OTHER_DIGGABLES_PATH, groupByFile: false, OtherDiggables);
-        var otherMeshes = new MeshGroups { [OTHER_MESHES_PATH] = [] };
-        LoadDir(OTHER_MESHES_PATH, groupByFile: false, otherMeshes, groupName: OTHER_MESHES_PATH);
-        OtherMeshes = otherMeshes[OTHER_MESHES_PATH];
-        GD.Print("Other loaded meshes: ", string.Join(", ", OtherMeshes.Keys));
+        var modelsManifest = Manifest.Instance.Dir(MODELS) ?? throw DirectoryNotFound;
+        var otherMeshesManifest = modelsManifest.Dir(OTHERS) ?? throw DirectoryNotFound;
+        var diggablesManifest = modelsManifest.Dir(DIGGABLES) ?? throw DirectoryNotFound;
+        var skeletonsManifest = diggablesManifest.Dir(SKELETONS) ?? throw DirectoryNotFound;
+        var otherDiggablesManifest = diggablesManifest.Dir(OTHERS) ?? throw DirectoryNotFound;
+
+        LoadDir(skeletonsManifest, groupByFile: true, Skeletons);
+        LoadDir(otherDiggablesManifest, groupByFile: false, OtherDiggables);
+        var otherMeshes = new MeshGroups { [OTHERS] = [] };
+        LoadDir(otherMeshesManifest, groupByFile: false, otherMeshes, groupName: OTHERS);
+        GD.Print(
+            "Other meshes manifest: ",
+            string.Join(", ", otherMeshesManifest.RecursiveFiles().Select(f => f.Ext))
+        );
+        OtherMeshes = otherMeshes[OTHERS];
+        GD.Print("Other loaded meshes: ", ToCodeUnits(string.Join(", ", OtherMeshes.Keys)));
+    }
+
+    private static readonly IOException DirectoryNotFound = new("Directory not found");
+
+    private static string ToCodeUnits(string value)
+    {
+        return string.Join(" ", value.Select(c => ((int)c).ToString("X4")));
     }
 
     private static void LoadDir(
-        string path,
+        FileSystemDir dir,
         bool groupByFile,
         MeshGroups destination,
-        string? prefix = null,
-        string? groupName = null,
-        HashSet<string>? except = null
+        string? groupName = null
     )
     {
-        var directory = DirAccess.Open(path);
-        if (directory == null)
+        if (groupName == null)
         {
-            GD.PrintErr($"Path `{path}` does not exist.");
-            return;
+            if (groupByFile)
+            {
+                foreach (var file in dir.RecursiveFiles().Where(f => f.Ext == MODELS_EXTENSION))
+                {
+                    destination[file.NameWithoutExtension] = [];
+                    LoadFile(
+                        "res://" + file.FullPath,
+                        destination[file.NameWithoutExtension],
+                        null
+                    );
+                }
+            }
+            else
+            {
+                foreach (var subDir in dir.SubDirs)
+                {
+                    LoadDir(subDir, groupByFile, destination, groupName: subDir.Name);
+                }
+                foreach (var file in dir.Files.Where(f => f.Ext == MODELS_EXTENSION))
+                {
+                    throw new Exception("Top-level files are not allowed");
+                }
+            }
         }
-        foreach (var subDir in directory.GetDirectories())
+        else
         {
-            if (except?.Contains(subDir) ?? false)
+            destination[groupName] = [];
+            foreach (var file in dir.RecursiveFiles().Where(f => f.Ext == MODELS_EXTENSION))
             {
-                continue;
+                GD.Print(file.PathRelativeTo(dir));
+                LoadFile(
+                    "res://" + file.FullPath,
+                    destination[groupName],
+                    System.IO.Path.GetFileNameWithoutExtension(
+                        file.PathRelativeTo(dir).Replace('/', '.')
+                    )
+                );
             }
-            LoadDir(
-                Path.Combine(path, subDir),
-                groupByFile,
-                destination,
-                prefix: groupName == null ? null : JoinName(prefix, subDir),
-                groupName: groupName ?? subDir,
-                except
-            );
-        }
-        foreach (var file in directory.GetFiles())
-        {
-            if (Path.GetExtension(file) != MODELS_EXTENSION)
-            {
-                continue;
-            }
-            var filename = Path.GetFileNameWithoutExtension(file);
-            var key = groupByFile
-                ? filename
-                : groupName ?? throw new Exception("Top-level files are not allowed");
-            if (!destination.TryGetValue(key, out var _))
-            {
-                destination[key] = [];
-            }
-            LoadFile(Path.Combine(path, file), destination[key], JoinName(prefix, filename));
         }
     }
 

@@ -1,6 +1,46 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
+
+public static class EntityPrefabs
+{
+    public static readonly Dictionary<string, Dictionary<string, EntityPrefab>> Skeletons = [];
+    public static readonly Dictionary<string, Dictionary<string, EntityPrefab>> Others = [];
+    public static bool Initialized { get; private set; } = false;
+
+    public static void Init()
+    {
+        Initialized = true;
+
+        foreach (var meshGroup in MeshCollection.Skeletons)
+        {
+            var skeleton = Skeletons[meshGroup.Key] = [];
+            foreach (var mesh in meshGroup.Value)
+            {
+                skeleton[mesh.Key] = new(meshGroup.Key, mesh.Key, mesh.Value);
+            }
+        }
+
+        foreach (var meshGroup in MeshCollection.OtherDiggables)
+        {
+            var diggable = Others[meshGroup.Key] = [];
+            foreach (var mesh in meshGroup.Value)
+            {
+                diggable[mesh.Key] = new(meshGroup.Key, mesh.Key, mesh.Value);
+            }
+        }
+    }
+
+    public static IEnumerable<EntityPrefab> All()
+    {
+        if (!Initialized)
+        {
+            Init();
+        }
+        return Skeletons.Values.Concat(Others.Values).SelectMany(dictionary => dictionary.Values);
+    }
+}
 
 public record EntityPrefab(string Type, string Id, MeshInstance MeshInstance)
 {
@@ -21,7 +61,7 @@ public record EntityPrefab(string Type, string Id, MeshInstance MeshInstance)
 
     public static EntityPrefab RandomSkeletonPiece(Random rng)
     {
-        var skeletonPieces = MeshCollection.Skeletons[Server.CurrentSkeleton];
+        var skeletonPieces = EntityPrefabs.Skeletons[Server.CurrentSkeleton];
         var remainingPieces = skeletonPieces
             .Where(p => !Server.CollectedSkeletonPieces.Contains(p.Key))
             .ToList();
@@ -29,50 +69,63 @@ public record EntityPrefab(string Type, string Id, MeshInstance MeshInstance)
         {
             remainingPieces = [.. skeletonPieces];
         }
-        var piece = RandomUtils.ChooseRandomItem(remainingPieces, rng);
-        return new("Skeleton", piece.Key, piece.Value);
+        var piece = RandomUtils.ChooseRandomItem(remainingPieces, rng).Value;
+        return piece;
     }
 
     public static EntityPrefab RandomOfType(string type, Random rng)
     {
-        var pieces = MeshCollection.OtherDiggables[type];
-        var piece = RandomUtils.ChooseRandomItem([.. pieces], rng);
-        return new(type, piece.Key, piece.Value);
+        var pieces = EntityPrefabs.Others[type];
+        var piece = RandomUtils.ChooseRandomItem([.. pieces.Values], rng);
+        return piece;
     }
 }
 
 public class Entity
 {
-    public MeshInstance MeshInstance { get; }
-    public Surface[] MeshData { get; }
     public Vector3I GlobalPosition { get; }
-    public EntityPrefab Prefab { get; }
-    public EntitiesChunk Chunk { get; set; } = null!;
+    public Vector3I LocalPosition { get; }
+    public Vector3I ChunkPosition { get; }
 
-    public Vector3I LocalPosition =>
-        GlobalPosition
-        - _coordinatesConverter.ChunkToWorld(_coordinatesConverter.WorldToChunk(GlobalPosition));
+    public EntityPrefab Prefab { get; }
+
+    public MeshInstance MeshInstance { get; }
+    public Vector3I[] SupportingTiles { get; }
 
     private readonly WorldChunkCoordinatesConverter _coordinatesConverter = new();
 
+    private StaticBody _staticBody;
+
     // Must be called on Godot's main thread
-    public Entity(EntityPrefab prefab, Vector3I globalPosition, Vector3 rotation, float scale)
+    public Entity(Vector3I globalPosition, BakedEntityData entityData, EntityPrefab prefab)
     {
         Prefab = prefab;
+
         GlobalPosition = globalPosition;
-        MeshInstance = new MeshInstance
+        ChunkPosition = _coordinatesConverter.WorldToChunk(GlobalPosition);
+        LocalPosition = GlobalPosition - _coordinatesConverter.ChunkToWorld(ChunkPosition);
+
+        MeshInstance = (MeshInstance)entityData.EntityInstance.Duplicate();
+        SupportingTiles = new Vector3I[entityData.EntitySupporingTiles.Length];
+
+        MeshInstance.Position += GlobalPosition.ToGdVector3();
+        for (var i = 0; i < entityData.EntitySupporingTiles.Length; i++)
         {
-            Position = globalPosition.ToGdVector3(),
-            Rotation = rotation,
-            Mesh = prefab.MeshInstance.Mesh,
-            Scale = new(scale, scale, scale),
-        };
-        var staticBody = new StaticBody();
-        staticBody.AddChild(
+            var cell = entityData.EntitySupporingTiles[i];
+            SupportingTiles[i] = cell + globalPosition;
+        }
+
+        _staticBody = new StaticBody();
+        _staticBody.AddChild(
             new CollisionShape() { Shape = MeshInstance.Mesh.CreateTrimeshShape() }
         );
-        staticBody.AddToGroup(NodeGroups.DIGGABLE);
-        MeshInstance.AddChild(staticBody);
-        MeshData = MeshUtils.GetMeshData(MeshInstance);
+        _staticBody.AddToGroup(NodeGroups.DIGGABLE);
+
+        MeshInstance.AddChild(_staticBody);
+    }
+
+    public void DestroyCollider()
+    {
+        _staticBody.QueueFree();
     }
 }

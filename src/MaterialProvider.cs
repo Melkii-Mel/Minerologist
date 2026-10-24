@@ -2,7 +2,7 @@ using Godot;
 
 public class MaterialProvider
 {
-    // TODO : Make configurable
+    // TODO: Make configurable
     public static Material CreateTerrainMaterial()
     {
         var noise = new OpenSimplexNoise

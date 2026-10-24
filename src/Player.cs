@@ -21,14 +21,14 @@ public class Player
     private DateTime _lastGroundTime = DateTime.MinValue;
 
     public readonly Session Session;
-    private readonly PlayerNode _playerNode;
+    public readonly PlayerNode PlayerNode;
     private readonly Camera _playerCameraNode;
     private readonly PlayerDigger _digger;
     public Vector2 HVelocity { get; set; }
     public float VVelocity { get; set; }
 
     public Vector3 VerticalOriginPosition =>
-        new(_horizontalOrigin.x, _playerNode.GlobalPosition.y, _horizontalOrigin.z);
+        new(_horizontalOrigin.x, PlayerNode.GlobalPosition.y, _horizontalOrigin.z);
     private Vector3 _horizontalOrigin;
 
     private PlayerStatsConfig PlayerStatsConfig => Config.Instance.PlayerStatsConfig;
@@ -43,16 +43,16 @@ public class Player
     {
         Session = session;
         Session.PhysicsUpdate += PhysicsUpdate;
-        _playerNode = SceneLoader.Instantiate<PlayerNode>("Player");
-        _playerCameraNode = _playerNode.GetNode<Camera>("Camera");
-        parent.AddChild(_playerNode);
+        PlayerNode = SceneLoader.Instantiate<PlayerNode>("Player");
+        _playerCameraNode = PlayerNode.GetNode<Camera>("Camera");
+        parent.AddChild(PlayerNode);
 
         var inputControls = new PlayerControls(this);
         inputControls.StartInputHandling();
 
         _horizontalOrigin = origin;
 
-        _digger = new PlayerDigger(_playerNode, _playerCameraNode, _playerNode, terrain, Session);
+        _digger = new PlayerDigger(PlayerNode, _playerCameraNode, PlayerNode, terrain, Session);
         _digger.DepositItemsStart += () => DepositItemsStart?.Invoke();
         _digger.DepositItemsStop += () => DepositItemsStop?.Invoke();
     }
@@ -76,7 +76,7 @@ public class Player
 
     private void UpdateLastGroundTime()
     {
-        if (_playerNode.IsOnFloor())
+        if (PlayerNode.IsOnFloor())
         {
             _lastGroundTime = DateTime.Now;
         }
@@ -96,19 +96,18 @@ public class Player
             0,
             0
         );
-        _playerNode.Rotation += new Vector3(0, -Spin.x * sensitivityY, 0);
+        PlayerNode.Rotation += new Vector3(0, -Spin.x * sensitivityY, 0);
         Spin = Vector2.Zero;
     }
 
     private Vector3 UpdatePosition()
     {
         var velocity = new Vector3(HVelocity.x, VVelocity, HVelocity.y);
-        // TODO: floor max angle and stopOnSlope as configurables
-        return _playerNode.MoveAndSlide(
+        return PlayerNode.MoveAndSlide(
             velocity,
             Vector3.Up,
-            stopOnSlope: true,
-            floorMaxAngle: Mathf.Deg2Rad(60)
+            stopOnSlope: PlayerStatsConfig.StopOnSlope,
+            floorMaxAngle: Mathf.Deg2Rad(PlayerStatsConfig.MaxFloorAngle)
         );
     }
 
@@ -120,7 +119,7 @@ public class Player
 
     private void UpdateHVelocity(float delta)
     {
-        var direction = Direction.Rotated(-_playerNode.Rotation.y);
+        var direction = Direction.Rotated(-PlayerNode.Rotation.y);
         if (Direction.LengthSquared() > 1)
             Direction = Direction.Normalized();
         if (direction == Vector2.Zero)
@@ -174,12 +173,12 @@ public class Player
 
     public void ResetPosition()
     {
-        _playerNode.Position = DefaultPlayerPosition;
+        PlayerNode.Position = DefaultPlayerPosition;
     }
 
     public void ResetRotation()
     {
-        _playerNode.Rotation = Vector3.Zero;
+        PlayerNode.Rotation = Vector3.Zero;
     }
 
     public void ResetVelocity()

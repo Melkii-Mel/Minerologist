@@ -4,14 +4,18 @@ using Godot;
 
 public class EntityNodesContainer : GodotNodeContainer
 {
-    private readonly ConcurrentDictionary<Vector3I, Spatial> _chunkEntitiesCache = [];
+    private readonly ConcurrentDictionary<Vector3I, Spatial> _entitiesChunkCache = [];
     private readonly HashSet<Vector3I> _queueRemove = [];
 
     public void Load(Vector3I chunkPosition, EntitiesChunk entities)
     {
         DeferOrCall(() =>
         {
-            if (_chunkEntitiesCache.TryGetValue(chunkPosition, out var chunk))
+            if (_queueRemove.Remove(chunkPosition))
+            {
+                return;
+            }
+            if (_entitiesChunkCache.TryGetValue(chunkPosition, out var chunk))
             {
                 if (chunk.GetParent() == null)
                 {
@@ -20,7 +24,7 @@ public class EntityNodesContainer : GodotNodeContainer
                 }
             }
             var chunkParent = new Spatial();
-            foreach (var entity in entities.Entities.Values)
+            foreach (var entity in entities.Entities)
             {
                 var meshInstance = entity.MeshInstance;
                 if (entity.MeshInstance.GetParent() == null)
@@ -28,17 +32,14 @@ public class EntityNodesContainer : GodotNodeContainer
                     chunkParent.AddChild(meshInstance);
                 }
             }
-            _chunkEntitiesCache[chunkPosition] = chunkParent;
-            if (!_queueRemove.Remove(chunkPosition))
-            {
-                AddChild(chunkParent);
-            }
+            _entitiesChunkCache[chunkPosition] = chunkParent;
+            AddChild(chunkParent);
         });
     }
 
     public void Unload(Vector3I chunkPosition)
     {
-        if (_chunkEntitiesCache.TryGetValue(chunkPosition, out var chunk))
+        if (_entitiesChunkCache.TryGetValue(chunkPosition, out var chunk))
         {
             chunk.GetParent()?.RemoveChild(chunk);
         }

@@ -11,15 +11,22 @@ public class PlayerDigger
     public float DigRange => (float)ExpConfig.F.DigRange.Calculate(Level);
     public Vector3 ToolOffset => VisualsConfig.ToolOffset.ToGdVector3() / 100f;
     public float DigRadius => (float)ExpConfig.F.DigArea.Calculate(Level);
+    public float DigDamage => (float)ExpConfig.F.DigDamage.Calculate(Level);
+    public float DigConeRadius => (float)ExpConfig.F.DigConeRadius.Calculate(Level);
 
     public event Action? DepositItemsStart;
     public event Action? DepositItemsStop;
 
-    public float DigDamage => (float)ExpConfig.F.DigDamage.Calculate(Level);
-    public float DistanceDamageScaling => 0.7f;
-    public float DamageChance => 0.5f;
-    public float DamageScaleMin => 0.5f;
-    public float DamageScaleMax => 2f;
+    public DiggerConfig DiggerConfig => Config.DiggerConfig;
+    public float BorderDigDamageMultiplier => DiggerConfig.BorderDigDamageMultiplier;
+    public float DistanceDamageScaling => DiggerConfig.DistanceDamageScaling;
+    public float DamageChance => DiggerConfig.DamageChance;
+    public float DamageScaleMin => DiggerConfig.DamageScaleMin;
+    public float DamageScaleMax => DiggerConfig.DamageScaleMax;
+    public float DamageTicksPerSecond => DiggerConfig.DamageTicksPerSecond;
+
+    public float DamageTickDuration => 1f / DamageTicksPerSecond;
+    private float _damageTimer = 0f;
 
     private readonly Node _parent;
 
@@ -56,16 +63,25 @@ public class PlayerDigger
 
     public void Dig(float delta)
     {
+        _damageTimer += delta;
+        if (_damageTimer < DamageTickDuration)
+        {
+            return;
+        }
+        delta = DamageTickDuration;
+        _damageTimer -= DamageTickDuration;
+
         var rayFrom = _camera.GlobalPosition;
         var direction = -_camera.GlobalTransform.basis.z.Normalized();
         var rayTo = rayFrom + direction * DigRange;
         var pipeHit = false;
 
         foreach (
-            var rayHit in RayCaster.Cast(
+            var rayHit in ConeCaster.Cast(
                 _camera.GetWorld(),
                 rayFrom,
                 rayTo,
+                Mathf.Deg2Rad(DigConeRadius) / 2,
                 exclude: [_playerCollider]
             )
         )
@@ -83,6 +99,10 @@ public class PlayerDigger
                 DepositItemsStart?.Invoke();
                 pipeHit = true;
             }
+            else if (rayHit.Collider.IsInGroup(NodeGroups.BORDER))
+            {
+                Dig(rayHit.Position, delta * BorderDigDamageMultiplier);
+            }
         }
         if (!pipeHit)
         {
@@ -97,27 +117,26 @@ public class PlayerDigger
 
     private void DigDiggable(RayHit rayHit, float delta)
     {
-        try
+        if (
+            !_terrain.GlobalMeshInstanceEntityMap.TryGetValue(
+                (MeshInstance)rayHit.Collider.GetParent(),
+                out var entity
+            )
+        )
         {
-            var entity = _terrain.GlobalMeshInstanceEntityMap[
-                (MeshInstance)rayHit.Collider.GetParent()
-            ];
-            var entitySupportingTiles = _terrain.GlobalEntitySupportingTilesIndex[entity];
-            var count = Mathf.Min(
-                (float)ExpConfig.F.DigOutSpeed.Calculate(Level),
-                entitySupportingTiles.Count
-            );
-            for (var i = 0; i < count; i++)
-            {
-                Dig(
-                    entitySupportingTiles[_rng.Next(entitySupportingTiles.Count())].ToGdVector3(),
-                    delta
-                );
-            }
+            return;
         }
-        catch (Exception e)
+        var entitySupportingTiles = _terrain.GlobalEntitySupportingTilesIndex[entity];
+        var count = Mathf.Min(
+            (float)ExpConfig.F.DigOutSpeed.Calculate(Level),
+            entitySupportingTiles.Length
+        );
+        for (var i = 0; i < count; i++)
         {
-            GD.PrintErr(e);
+            Dig(
+                entitySupportingTiles[_rng.Next(entitySupportingTiles.Count())].ToGdVector3(),
+                delta
+            );
         }
     }
 

@@ -1,0 +1,87 @@
+{
+  "SubDirs": [
+    {
+      "SubDirs": [
+        {
+          "SubDirs": [
+            {
+              "SubDirs": [],
+              "Files": [],
+              "Name": "Others"
+            },
+            {
+              "SubDirs": [],
+              "Files": [
+                {
+                  "Name": "Bone.material"
+                },
+                {
+                  "Name": "Мамонт.glb"
+                },
+                {
+                  "Name": "Мамонт.glb.import"
+                }
+              ],
+              "Name": "Skeletons"
+            }
+          ],
+          "Files": [],
+          "Name": "Diggables"
+        },
+        {
+          "SubDirs": [],
+          "Files": [
+            {
+              "Name": "Material_001.material"
+            },
+            {
+              "Name": "Material_002.material"
+            },
+            {
+              "Name": "me.material"
+            },
+            {
+              "Name": "границы.glb"
+            },
+            {
+              "Name": "границы.glb.import"
+            },
+            {
+              "Name": "труба.glb"
+            },
+            {
+              "Name": "труба.glb.import"
+            }
+          ],
+          "Name": "Others"
+        }
+      ],
+      "Files": [],
+      "Name": "Models"
+    },
+    {
+      "SubDirs": [],
+      "Files": [
+        {
+          "Name": "Player.tscn"
+        },
+        {
+          "Name": "PopupDeviceDisconnected.tscn"
+        }
+      ],
+      "Name": "Scenes"
+    }
+  ],
+  "Files": [
+    {
+      "Name": "config.merged.toml"
+    },
+    {
+      "Name": "config.template.toml"
+    },
+    {
+      "Name": "config_backup.toml"
+    }
+  ],
+  "Name": "Assets"
+}
