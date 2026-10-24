@@ -13,9 +13,11 @@ public class PlayerNode : KinematicBody
     private const float STEP_SOUND_SPEED_THRESHOLD = 1;
     private const float FREEFALL_SOUND_VERTICAL_VELOCITY_THRESHOLD = 70;
     private const float FALL_SOUND_VERTICAL_VELOCITY_THRESHOLD = 20;
+    private const float FALL_SOUND_DELAY = 0.5f;
     private Vector3 _lastFramePos;
     private float _stepTimer;
     private float _verticalVelocity;
+    private float _fallSoundTimer;
 
     public override async void _Ready()
     {
@@ -34,6 +36,7 @@ public class PlayerNode : KinematicBody
         var verticalVelocity = -(Position - _lastFramePos).y;
         verticalVelocity /= delta;
         _verticalVelocity = Mathf.Max(_verticalVelocity, verticalVelocity);
+        _fallSoundTimer += delta;
 
         var horizontalVelocitySquared =
             (
@@ -48,7 +51,11 @@ public class PlayerNode : KinematicBody
             }
             if (_verticalVelocity > FALL_SOUND_VERTICAL_VELOCITY_THRESHOLD)
             {
-                AudioCollection.PlayRandomSound(Sounds.Fall);
+                if (_fallSoundTimer > FALL_SOUND_DELAY)
+                {
+                    _fallSoundTimer = 0;
+                    AudioCollection.PlayRandomSound(Sounds.Fall);
+                }
             }
             if (horizontalVelocitySquared > STEP_SOUND_SPEED_THRESHOLD * STEP_SOUND_SPEED_THRESHOLD)
             {
