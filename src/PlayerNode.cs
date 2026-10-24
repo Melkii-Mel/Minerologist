@@ -13,7 +13,7 @@ public class PlayerNode : KinematicBody
 
     private const float STEP_DELAY = 0.5f;
     private const float STEP_SOUND_SPEED_THRESHOLD = 1;
-    private const float FREEFALL_SOUND_VERTICAL_VELOCITY_THRESHOLD = 40;
+    private const float FREEFALL_SOUND_VERTICAL_VELOCITY_THRESHOLD = 70;
     private const float FALL_SOUND_VERTICAL_VELOCITY_THRESHOLD = 20;
     private Vector3 _lastFramePos;
     private float _stepTimer;
@@ -43,7 +43,6 @@ public class PlayerNode : KinematicBody
             (
                 new Vector2(Position.x, Position.z) - new Vector2(_lastFramePos.x, _lastFramePos.z)
             ).LengthSquared() / delta;
-        GD.Print($"Vertical: {verticalVelocity}, Horizontal Squared: {horizontalVelocitySquared}");
         if (IsOnFloor())
         {
             _lastFloorTime = DateTime.Now;
@@ -69,7 +68,7 @@ public class PlayerNode : KinematicBody
         }
         else
         {
-            if (-_verticalVelocity > FREEFALL_SOUND_VERTICAL_VELOCITY_THRESHOLD)
+            if (_verticalVelocity > FREEFALL_SOUND_VERTICAL_VELOCITY_THRESHOLD)
             {
                 if (!_freefalSoundIdx.HasValue)
                 {
