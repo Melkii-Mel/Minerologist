@@ -7,8 +7,6 @@ public class PlayerNode : KinematicBody
     public Spatial Center { get; private set; } = null!;
     public Spatial Collector { get; private set; } = null!;
 
-    private DateTime _lastFloorTime = DateTime.MinValue;
-
     private int? _freefalSoundIdx = null;
 
     private const float STEP_DELAY = 0.5f;
@@ -29,8 +27,6 @@ public class PlayerNode : KinematicBody
         await ToSignal(GetTree(), "idle_frame");
 
         AudioCollection.PlayRandomSound(Sounds.Spawn);
-
-        _lastFramePos = Position;
     }
 
     public override void _Process(float delta)
@@ -45,7 +41,6 @@ public class PlayerNode : KinematicBody
             ).LengthSquared() / delta;
         if (IsOnFloor())
         {
-            _lastFloorTime = DateTime.Now;
             if (_freefalSoundIdx.HasValue)
             {
                 AudioCollection.StopPlayingSound(_freefalSoundIdx.Value);
