@@ -42,10 +42,15 @@ public static class AudioCollection
         return RandomUtils.ChooseRandomItem(Sounds[id], rng ?? _rng);
     }
 
-    public static void PlayRandomSound(string id, Random? rng = default)
+    public static int PlayRandomSound(string id, Random? rng = default)
     {
         var sound = RandomSound(id, rng);
-        SoundPlayer.Play(sound);
+        return SoundPlayer.Play(sound);
+    }
+
+    public static void StopPlayingSound(int idx)
+    {
+        SoundPlayer.StopPlaying(idx);
     }
 
     public static AudioStream GetMusic(string id)
