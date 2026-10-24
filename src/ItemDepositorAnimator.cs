@@ -39,6 +39,7 @@ public class ItemsDepositorAnimator
                 {
                     entity.MeshInstance.QueueFree();
                     arrivalPoint.QueueFree();
+                    AudioCollection.PlayRandomSound(Sounds.Deposit);
                 }
             );
             Animations.AddAnimation(
