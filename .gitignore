@@ -7,6 +7,7 @@ Builds/
 *.merged.toml
 *.template.toml
 manifest.json
+config.toml
 
 # Created by https://www.toptal.com/developers/gitignore/api/jetbrains,vim,windows,godot,csharp
 # Edit at https://www.toptal.com/developers/gitignore?templates=jetbrains,vim,windows,godot,csharp
