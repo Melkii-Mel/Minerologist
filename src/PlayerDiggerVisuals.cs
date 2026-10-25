@@ -4,7 +4,7 @@ using Godot;
 public class PlayerDiggerVisuals
 {
     private readonly Session Session;
-    public DiggerVisualsConfig DiggerVisualsConfig = Config.Instance.DiggerVisualsConfig;
+    public DiggerVisualsConfig DiggerVisualsConfig => Config.Instance.DiggerVisualsConfig;
 
     public DiggerAnimationConfig DiggerAnimationConfig => DiggerVisualsConfig.DiggerAnimationConfig;
 
