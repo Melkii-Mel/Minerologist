@@ -24,6 +24,8 @@ public class SessionContainer : ISession
         _localRootUi = new Control();
         _viewport.AddChild(_localRootUi);
         _viewport.AddChild(_localRoot3d);
+        _localRootUi.SetAnchorsAndMarginsPreset(Control.LayoutPreset.Wide);
+        _localRootUi.MouseFilter = Control.MouseFilterEnum.Ignore;
         Root = root;
         ControllerId = controllerId;
         Frozen = false;

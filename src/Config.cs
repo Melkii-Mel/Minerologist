@@ -17,6 +17,7 @@ public sealed record Config
     public DepositConfig DepositConfig { get; init; } = new();
     public PipeConfig PipeConfig { get; init; } = new();
     public ConeCasterConfig ConeCasterConfig { get; init; } = new();
+    public DiggerVisualsConfig DiggerVisualsConfig { get; init; } = new();
 
     private static ConfigLoader? _configLoader;
     private static Config? _instance;
@@ -166,17 +167,20 @@ public sealed record PlayerVisualsConfig
     public float SwingFrequency { get; init; } = 1.0f;
 }
 
-public sealed record ToolVisualsConfig
+public sealed record DiggerVisualsConfig
 {
     public string ToolModel { get; init; } = "Tools.Default.Plane";
     public Vector3I ToolRotationDegrees { get; init; } = new(0, 180, 0);
     public float ToolScale { get; init; } = 0.8f;
     public Vector3I ToolOffset { get; init; } = new(80, -160, -180);
+    public DiggerAnimationConfig DiggerAnimationConfig { get; init; } = new();
 }
 
-public sealed record ToolAnimationConfig
+public sealed record DiggerAnimationConfig
 {
-    public float RotationIdleDegrees { get; init; } = 45;
+    public Vector3I AnimationPivotOffset { get; init; } = new(0, 120, 90);
+    public Vector3I OffsetIdle { get; init; } = new(20, -30, 20);
+    public Vector3I RotationIdleDegrees { get; init; } = new(-20, -20, 0);
     public float RotationDurationSeconds { get; init; } = 0.5f;
 }
 

@@ -9,7 +9,6 @@ public class PlayerDigger
     public int Level => Session.Upgrades.Level;
     public ExpConfig ExpConfig => Config.ExpConfig;
     public float DigRange => (float)ExpConfig.F.DigRange.Calculate(Level);
-    public Vector3 ToolOffset => VisualsConfig.ToolOffset.ToGdVector3() / 100f;
     public float DigRadius => (float)ExpConfig.F.DigArea.Calculate(Level);
     public float DigDamage => (float)ExpConfig.F.DigDamage.Calculate(Level);
     public float DigConeRadius => (float)ExpConfig.F.DigConeRadius.Calculate(Level);
@@ -24,13 +23,14 @@ public class PlayerDigger
     public float DamageScaleMin => DiggerConfig.DamageScaleMin;
     public float DamageScaleMax => DiggerConfig.DamageScaleMax;
     public float DamageTicksPerSecond => DiggerConfig.DamageTicksPerSecond;
+    public float BuildupSeconds => DiggerConfig.DiggingBuildupSeconds;
 
     public float DamageTickDuration => 1f / DamageTicksPerSecond;
     private float _damageTimer = 0f;
+    private float _digTimer = 0f;
 
     private readonly Node _parent;
 
-    private readonly MeshInstance _model;
     private readonly Camera _camera;
     private readonly CollisionObject _playerCollider;
     private readonly Terrain _terrain;
@@ -40,6 +40,8 @@ public class PlayerDigger
     private readonly Random _rng;
 
     public readonly Session Session;
+
+    public bool _isIdle = true;
 
     public PlayerDigger(
         Node parent,
@@ -58,18 +60,22 @@ public class PlayerDigger
         _playerCollider = player;
         _terrain = terrain;
 
-        _model = CreateModel();
+        new PlayerDiggerVisuals(Session, () => _isIdle);
     }
 
     public void Dig(float delta)
     {
+        _isIdle = false;
         _damageTimer += delta;
+        _digTimer += delta;
         if (_damageTimer < DamageTickDuration)
         {
             return;
         }
         delta = DamageTickDuration;
         _damageTimer -= DamageTickDuration;
+        var damageMultiplier = Mathf.Min(1, _digTimer / BuildupSeconds);
+        delta *= damageMultiplier;
 
         var rayFrom = _camera.GlobalPosition;
         var direction = -_camera.GlobalTransform.basis.z.Normalized();
@@ -113,6 +119,8 @@ public class PlayerDigger
     public void Idle(float _)
     {
         DepositItemsStop?.Invoke();
+        _digTimer = 0;
+        _isIdle = true;
     }
 
     private void DigDiggable(RayHit rayHit, float delta)
@@ -137,22 +145,6 @@ public class PlayerDigger
                 entitySupportingTiles[_rng.Next(entitySupportingTiles.Count())].ToGdVector3(),
                 delta
             );
-        }
-    }
-
-    private MeshInstance CreateModel()
-    {
-        if (MeshCollection.OtherMeshes.TryGetValue(VisualsConfig.ToolModel, out var diggerModel))
-        {
-            diggerModel = (MeshInstance)diggerModel.Duplicate();
-            _parent.AddChild(diggerModel);
-            diggerModel.Position = ToolOffset;
-            return diggerModel;
-        }
-        else
-        {
-            GD.PrintErr("Tool model not found");
-            return new MeshInstance();
         }
     }
 
