@@ -7,7 +7,7 @@ public static class AudioCollection
 {
     public static Dictionary<string, List<AudioStream>> Sounds { get; } = [];
     public static Dictionary<string, AudioStream> Music { get; } = [];
-    public static Dictionary<string, int> ActiveMusic { get; } = [];
+    public static Dictionary<string, AudioPlayer> ActiveMusic { get; } = [];
 
     public static string[] SupportedFormats = [".mp3", ".wav", ".ogg"];
 
@@ -42,15 +42,15 @@ public static class AudioCollection
         return RandomUtils.ChooseRandomItem(Sounds[id], rng ?? _rng);
     }
 
-    public static int PlayRandomSound(string id, Random? rng = default)
+    public static AudioPlayer PlayRandomSound(string id, Random? rng = default)
     {
         var sound = RandomSound(id, rng);
         return SoundPlayer.Play(sound);
     }
 
-    public static void StopPlayingSound(int idx)
+    public static void StopPlayingSound(AudioPlayer player)
     {
-        SoundPlayer.StopPlaying(idx);
+        SoundPlayer.StopPlaying(player);
     }
 
     public static AudioStream GetMusic(string id)
@@ -60,8 +60,8 @@ public static class AudioCollection
 
     public static void PlayMusic(string id)
     {
-        var idx = SoundPlayer.Play(GetMusic(id), loop: true);
-        ActiveMusic[id] = idx;
+        var player = SoundPlayer.Play(GetMusic(id), loop: true);
+        ActiveMusic[id] = player;
     }
 
     public static void StopMusic(string id)

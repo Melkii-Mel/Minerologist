@@ -5,7 +5,7 @@ using Godot;
 public static class SoundPlayer
 {
     private static readonly List<AudioPlayer> _players = [];
-    private static readonly List<int> _freePlayers = [];
+    private static readonly List<AudioPlayer> _freePlayers = [];
 
     private static Node? _parent;
 
@@ -14,26 +14,24 @@ public static class SoundPlayer
         _parent = parent;
     }
 
-    public static int Play(AudioStream stream, bool loop = false)
+    public static AudioPlayer Play(AudioStream stream, bool loop = false)
     {
-        var idx = ConsumeOrCreatePlayer();
-        var player = _players[idx];
+        var player = ConsumeOrCreatePlayer();
         player.Stream = stream;
         player.Play(loop);
-        return idx;
+        return player;
     }
 
-    public static void StopPlaying(int idx)
+    public static void StopPlaying(AudioPlayer player)
     {
-        AudioPlayer player = _players[idx];
         if (player.Playing)
         {
             player.Stop();
-            FreePlayer(idx);
+            FreePlayer(player);
         }
     }
 
-    private static int ConsumeOrCreatePlayer()
+    private static AudioPlayer ConsumeOrCreatePlayer()
     {
         var i = _freePlayers.Count - 1;
 
@@ -42,20 +40,18 @@ public static class SoundPlayer
             return CreatePlayer(false);
         }
 
-        var idx = _freePlayers[i];
+        var player = _freePlayers[i];
         _freePlayers.RemoveAt(i);
 
-        return idx;
+        return player;
     }
 
-    private static int CreatePlayer(bool free)
+    private static AudioPlayer CreatePlayer(bool free)
     {
-        var idx = _players.Count;
-
         AudioPlayer player = new();
         _players.Add(player);
 
-        player.PlaybackFinished += () => FreePlayer(idx);
+        player.PlaybackFinished += () => FreePlayer(player);
 
         var parent =
             _parent
@@ -64,15 +60,15 @@ public static class SoundPlayer
 
         if (free)
         {
-            _freePlayers.Add(idx);
+            _freePlayers.Add(player);
         }
 
-        return idx;
+        return player;
     }
 
-    private static void FreePlayer(int idx)
+    private static void FreePlayer(AudioPlayer player)
     {
-        _freePlayers.Add(idx);
+        _freePlayers.Add(player);
     }
 }
 
