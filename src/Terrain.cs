@@ -94,6 +94,8 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
             return false;
         }
 
+        var isoLevel = Config.Instance.MarchingCubesOptions.IsoLevel;
+
         var currentHealth = chunk.VoxelGrid.Sample(localPos);
 
         var depth = -worldPosition.Y;
@@ -118,10 +120,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
                         }
 
                         var value = TryGetCellValue(worldPosition + new Vector3I(x, y, z));
-                        if (
-                            !value.HasValue
-                            || value.Value <= Config.Instance.MarchingCubesOptions.IsoLevel
-                        )
+                        if (!value.HasValue || value.Value <= isoLevel)
                         {
                             goto BREAK;
                         }
