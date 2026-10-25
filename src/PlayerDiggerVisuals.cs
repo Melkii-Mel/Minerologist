@@ -12,8 +12,9 @@ public class PlayerDiggerVisuals
     public float ToolScale => DiggerVisualsConfig.ToolScale;
     public Vector3 ToolOffset => DiggerVisualsConfig.ToolOffset.ToGdVector3() / 100;
 
-    private readonly MeshInstance _model;
-    private readonly Spatial _pivot;
+    private Spatial _root3d = null!;
+    private MeshInstance _digger = null!;
+    private Spatial _pivot = null!;
 
     private Vector3 _pivotInitialPosition;
     private Vector3 _stateRotationDegrees;
@@ -25,7 +26,7 @@ public class PlayerDiggerVisuals
     {
         Session = session;
 
-        (_pivot, _model) = CreateModel();
+        CreateModel();
         _pivotInitialPosition = _pivot.Position;
         GD.Print("Model createad");
 
@@ -36,6 +37,7 @@ public class PlayerDiggerVisuals
 
     private void Update(float delta)
     {
+        _root3d.Rotation = Session.Player.PlayerNode.Rotation;
         _stateRotationDegrees = Move(
             _stateRotationDegrees,
             _isIdle() ? DiggerAnimationConfig.RotationIdleDegrees.ToGdVector3() : Vector3.Zero,
@@ -51,12 +53,12 @@ public class PlayerDiggerVisuals
         _pivot.Position = _pivotInitialPosition + _stateOffset;
     }
 
-    private (Spatial Pivot, MeshInstance Model) CreateModel()
+    private void CreateModel()
     {
         var rootUi = Session.RootUi;
         var viewportContainer = new ViewportContainer();
         var viewport = new Viewport();
-        var root3d = new Spatial();
+        _root3d = new Spatial();
         var camera = new Camera();
 
         rootUi.AddChild(viewportContainer);
@@ -70,30 +72,29 @@ public class PlayerDiggerVisuals
         viewport.World = new();
         viewport.TransparentBg = true;
 
-        viewport.AddChild(root3d);
+        viewport.AddChild(SceneLoader.Instantiate<Node>("Environment"));
 
-        root3d.AddChild(camera);
+        viewport.AddChild(_root3d);
 
-        MeshInstance digger;
+        _root3d.AddChild(camera);
+
         if (MeshCollection.OtherMeshes.TryGetValue(DiggerVisualsConfig.ToolModel, out var d))
         {
-            digger = (MeshInstance)d.Duplicate();
-            digger.Scale *= ToolScale;
-            digger.RotationDegrees = ToolRotationDegrees.ToGdVector3();
+            _digger = (MeshInstance)d.Duplicate();
+            _digger.Scale *= ToolScale;
+            _digger.RotationDegrees = ToolRotationDegrees.ToGdVector3();
         }
         else
         {
             GD.PrintErr("Tool model not found");
-            digger = new();
+            _digger = new();
         }
-        var pivot = new Spatial();
+        _pivot = new Spatial();
         var pivotOffset = DiggerAnimationConfig.AnimationPivotOffset.ToGdVector3() / 100;
-        root3d.AddChild(pivot);
-        pivot.Position = ToolOffset + pivotOffset;
-        digger.Position = -pivotOffset;
-        pivot.AddChild(digger);
-
-        return (pivot, digger);
+        _root3d.AddChild(_pivot);
+        _pivot.Position = ToolOffset + pivotOffset;
+        _digger.Position = -pivotOffset;
+        _pivot.AddChild(_digger);
     }
 
     private Vector3 Move(Vector3 from, Vector3 to, float delta)

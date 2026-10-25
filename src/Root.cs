@@ -9,6 +9,8 @@ public class Root : Node
 
     public override void _Ready()
     {
+        AddChild(SceneLoader.Instantiate<Node>("Environment"));
+
         Manifest.Root = "Assets";
 
         Console.WriteLine("Initializing entities collection...");

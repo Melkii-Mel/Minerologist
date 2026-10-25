@@ -1,0 +1,49 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Assets/Skybox/sky_12_2k.png" type="Texture" id=1]
+
+[sub_resource type="PanoramaSky" id=2]
+radiance_size = 0
+panorama = ExtResource( 1 )
+
+[sub_resource type="Environment" id=3]
+background_mode = 2
+background_sky = SubResource( 2 )
+background_color = Color( 0.384314, 0.223529, 0.156863, 1 )
+ambient_light_color = Color( 0.521569, 0.572549, 0.682353, 1 )
+ambient_light_energy = 0.48
+fog_enabled = true
+fog_color = Color( 0.384314, 0.223529, 0.156863, 1 )
+fog_depth_begin = 74.7
+fog_depth_end = 97.8
+fog_depth_curve = 5.6568
+tonemap_mode = 2
+ss_reflections_max_steps = 512
+ss_reflections_fade_in = 0.00041432
+ss_reflections_fade_out = 0.00418662
+ss_reflections_depth_tolerance = 0.1
+ss_reflections_roughness = false
+ssao_enabled = true
+ssao_radius = 4.08
+ssao_intensity = 1.48
+ssao_radius2 = 8.17
+ssao_intensity2 = 5.26
+ssao_bias = 0.039
+ssao_quality = 2
+ssao_blur = 1
+ssao_edge_sharpness = 9.1
+dof_blur_far_enabled = true
+dof_blur_far_distance = 90.0
+dof_blur_far_transition = 19.33
+dof_blur_far_amount = 0.16
+adjustment_enabled = true
+adjustment_contrast = 1.09
+
+[node name="Environment" type="Node"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource( 3 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="."]
+transform = Transform( 1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 0, 0, 0 )
+light_energy = 1.133
