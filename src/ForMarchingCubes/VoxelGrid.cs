@@ -150,31 +150,31 @@ public class VoxelGrid : IScalarField
         }
         if (x == 0)
         {
-            TryGetNeighbor(new(-1, 0, 0))?.InvalidateBorder();
+            InvalidateNeighbor(-1, 0, 0);
         }
         if (y == 0)
         {
-            TryGetNeighbor(new(0, -1, 0))?.InvalidateBorder();
+            InvalidateNeighbor(0, -1, 0);
         }
         if (z == 0)
         {
-            TryGetNeighbor(new(0, 0, -1))?.InvalidateBorder();
+            InvalidateNeighbor(0, 0, -1);
         }
         if (x == 0 && y == 0)
         {
-            TryGetNeighbor(new(-1, -1, 0))?.InvalidateBorder();
+            InvalidateNeighbor(-1, -1, 0);
         }
         if (x == 0 && z == 0)
         {
-            TryGetNeighbor(new(-1, 0, -1))?.InvalidateBorder();
+            InvalidateNeighbor(-1, 0, -1);
         }
         if (y == 0 && z == 0)
         {
-            TryGetNeighbor(new(0, -1, -1))?.InvalidateBorder();
+            InvalidateNeighbor(0, -1, -1);
         }
         if (x == 0 && y == 0 && z == 0)
         {
-            TryGetNeighbor(new(-1, -1, -1))?.InvalidateBorder();
+            InvalidateNeighbor(-1, -1, -1);
         }
     }
 
@@ -188,6 +188,18 @@ public class VoxelGrid : IScalarField
         SnapshotBorder();
 
         return true;
+    }
+
+    public readonly List<VoxelGrid> InvalidatedNeighbors = [];
+
+    private void InvalidateNeighbor(int x, int y, int z)
+    {
+        var neighbor = TryGetNeighbor(new(x, y, z));
+        if (neighbor != null)
+        {
+            neighbor.InvalidateBorder();
+            InvalidatedNeighbors.Add(neighbor);
+        }
     }
 
     private void InvalidateBorder()
@@ -307,24 +319,25 @@ public class VoxelGrid : IScalarField
 
     private VoxelGrid GetOrCreateNeighbor(Vector3I offset)
     {
-        return _neighbors[NeighborIndex(offset)] = _container.GetOrCreateVoxelGrid(
+        return _neighbors[NeighborIndex(offset)] ??= _container.GetOrCreateVoxelGrid(
             ChunkPosition + offset
         );
     }
 
     private VoxelGrid? TryGetNeighbor(Vector3I offset)
     {
-        return _neighbors[NeighborIndex(offset)]
-            ?? (
-                _neighbors[NeighborIndex(offset)] = _container.TryGetVoxelGrid(
-                    ChunkPosition + offset
-                )
-            );
+        int i = NeighborIndex(offset);
+        return _neighbors[i] ??= _neighbors[i] = _container.TryGetVoxelGrid(ChunkPosition + offset);
     }
 
     private static int NeighborIndex(Vector3I offset)
     {
-        var index = offset.X + 1 + (offset.Y + 1) * 3 + (offset.Z + 1) * 9;
+        return NeighborIndex(offset.X, offset.Y, offset.Z);
+    }
+
+    private static int NeighborIndex(int x, int y, int z)
+    {
+        var index = x + 1 + (y + 1) * 3 + (z + 1) * 9;
 
         // Skip the center chunk.
         return index > 13 ? index - 1 : index;

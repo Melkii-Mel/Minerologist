@@ -101,7 +101,6 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         var depth = -worldPosition.Y;
 
         var maxCellHealth = CellHealth(depth);
-
         var minHealth = Config.Instance.GenerationConfig.MinCellHealthMultiplier * maxCellHealth;
 
         if (onlyIfContactsAir)
@@ -151,7 +150,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         chunk.VoxelGrid.Set(localPos, newHealth);
         InvokeOrCollectChunkChange(chunk.VoxelGrid.ChunkPosition, notify);
 
-        foreach (var neighbor in chunk.VoxelGrid.ExistingNeighbors())
+        foreach (var neighbor in chunk.VoxelGrid.InvalidatedNeighbors)
         {
             if (
                 neighbor?.UpdateBorderIfInvalid()
@@ -161,6 +160,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
                 InvokeOrCollectChunkChange(neighbor.ChunkPosition, notify);
             }
         }
+        chunk.VoxelGrid.InvalidatedNeighbors.Clear();
 
         if (
             healthJustDepleted
