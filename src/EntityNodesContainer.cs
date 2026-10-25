@@ -1,17 +1,16 @@
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using Godot;
 
 public class EntityNodesContainer : GodotNodeContainer
 {
     private readonly ConcurrentDictionary<Vector3I, Spatial> _entitiesChunkCache = [];
-    private readonly HashSet<Vector3I> _queueRemove = [];
+    private readonly ConcurrentDictionary<Vector3I, byte> _queueRemove = [];
 
     public void Load(Vector3I chunkPosition, EntitiesChunk entities)
     {
         DeferOrCall(() =>
         {
-            if (_queueRemove.Remove(chunkPosition))
+            if (_queueRemove.TryRemove(chunkPosition, out _))
             {
                 return;
             }
@@ -45,7 +44,7 @@ public class EntityNodesContainer : GodotNodeContainer
         }
         else
         {
-            _queueRemove.Add(chunkPosition);
+            _queueRemove.TryAdd(chunkPosition, 0);
         }
     }
 }
