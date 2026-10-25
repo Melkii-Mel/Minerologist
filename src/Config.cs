@@ -217,6 +217,7 @@ public sealed record ExpConfig
     public string JumpVelocity { get; init; } = "25 + lvl * 2";
     public string MaxVelocity { get; init; } = "15 + lvl * 2";
     public string DigConeRadius { get; init; } = "20";
+    public string DigOutDamage { get; init; } = "0.3";
     public Dictionary<string, float> ExpPerType { get; init; } =
         new() { ["Skeleton"] = 10, ["Others"] = 20 };
     public Dictionary<string, float> ExpOverrides { get; init; } = [];
@@ -241,6 +242,7 @@ public sealed record LevelFormulas
     public LevelFormula JumpVelocity { get; private set; }
     public LevelFormula MaxVelocity { get; private set; }
     public LevelFormula DigConeRadius { get; private set; }
+    public LevelFormula DigOutDamage { get; internal set; }
 
     public LevelFormulas(ExpConfig c)
     {
@@ -253,6 +255,7 @@ public sealed record LevelFormulas
         JumpVelocity = new(c.JumpVelocity);
         MaxVelocity = new(c.MaxVelocity);
         DigConeRadius = new(c.DigConeRadius);
+        DigOutDamage = new(c.DigOutDamage);
     }
 }
 

@@ -37,8 +37,13 @@ public static class AudioCollection
         }
     }
 
-    public static AudioStream RandomSound(string id, Random? rng = default)
+    public static AudioStream? RandomSound(string id, Random? rng = default)
     {
+        if (!Sounds.ContainsKey(id))
+        {
+            GD.Print($"Audio `{id}` not found");
+            return null;
+        }
         return RandomUtils.ChooseRandomItem(Sounds[id], rng ?? _rng);
     }
 
@@ -48,7 +53,7 @@ public static class AudioCollection
         return SoundPlayer.Play(sound);
     }
 
-    public static void StopPlayingSound(AudioPlayer player)
+    public static void StopPlayingSound(AudioPlayer? player)
     {
         SoundPlayer.StopPlaying(player);
     }

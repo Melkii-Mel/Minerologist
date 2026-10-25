@@ -64,14 +64,7 @@ public class Player
         AdjustVelocity(UpdatePosition());
         UpdateVVelocity(delta);
         UpdateLastGroundTime();
-        if (Digging)
-        {
-            _digger.Dig(delta);
-        }
-        else
-        {
-            _digger.Idle(delta);
-        }
+        _digger.Update(delta, Digging);
     }
 
     private void UpdateLastGroundTime()

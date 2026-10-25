@@ -43,6 +43,8 @@ public class PlayerDigger
 
     public bool _isIdle = true;
 
+    private readonly DiggerSoundPlayer _soundPlayer;
+
     public PlayerDigger(
         Node parent,
         Camera camera,
@@ -61,11 +63,26 @@ public class PlayerDigger
         _terrain = terrain;
 
         new PlayerDiggerVisuals(Session, () => _isIdle);
+        _soundPlayer = new DiggerSoundPlayer(session);
+    }
+
+    public void Update(float delta, bool digging)
+    {
+        _isIdle = !digging;
+        if (digging)
+        {
+            Dig(delta);
+            _soundPlayer.Start();
+        }
+        else
+        {
+            Idle(delta);
+            _soundPlayer.Stop();
+        }
     }
 
     public void Dig(float delta)
     {
-        _isIdle = false;
         _damageTimer += delta;
         _digTimer += delta;
         if (_damageTimer < DamageTickDuration)
@@ -81,6 +98,7 @@ public class PlayerDigger
         var direction = -_camera.GlobalTransform.basis.z.Normalized();
         var rayTo = rayFrom + direction * DigRange;
         var pipeHit = false;
+        var hitSomething = false;
 
         foreach (
             var rayHit in ConeCaster.Cast(
@@ -92,27 +110,40 @@ public class PlayerDigger
             )
         )
         {
+            hitSomething = true;
             if (rayHit.Collider.IsInGroup(NodeGroups.TERRAIN))
             {
+                _soundPlayer.StateGround();
                 Dig(rayHit.Position, delta);
             }
             else if (rayHit.Collider.IsInGroup(NodeGroups.DIGGABLE))
             {
+                _soundPlayer.StateDiggable();
                 DigDiggable(rayHit, delta);
             }
             else if (rayHit.Collider.IsInGroup(NodeGroups.PIPE))
             {
+                _soundPlayer.StatePush();
                 DepositItemsStart?.Invoke((MeshInstance)rayHit.Collider.GetParent());
                 pipeHit = true;
             }
             else if (rayHit.Collider.IsInGroup(NodeGroups.BORDER))
             {
+                _soundPlayer.StateWall();
                 Dig(rayHit.Position, delta * BorderDigDamageMultiplier);
+            }
+            else
+            {
+                _soundPlayer.StateAir();
             }
         }
         if (!pipeHit)
         {
             DepositItemsStop?.Invoke();
+        }
+        if (!hitSomething)
+        {
+            _soundPlayer.StateAir();
         }
     }
 
@@ -120,7 +151,6 @@ public class PlayerDigger
     {
         DepositItemsStop?.Invoke();
         _digTimer = 0;
-        _isIdle = true;
     }
 
     private void DigDiggable(RayHit rayHit, float delta)
@@ -143,7 +173,7 @@ public class PlayerDigger
         {
             Dig(
                 entitySupportingTiles[_rng.Next(entitySupportingTiles.Count())].ToGdVector3(),
-                delta
+                delta * (float)ExpConfig.F.DigOutDamage.Calculate(Level)
             );
         }
     }

@@ -14,7 +14,14 @@ public static class SoundPlayer
         _parent = parent;
     }
 
-    public static AudioPlayer Play(AudioStream stream, bool loop = false)
+    public static AudioPlayer CreateUnmanagedPlayer(AudioStream? stream = null)
+    {
+        var player = CreatePlayer(false, false);
+        player.Stream = stream;
+        return player;
+    }
+
+    public static AudioPlayer Play(AudioStream? stream, bool loop = false)
     {
         var player = ConsumeOrCreatePlayer();
         player.Stream = stream;
@@ -22,9 +29,9 @@ public static class SoundPlayer
         return player;
     }
 
-    public static void StopPlaying(AudioPlayer player)
+    public static void StopPlaying(AudioPlayer? player)
     {
-        if (player.Playing)
+        if (player?.Playing ?? false)
         {
             player.Stop();
             FreePlayer(player);
@@ -37,7 +44,7 @@ public static class SoundPlayer
 
         if (i == -1)
         {
-            return CreatePlayer(false);
+            return CreatePlayer(false, true);
         }
 
         var player = _freePlayers[i];
@@ -46,12 +53,15 @@ public static class SoundPlayer
         return player;
     }
 
-    private static AudioPlayer CreatePlayer(bool free)
+    private static AudioPlayer CreatePlayer(bool free, bool listenFinished)
     {
         AudioPlayer player = new();
         _players.Add(player);
 
-        player.PlaybackFinished += () => FreePlayer(player);
+        if (listenFinished)
+        {
+            player.PlaybackFinished += () => FreePlayer(player);
+        }
 
         var parent =
             _parent
