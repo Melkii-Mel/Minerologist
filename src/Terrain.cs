@@ -134,8 +134,11 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
 
         var newHealth = currentHealth + delta;
 
-        var healthDepleted =
-            newHealth < Config.Instance.GenerationConfig.CellThresholdMultiplier * maxCellHealth;
+        float healthThreshold =
+            Config.Instance.GenerationConfig.CellThresholdMultiplier * maxCellHealth;
+        var healthDepleted = newHealth < healthThreshold;
+
+        var healthJustDepleted = healthDepleted && currentHealth > healthThreshold;
 
         if (healthDepleted)
         {
@@ -161,7 +164,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         }
 
         if (
-            healthDepleted
+            healthJustDepleted
             && GlobalTileSupportedEntitiesIndex.TryGetValue(worldPosition, out var entities)
         )
         {
