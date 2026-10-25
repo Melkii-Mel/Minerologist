@@ -90,6 +90,7 @@ public record DiggerConfig
     public float DamageScaleMin { get; init; } = .5f;
     public float DamageScaleMax { get; init; } = 2;
     public float DamageTicksPerSecond { get; init; } = 40;
+    public float DiggingBuildupSeconds { get; init; } = 0.5f;
 }
 
 public record RemnantsSizeConfig
@@ -160,16 +161,24 @@ public sealed record PlayerStatsConfig
 
 public sealed record PlayerVisualsConfig
 {
-    public string ToolModel { get; init; } = "Tools.Default.Plane";
-    public Vector3I ToolRotationDegrees { get; init; } = new(180, 0, 0);
-    public float ToolScale { get; init; } = 0.8f;
-    public Vector3I ToolOffset { get; init; } = Vector3I.Zero;
     public float SwingAmplitudeX { get; init; } = 0.0f;
     public float SwingAmplitudeY { get; init; } = 0.0f;
     public float SwingFrequency { get; init; } = 1.0f;
 }
 
-public sealed record PlayerDiggingStats;
+public sealed record ToolVisualsConfig
+{
+    public string ToolModel { get; init; } = "Tools.Default.Plane";
+    public Vector3I ToolRotationDegrees { get; init; } = new(0, 180, 0);
+    public float ToolScale { get; init; } = 0.8f;
+    public Vector3I ToolOffset { get; init; } = new(80, -160, -180);
+}
+
+public sealed record ToolAnimationConfig
+{
+    public float RotationIdleDegrees { get; init; } = 45;
+    public float RotationDurationSeconds { get; init; } = 0.5f;
+}
 
 public sealed record NoiseConfig
 {
