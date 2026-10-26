@@ -19,6 +19,7 @@ public class PlayerDiggerVisuals
     private Vector3 _pivotInitialPosition;
     private Vector3 _stateRotationDegrees;
     private Vector3 _stateOffset;
+    private Vector3 _shakeOffset;
 
     private readonly Func<bool> _isIdle;
 
@@ -50,7 +51,7 @@ public class PlayerDiggerVisuals
         );
 
         _pivot.RotationDegrees = _stateRotationDegrees;
-        _pivot.Position = _pivotInitialPosition + _stateOffset;
+        _pivot.Position = _pivotInitialPosition + _stateOffset + _shakeOffset;
     }
 
     private void CreateModel()

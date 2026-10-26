@@ -6,6 +6,8 @@ using Godot;
 
 public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContainer
 {
+    public static Session _session;
+
     public static readonly int OffsetX = -Chunk.Size.X / 2;
     public static readonly int OffsetY = -Chunk.Size.Y / 2;
     public static readonly int OffsetZ = -Chunk.Size.Z / 2;
@@ -39,8 +41,10 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
     public float CellHealth(int depth) =>
         Config.Instance.GenerationConfig.F.CellHealth.Calculate(depth);
 
-    public Terrain(Node parent, int? seed = null)
+    public Terrain(Node parent, Session session, int? seed = null)
     {
+        _session = session;
+
         _worldChunkCoordinatesConverter = new(Config.Instance.GenerationConfig.ChunkSize);
 
         _rng = seed.HasValue ? new(seed.Value) : new();
@@ -132,11 +136,14 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
 
         var newHealth = currentHealth + delta;
 
-        float healthThreshold =
-            Config.Instance.GenerationConfig.CellThresholdMultiplier * maxCellHealth;
-        var healthDepleted = newHealth < healthThreshold;
+        float healthThreshold = Mathf.Max(
+            Config.Instance.GenerationConfig.CellThresholdMultiplier * maxCellHealth,
+            0
+        );
 
-        var healthJustDepleted = healthDepleted && currentHealth > healthThreshold;
+        var healthDepleted = newHealth <= healthThreshold;
+
+        var healthJustDepleted = healthDepleted && currentHealth >= healthThreshold;
 
         if (healthDepleted)
         {
@@ -145,6 +152,17 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
                 Mathf.Min(minHealth - 1, Config.Instance.MarchingCubesOptions.IsoLevel),
                 Config.Instance.MarchingCubesOptions.IsoLevel
             );
+        }
+
+        if (!healthDepleted && _rng.NextDouble() > 0.8 || healthJustDepleted)
+        {
+            var particlesSettings = new SimpleParticles.Settings()
+            {
+                Direction =
+                    _session.Player.PlayerNode.Center.GlobalPosition - worldPosition.ToGdVector3(),
+                Spread = 35,
+            };
+            SimpleParticles.Emit(worldPosition.ToGdVector3());
         }
 
         chunk.VoxelGrid.Set(localPos, newHealth);

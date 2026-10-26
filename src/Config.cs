@@ -53,7 +53,7 @@ public record ConeCasterConfig
 
 public record PipeConfig
 {
-    public float UnitHeight { get; init; } = 100;
+    public float UnitHeight { get; init; } = 25;
     public float Scale { get; init; } = 3;
     public float GenerationChance { get; init; } = 1;
     public bool AlwaysGenerateTop { get; init; } = true;
@@ -85,12 +85,12 @@ public record DepositConfigFormulas
 
 public record DiggerConfig
 {
-    public float BorderDigDamageMultiplier { get; init; } = .2f;
-    public float DistanceDamageScaling { get; init; } = .7f;
-    public float DamageChance { get; init; } = .8f;
-    public float DamageScaleMin { get; init; } = .5f;
-    public float DamageScaleMax { get; init; } = 2;
-    public float DamageTicksPerSecond { get; init; } = 40;
+    public float BorderDigDamageMultiplier { get; init; } = 0.2f;
+    public float DistanceDamageScaling { get; init; } = 0.7f;
+    public float DamageChance { get; init; } = 0.8f;
+    public float DamageScaleMin { get; init; } = 0.5f;
+    public float DamageScaleMax { get; init; } = 2.0f;
+    public float DamageTicksPerSecond { get; init; } = 40.0f;
     public float DiggingBuildupSeconds { get; init; } = 0.5f;
 }
 
@@ -117,6 +117,7 @@ public sealed record ControlsConfig
     public int CameraMaxAngleDegreesY { get; init; } = 90;
     public int CoyoteTime { get; init; } = 250;
     public int BufferTime { get; init; } = 250;
+    public float RestartDuration { get; init; } = 3;
 }
 
 public sealed record GenerationConfig
@@ -124,11 +125,11 @@ public sealed record GenerationConfig
     public NoiseConfig NoiseConfig { get; init; } = new();
     public int HoleRadiusChunks { get; init; } = 2;
     public bool XRay { get; init; } = false;
-    public Vector3I ChunkSize { get; init; } = new(16, 16, 16);
-    public string CellHealth { get; init; } = "100 * pow(1.3, depth / 16)";
-    public int VerticalGenerationDistanceChunks { get; init; } = 3;
+    public Vector3I ChunkSize { get; init; } = new(8, 8, 8);
+    public string CellHealth { get; init; } = "50 * pow(2, (depth / 8 - 1))";
+    public int VerticalGenerationDistanceChunks { get; init; } = 6;
     public float BorderPadding { get; init; } = 0.8f;
-    public float MinCellHealthMultiplier { get; init; } = -1;
+    public float MinCellHealthMultiplier { get; init; } = -1.0f;
     public float CellThresholdMultiplier { get; init; } = 0.05f;
 
     [TomlIgnore]
@@ -157,7 +158,7 @@ public sealed record PlayerStatsConfig
     public float Deceleration { get; init; } = 400.0f;
     public FallingObjectConfig FallingObjectConfig { get; init; } = new();
     public bool StopOnSlope { get; init; } = true;
-    public float MaxFloorAngle { get; init; } = 45;
+    public float MaxFloorAngle { get; init; } = 45.0f;
 }
 
 public sealed record PlayerVisualsConfig
@@ -180,8 +181,8 @@ public sealed record DiggerAnimationConfig
 {
     public Vector3I AnimationPivotOffset { get; init; } = new(0, 120, 90);
     public Vector3I OffsetIdle { get; init; } = new(20, -30, 20);
-    public Vector3I RotationIdleDegrees { get; init; } = new(-20, -20, 0);
-    public float RotationDurationSeconds { get; init; } = 0.5f;
+    public Vector3I RotationIdleDegrees { get; init; } = new(-740, -20, 0);
+    public float RotationDurationSeconds { get; init; } = 0.25f;
 }
 
 public sealed record NoiseConfig
@@ -189,7 +190,7 @@ public sealed record NoiseConfig
     public int Octaves { get; init; } = 2;
     public float Period { get; init; } = 0.5f;
     public float Persistence { get; init; } = 0.8f;
-    public float SpawnThreshold { get; init; } = 0.75f;
+    public float SpawnThreshold { get; init; } = 0.76f;
     public float Lacunarity { get; init; } = 10.0f;
 }
 
@@ -209,13 +210,13 @@ public sealed record FallingObjectConfig
 public sealed record ExpConfig
 {
     public string ExpReq { get; init; } = "30 * pow(lvl, 1.5)";
-    public string DigDamage { get; init; } = "400 * pow(1.3, lvl)";
-    public string DigArea { get; init; } = "1 + log(lvl, 4)";
+    public string DigDamage { get; init; } = "200 * pow(1.3, lvl)";
+    public string DigArea { get; init; } = "0.5 + log(lvl, 4)";
     public string DigRange { get; init; } = "5 + lvl / 2";
-    public string DigOutSpeed { get; init; } = "1 + log(lvl, 2)";
+    public string DigOutSpeed { get; init; } = "0.5 + log(lvl, 2)";
     public string ExpMultiplier { get; init; } = "1";
-    public string JumpVelocity { get; init; } = "25 + lvl * 2";
-    public string MaxVelocity { get; init; } = "15 + lvl * 2";
+    public string JumpVelocity { get; init; } = "20 + lvl * 2";
+    public string MaxVelocity { get; init; } = "10 + lvl * 1.5";
     public string DigConeRadius { get; init; } = "20";
     public string DigOutDamage { get; init; } = "0.3";
     public Dictionary<string, float> ExpPerType { get; init; } =

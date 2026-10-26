@@ -115,7 +115,7 @@ public class DiggerSoundPlayer
             return;
         }
         _stuck = true;
-        RandomSound(DiggerStuck);
+        RandomSound(DiggerStuck, 0);
     }
 
     private void UnstuckIfStuck()
@@ -125,7 +125,7 @@ public class DiggerSoundPlayer
             return;
         }
         _stuck = false;
-        RandomSound(DiggerUnstuck);
+        RandomSound(DiggerUnstuck, 0);
     }
 
     private const float MotorPitchTransitionSpeed = 0.75f;
@@ -184,7 +184,7 @@ public class DiggerSoundPlayer
         player.PitchScale = Mathf.Max(Mathf.Abs(_currentMotorPitch), 0.001f);
         player.VolumeDb = VolumeToDb(
             Mathf.Max(
-                Mathf.Min(Mathf.Abs(_currentMotorPitch * 2), 1),
+                Mathf.Min(Mathf.Abs(_currentMotorPitch * 1.5f), 0.4f),
                 _targetMotorPitch < 0 ? 1 : 0
             )
         );

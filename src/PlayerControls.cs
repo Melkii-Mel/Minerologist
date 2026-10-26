@@ -7,12 +7,32 @@ public class PlayerControls
     private int ControllerId => _session.SessionContainer.ControllerId;
     private bool _handleInputs = false;
 
+    private float RestartDuration => Config.Instance.ControlsConfig.RestartDuration;
+    private float _restartDuration = 0;
+
     public PlayerControls(Player player)
     {
         _session = player.Session;
         _player = player;
 
-        _session.SessionContainer.Root.Input += OnInput;
+        _session.Input += OnInput;
+        _session.Update += OnUpdate;
+    }
+
+    private void OnUpdate(float delta)
+    {
+        if (Input.IsKeyPressed((int)KeyList.R))
+        {
+            _restartDuration += delta;
+            if (_restartDuration > RestartDuration)
+            {
+                _session.RestartSession();
+            }
+        }
+        else
+        {
+            _restartDuration = 0;
+        }
     }
 
     public void StartInputHandling()

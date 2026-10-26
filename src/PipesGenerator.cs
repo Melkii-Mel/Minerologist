@@ -28,7 +28,7 @@ public class Pipes(Node parent, MeshInstance pipeMeshInstance, Random rng)
         instance.Scale = new(Scale, Scale, Scale);
         instance.Position = new(
             worldPosition.X + Offset.x,
-            UnitHeight * verticalGlobalPosition + OffsetY,
+            verticalGlobalPosition + OffsetY,
             worldPosition.Z + Offset.y
         );
         var angle = Angle(verticalGlobalPosition);

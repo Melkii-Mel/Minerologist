@@ -54,6 +54,11 @@ public class Inventory
             InventoryUpdated?.Invoke(new SlotMoved(i + removedCount, i));
         }
     }
+
+    public void Clear()
+    {
+        _itemStacks.Clear();
+    }
 }
 
 public record struct ItemStack(EntityPrefab Item);

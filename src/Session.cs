@@ -37,7 +37,7 @@ public class Session
         Root3d = root3d;
         RootUi = rootUi;
 
-        Terrain = new Terrain(root3d);
+        Terrain = new Terrain(root3d, this);
         Terrain.EntityRemoved += OnEntityRemove;
         GD.Print(string.Join(", ", MeshCollection.OtherMeshes.Keys));
         Border = new Border(root3d, MeshCollection.OtherMeshes["границы.Cylinder001"]);
@@ -69,6 +69,8 @@ public class Session
             genConfig.VerticalGenerationDistanceChunks,
             Terrain
         );
+
+        SimpleParticles.Initialize(root3d, u => Update += u);
 
         Update += _ =>
         {
@@ -102,7 +104,7 @@ public class Session
             {
                 entity.MeshInstance.QueueFree();
                 Inventory.AddItem(entity);
-                AudioCollection.PlayRandomSound(Sounds.Collect);
+                // AudioCollection.PlayRandomSound(Sounds.Collect);
             }
         );
         Animations.AddAnimation(
