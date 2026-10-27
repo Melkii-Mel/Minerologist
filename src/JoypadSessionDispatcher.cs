@@ -18,7 +18,7 @@ public class JoypadSessionDispatcher<TSession>(
 {
     private readonly List<TSession> _disconnectedSessions = [];
     private readonly Dictionary<int, TSession> _deviceIdSessionMap = [];
-    private readonly List<TSession> _sessions = [];
+    public readonly List<TSession> Sessions = [];
     private readonly Node _root = root;
     private readonly Func<int, TSession> _createSession = createSession;
     private readonly bool _includeKeyboardInput = includeKeyboardInput;
@@ -74,8 +74,8 @@ public class JoypadSessionDispatcher<TSession>(
         else
         {
             session = _createSession(deviceId);
-            _sessions.Add(session);
-            SessionAdded?.Invoke([.. _sessions], session);
+            Sessions.Add(session);
+            SessionAdded?.Invoke([.. Sessions], session);
         }
         _deviceIdSessionMap.Add(deviceId, session);
     }

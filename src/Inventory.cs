@@ -5,7 +5,7 @@ public class Inventory
 {
     private readonly List<ItemStack?> _itemStacks = [];
 
-    public event Action<IInventoryAction>? InventoryUpdated;
+    public event Action<InventoryActionSlotSet>? InventoryUpdated;
 
     public void AddItem(Entity entity)
     {
@@ -13,16 +13,15 @@ public class Inventory
         var itemStack = new ItemStack(prefab);
         for (var i = 0; i < _itemStacks.Count; i++)
         {
-            var stack = _itemStacks[i];
-            if (stack == null)
+            if (_itemStacks[i] == null)
             {
-                _itemStacks[i] = stack;
-                InventoryUpdated?.Invoke(new SlotAdded(i));
+                _itemStacks[i] = itemStack;
+                InventoryUpdated?.Invoke(new InventoryActionSlotSet(i, itemStack));
                 return;
             }
         }
         _itemStacks.Add(itemStack);
-        InventoryUpdated?.Invoke(new SlotAdded(_itemStacks.Count - 1));
+        InventoryUpdated?.Invoke(new InventoryActionSlotSet(_itemStacks.Count - 1, itemStack));
     }
 
     public ItemStack? FlushItem()
@@ -34,7 +33,7 @@ public class Inventory
         ShiftItemsToFillFirstSlot();
         var removed = _itemStacks[0];
         _itemStacks[0] = null;
-        InventoryUpdated?.Invoke(new SlotRemoved(0, removed!.Value));
+        InventoryUpdated?.Invoke(new InventoryActionSlotSet(0, null));
         ShiftItemsToFillFirstSlot();
         return removed;
     }
@@ -42,6 +41,11 @@ public class Inventory
     public void ShiftItemsToFillFirstSlot()
     {
         var removedCount = 0;
+
+        if (_itemStacks[0] != null)
+        {
+            return;
+        }
 
         while (_itemStacks.Count > 0 && _itemStacks[0] == null)
         {
@@ -51,7 +55,8 @@ public class Inventory
 
         for (var i = 0; i < _itemStacks.Count; i++)
         {
-            InventoryUpdated?.Invoke(new SlotMoved(i + removedCount, i));
+            InventoryUpdated?.Invoke(new InventoryActionSlotSet(i + removedCount, null));
+            InventoryUpdated?.Invoke(new InventoryActionSlotSet(i, _itemStacks[i]));
         }
     }
 
@@ -63,10 +68,4 @@ public class Inventory
 
 public record struct ItemStack(EntityPrefab Item);
 
-public interface IInventoryAction;
-
-public record SlotAdded(int SlotIndex) : IInventoryAction;
-
-public record SlotRemoved(int SlotIndex, ItemStack LastContents) : IInventoryAction;
-
-public record SlotMoved(int OldSlotIndex, int NewSlotIndex) : IInventoryAction;
+public record InventoryActionSlotSet(int SlotIndex, ItemStack? ItemStack);

@@ -26,7 +26,7 @@ public class PlayerControls
             _restartDuration += delta;
             if (_restartDuration > RestartDuration)
             {
-                _session.RestartSession();
+                _session.SessionContainer.Restart();
             }
         }
         else

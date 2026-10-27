@@ -11,6 +11,7 @@ public class Session
     public readonly Upgrades Upgrades;
     public float TimeScale { get; set; } = 1;
     public InventoryUi InventoryUi { get; }
+    public Crosshair Crosshair { get; }
 
     public readonly TerrainStreamer<VoxelGrid, GodotMeshBuilder> TerrainStreamer;
     public readonly Terrain Terrain;
@@ -29,7 +30,8 @@ public class Session
         Control rootUi,
         Random rng,
         Action<Action<float>> bindUpdate,
-        Action<Action<float>> bindPhysicsUpdate
+        Action<Action<float>> bindPhysicsUpdate,
+        Action<Action<InputEvent>> bindInput
     )
     {
         SessionContainer = container;
@@ -51,15 +53,19 @@ public class Session
 
         Inventory.InventoryUpdated += OnInventoryUpdate;
 
-        InventoryUi = new();
+        InventoryUi = new(this);
+        Crosshair = new(this);
 
         Upgrades = new();
 
-        ItemsDepositor = new(bindUpdate, Inventory, Upgrades);
+        ItemsDepositor = new(u => Update += u, Inventory, Upgrades);
         ItemsDepositorAnimator = new(root3d, ItemsDepositor, Player.PlayerNode.Center);
+
+        var _ = new PlayerLevelUi(this);
 
         bindUpdate(OnUpdate);
         bindPhysicsUpdate(OnPhysicsUpdate);
+        bindInput(OnInput);
 
         var genConfig = Config.Instance.GenerationConfig;
 
@@ -80,8 +86,6 @@ public class Session
             Pipes.Update(Player.VerticalOriginPosition);
             //GD.Print(duration.TotalMilliseconds());
         };
-
-        RestartSession();
     }
 
     private void OnDepositItemsStart(MeshInstance pipe)
@@ -114,7 +118,7 @@ public class Session
         Animations.AddAnimation(new AnimationScale(entity.MeshInstance, 0.05f));
     }
 
-    private void OnInventoryUpdate(IInventoryAction action)
+    private void OnInventoryUpdate(InventoryActionSlotSet action)
     {
         InventoryUi.Update(action);
     }
@@ -135,20 +139,8 @@ public class Session
         PhysicsUpdate?.Invoke(delta);
     }
 
-    public void RestartSession()
+    private void OnInput(InputEvent e)
     {
-        Player.ResetPlayerStats();
-        ResetUpgrades();
-        ClearInventory();
-        ResetTerrain();
+        Input?.Invoke(e);
     }
-
-    private void ResetUpgrades()
-    {
-        Upgrades.Reset();
-    }
-
-    private void ClearInventory() { }
-
-    private void ResetTerrain() { }
 }

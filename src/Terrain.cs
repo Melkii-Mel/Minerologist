@@ -442,6 +442,8 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
             return GetOrGenerateVoxelGrid(chunkPosition);
         }
     }
+
+    public void UnloadAll() { }
 }
 
 public class Chunk(VoxelGrid voxelGrid, EntitiesChunk? entities)

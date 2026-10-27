@@ -34,6 +34,7 @@ public class DiggerSoundPlayer
 
         MotorPitchSet(PitchOff);
         ShiftMotorPitch(0);
+        AdjustAirflow(0);
     }
 
     public void Update(float delta)
@@ -195,11 +196,14 @@ public class DiggerSoundPlayer
         v = v > to ? Mathf.Max(v - delta, to) : Mathf.Min(v + delta, to);
     }
 
+    private const float MaxRockIngestionAccumulation = 5;
+
     private void IngestRocks(float delta)
     {
         _rockIngestionTimer += delta;
         if (_rockIngestionSpeed == 0)
         {
+            _rockIngestionTimer = Mathf.Min(_rockIngestionTimer, MaxRockIngestionAccumulation);
             return;
         }
         var duration = 1 / _rockIngestionSpeed;

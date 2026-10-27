@@ -65,6 +65,7 @@ public class Player
         UpdateVVelocity(delta);
         UpdateLastGroundTime();
         _digger.Update(delta, Digging);
+        _playerCameraNode.Fov = ControlsConfig.Fov;
     }
 
     private void UpdateLastGroundTime()

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
@@ -69,9 +70,11 @@ public class PlayerDigger
     public void Update(float delta, bool digging)
     {
         _isIdle = !digging;
+        var hits = Hit().ToArray();
+        Session.Crosshair.Active = digging;
         if (digging)
         {
-            Dig(delta);
+            Dig(delta, hits);
             _soundPlayer.Start();
         }
         else
@@ -81,7 +84,7 @@ public class PlayerDigger
         }
     }
 
-    public void Dig(float delta)
+    public void Dig(float delta, IEnumerable<RayHit> hits)
     {
         _damageTimer += delta;
         _digTimer += delta;
@@ -94,21 +97,10 @@ public class PlayerDigger
         var damageMultiplier = Mathf.Min(1, _digTimer / BuildupSeconds);
         delta *= damageMultiplier;
 
-        var rayFrom = _camera.GlobalPosition;
-        var direction = -_camera.GlobalTransform.basis.z.Normalized();
-        var rayTo = rayFrom + direction * DigRange;
         var pipeHit = false;
         var hitSomething = false;
 
-        foreach (
-            var rayHit in ConeCaster.Cast(
-                _camera.GetWorld(),
-                rayFrom,
-                rayTo,
-                Mathf.Deg2Rad(DigConeRadius) / 2,
-                exclude: [_playerCollider]
-            )
-        )
+        foreach (var rayHit in hits)
         {
             hitSomething = true;
             if (rayHit.Collider.IsInGroup(NodeGroups.TERRAIN))
@@ -151,6 +143,59 @@ public class PlayerDigger
     {
         DepositItemsStop?.Invoke();
         _digTimer = 0;
+    }
+
+    private IEnumerable<RayHit> Hit()
+    {
+        var rayFrom = _camera.GlobalPosition;
+        var direction = -_camera.GlobalTransform.basis.z.Normalized();
+        var rayTo = rayFrom + direction * DigRange;
+
+        var hitSomething = false;
+
+        foreach (
+            var rayHit in ConeCaster.Cast(
+                _camera.GetWorld(),
+                rayFrom,
+                rayTo,
+                Mathf.Deg2Rad(DigConeRadius) / 2,
+                exclude: [_playerCollider]
+            )
+        )
+        {
+            hitSomething = true;
+            if (rayHit.Collider.IsInGroup(NodeGroups.TERRAIN))
+            {
+                SetCrosshairMode(CrosshairMode.Ground);
+            }
+            else if (rayHit.Collider.IsInGroup(NodeGroups.DIGGABLE))
+            {
+                SetCrosshairMode(CrosshairMode.Diggable);
+            }
+            else if (rayHit.Collider.IsInGroup(NodeGroups.PIPE))
+            {
+                SetCrosshairMode(CrosshairMode.Pipe);
+            }
+            else if (rayHit.Collider.IsInGroup(NodeGroups.BORDER))
+            {
+                SetCrosshairMode(CrosshairMode.Air);
+            }
+            else
+            {
+                SetCrosshairMode(CrosshairMode.Air);
+            }
+            yield return rayHit;
+        }
+
+        if (!hitSomething)
+        {
+            SetCrosshairMode(CrosshairMode.Air);
+        }
+
+        void SetCrosshairMode(CrosshairMode mode)
+        {
+            Session.Crosshair.CrosshairMode = mode;
+        }
     }
 
     private void DigDiggable(RayHit rayHit, float delta)

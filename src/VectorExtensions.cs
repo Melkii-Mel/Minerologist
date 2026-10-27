@@ -12,6 +12,11 @@ public static class VectorExtensions
         return a.LengthSquared() > b.LengthSquared() ? a : b;
     }
 
+    public static float Max(this Vector3 a)
+    {
+        return Mathf.Max(a.x, Mathf.Max(a.y, a.z));
+    }
+
     public static Vector2 Min(this Vector2 a, Vector2 b)
     {
         return a.LengthSquared() < b.LengthSquared() ? a : b;

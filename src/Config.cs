@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Godot;
 using Tomlyn.Serialization;
 
 public sealed record Config
@@ -18,6 +19,9 @@ public sealed record Config
     public PipeConfig PipeConfig { get; init; } = new();
     public ConeCasterConfig ConeCasterConfig { get; init; } = new();
     public DiggerVisualsConfig DiggerVisualsConfig { get; init; } = new();
+    public ExpUiConfig ExpUiConfig { get; init; } = new();
+    public CrosshairConfig CrosshairConfig { get; init; } = new();
+    public MuseumConfig MuseumConfig { get; init; } = new();
 
     private static ConfigLoader? _configLoader;
     private static Config? _instance;
@@ -45,6 +49,80 @@ public sealed record Config
     }
 }
 
+public record MuseumConfig
+{
+    public MuseumBuildingConfig MuseumBuildingConfig { get; init; } = new();
+    public MuseumCameraConfig MuseumCameraConfig { get; internal set; }
+}
+
+public record MuseumCameraConfig
+{
+    public Vector3I Offset { get; init; } = Vector3I.Zero;
+}
+
+public record MuseumBuildingConfig
+{
+    public Vector3I Offset { get; init; } = Vector3I.Zero;
+}
+
+public record CrosshairConfig
+{
+    public Dictionary<
+        string,
+        Dictionary<string, CrosshairPartState>
+    > CrosshairModeConfigs { get; init; } =
+        new()
+        {
+            ["Air"] = new()
+            {
+                ["Left"] = new(0, 0, 45),
+                ["Right"] = new(0, 0, -45),
+                ["Top"] = new(0, 0, -45),
+                ["Bottom"] = new(0, 0, 45),
+            },
+            ["Diggable"] = new()
+            {
+                ["Left"] = new(-1.1f, 0, 0),
+                ["Right"] = new(1.1f, 0, 0),
+                ["Top"] = new(0, -1.1f, 90),
+                ["Bottom"] = new(0, 1.1f, 90),
+            },
+            ["Ground"] = new()
+            {
+                ["Left"] = new(-0.6f, -0.1f, -90),
+                ["Right"] = new(0.6f, 0.1f, -90),
+                ["Top"] = new(0.1f, -0.6f, -180),
+                ["Bottom"] = new(-0.1f, 0.6f, -180),
+            },
+            ["Pipe"] = new()
+            {
+                ["Left"] = new(0, 0, 0),
+                ["Right"] = new(0, 0, 0),
+                ["Top"] = new(0, 0, 0),
+                ["Bottom"] = new(0, 0, 0),
+            },
+        };
+
+    public float RelativeTransitionSpeed { get; init; } = 10;
+    public float MinRotationSpeedDegrees { get; init; } = 30;
+    public float MinOffsetTransitionSpeed { get; init; } = 1;
+    public float MinScaleTransitionSpeed { get; init; } = 1;
+    public Vector2 CrosshairPartSize { get; init; } = new(100, 15);
+    public float ActiveScale { get; init; } = 0.8f;
+    public float InactiveScale { get; init; } = 0.5f;
+}
+
+public record ExpUiConfig
+{
+    public float LvlVelocity { get; init; } = 1;
+    public float MinVelocity { get; init; } = 0.01f;
+    public string BgColor { get; init; } = "#DBA25D";
+    public string MainColor { get; init; } = "#FFDF94";
+    public string TextColor { get; init; } = "#4A1E00";
+    public float Radius { get; init; } = 30;
+    public float Width { get; init; } = 8;
+}
+
 public record ConeCasterConfig
 {
     public int Rings { get; init; } = 3;
@@ -53,11 +131,11 @@ public record ConeCasterConfig
 
 public record PipeConfig
 {
-    public float UnitHeight { get; init; } = 25;
+    public float UnitHeight { get; init; } = 15;
     public float Scale { get; init; } = 3;
     public float GenerationChance { get; init; } = 1;
     public bool AlwaysGenerateTop { get; init; } = true;
-    public int GenerationRange { get; init; } = 4;
+    public int GenerationRange { get; init; } = 15;
 }
 
 public record DepositConfig
@@ -118,6 +196,7 @@ public sealed record ControlsConfig
     public int CoyoteTime { get; init; } = 250;
     public int BufferTime { get; init; } = 250;
     public float RestartDuration { get; init; } = 3;
+    public float Fov { get; init; } = 75;
 }
 
 public sealed record GenerationConfig
