@@ -3,8 +3,6 @@ using Godot;
 
 public class Root : Node
 {
-    public static bool MUSEUM = false;
-
     public event Action<float>? Update;
     public event Action<float>? PhysicsUpdate;
     public event Action<InputEvent>? Input;
@@ -17,7 +15,10 @@ public class Root : Node
         AudioCollection.Init();
         SoundPlayer.Init(this);
 
-        if (MUSEUM)
+        var args = OS.GetCmdlineArgs();
+        bool isMuseum = Array.IndexOf(args, "--museum") != -1;
+
+        if (isMuseum)
         {
             AddChild(new MuseumRoot(this));
         }

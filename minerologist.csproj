@@ -6,6 +6,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DynamicExpresso.Core" Version="2.19.6" />
+    <PackageReference Include="NetMQ" Version="4.0.4.5" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Tomlyn" Version="2.10.1" />
   </ItemGroup>
 </Project>

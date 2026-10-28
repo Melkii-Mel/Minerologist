@@ -69,7 +69,7 @@ public class ItemsDepositor
         }
         var entityPrefab = itemStack.Value.Item;
         Upgrades.Upgrade(entityPrefab);
-        Server.SendItem(entityPrefab);
+        MuseumCommunication.SendItem(entityPrefab);
         Deposited?.Invoke(entityPrefab);
     }
 }

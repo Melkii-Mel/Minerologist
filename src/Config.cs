@@ -22,6 +22,7 @@ public sealed record Config
     public ExpUiConfig ExpUiConfig { get; init; } = new();
     public CrosshairConfig CrosshairConfig { get; init; } = new();
     public MuseumConfig MuseumConfig { get; init; } = new();
+    public ServerConfig ServerConfig { get; init; } = new();
 
     private static ConfigLoader? _configLoader;
     private static Config? _instance;
@@ -49,15 +50,45 @@ public sealed record Config
     }
 }
 
+public record ServerConfig
+{
+    public uint PortSeed { get; init; } = 322;
+}
+
 public record MuseumConfig
 {
     public MuseumBuildingConfig MuseumBuildingConfig { get; init; } = new();
-    public MuseumCameraConfig MuseumCameraConfig { get; internal set; }
+    public MuseumCameraConfig MuseumCameraConfig { get; init; } = new();
+    public MuseumPlacerConfig MuseumPlacerConfig { get; init; } = new();
+}
+
+public record MuseumPlacerConfig
+{
+    public string MainSkeletonPlaceholderName { get; init; } = "placeholder_current_skeleton";
+    public string OtherSkeletonsParentName { get; init; } = "placeholders_other_skeletons";
+    public string DiggablesParentName { get; init; } = "placeholders_diggables";
 }
 
 public record MuseumCameraConfig
 {
     public Vector3I Offset { get; init; } = Vector3I.Zero;
+    public float Fov { get; init; } = 93;
+    public Dictionary<string, Vector3I> Offsets { get; init; } =
+        new()
+        {
+            ["Left"] = Vector3I.Zero,
+            ["Center"] = Vector3I.Zero,
+            ["Right"] = Vector3I.Zero,
+        };
+    public Dictionary<string, float> Rotations { get; init; } =
+        new()
+        {
+            ["Left"] = 90,
+            ["Center"] = 0,
+            ["Right"] = -90,
+        };
+    public float PositionTransitionSpeed { get; init; } = 10;
+    public float RotationTransitionSpeed { get; init; } = 45;
 }
 
 public record MuseumBuildingConfig

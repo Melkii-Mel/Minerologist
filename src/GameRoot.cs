@@ -20,7 +20,6 @@ public class GameRoot(Root root) : Node
             id => new SessionContainer(id, this),
             includeKeyboardInput: true
         );
-
         _sessionDispatcher.SessionAdded += (sessions, _) =>
             SessionResizer.ResizeAllSessions(sessions, this);
 
@@ -29,5 +28,7 @@ public class GameRoot(Root root) : Node
         _sessionDispatcher.ListenForChanges();
 
         Animations.Init(a => Root.Update += a);
+
+        _ = new MuseumCommunicator(this);
     }
 }

@@ -61,9 +61,9 @@ public record EntityPrefab(string Type, string Id, MeshInstance MeshInstance)
 
     public static EntityPrefab RandomSkeletonPiece(Random rng)
     {
-        var skeletonPieces = EntityPrefabs.Skeletons[Server.CurrentSkeleton];
+        var skeletonPieces = EntityPrefabs.Skeletons[MuseumCommunication.CurrentSkeleton];
         var remainingPieces = skeletonPieces
-            .Where(p => !Server.CollectedSkeletonPieces.Contains(p.Key))
+            .Where(p => !MuseumCommunication.CollectedSkeletonPieces.Contains(p.Key))
             .ToList();
         if (remainingPieces.Count == 0)
         {

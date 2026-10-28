@@ -63,6 +63,7 @@ public class SessionContainer : ISession
         );
     }
 
+    // TODO:
     public void Freeze()
     {
         Frozen = true;
@@ -73,6 +74,7 @@ public class SessionContainer : ISession
         throw new NotImplementedException("Session freezing is not yet implemented");
     }
 
+    // TODO:
     public void Resume(int controllerId)
     {
         ControllerId = controllerId;
