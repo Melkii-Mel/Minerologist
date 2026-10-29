@@ -84,7 +84,6 @@ public class Session
             TerrainStreamer.Update(Player.VerticalOriginPosition);
             Border.Update(Player.VerticalOriginPosition);
             Pipes.Update(Player.VerticalOriginPosition);
-            //GD.Print(duration.TotalMilliseconds());
         };
     }
 

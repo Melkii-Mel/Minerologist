@@ -39,7 +39,6 @@ public class SessionContainer : ISession
         _localRootUi.MouseFilter = Control.MouseFilterEnum.Ignore;
         Frozen = false;
         GD.Print("New session container created");
-
         Session = new Session(
             this,
             _localRoot3d,
@@ -63,7 +62,6 @@ public class SessionContainer : ISession
         );
     }
 
-    // TODO:
     public void Freeze()
     {
         Frozen = true;
@@ -71,17 +69,14 @@ public class SessionContainer : ISession
         _localRootUi?.AddChild(_deviceDisconnectedPopup);
         _viewportContainer?.AddChild(_deviceDisconnectedPopup);
         Session?.TimeScale = 0;
-        throw new NotImplementedException("Session freezing is not yet implemented");
     }
 
-    // TODO:
     public void Resume(int controllerId)
     {
         ControllerId = controllerId;
         Frozen = false;
         _deviceDisconnectedPopup?.QueueFree();
         Session?.TimeScale = 1;
-        throw new NotImplementedException("Session unfreezing is not yet implemented");
     }
 
     public void SetPositionAndSize(Vector2 position, Vector2 size)

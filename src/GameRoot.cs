@@ -29,6 +29,6 @@ public class GameRoot(Root root) : Node
 
         Animations.Init(a => Root.Update += a);
 
-        _ = new MuseumCommunicator(this);
+        // _ = new MuseumCommunicator(this);
     }
 }

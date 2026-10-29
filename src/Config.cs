@@ -138,7 +138,8 @@ public record CrosshairConfig
     public float MinRotationSpeedDegrees { get; init; } = 30;
     public float MinOffsetTransitionSpeed { get; init; } = 1;
     public float MinScaleTransitionSpeed { get; init; } = 1;
-    public Vector2 CrosshairPartSize { get; init; } = new(100, 15);
+    public float CrosshairPartSizeX { get; init; } = 100;
+    public float CrosshairPartSizeY { get; init; } = 15;
     public float ActiveScale { get; init; } = 0.8f;
     public float InactiveScale { get; init; } = 0.5f;
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NetMQ;
 using NetMQ.Sockets;
 
@@ -31,9 +32,13 @@ public static class SocketProvider
         throw new Exception();
     }
 
-    public static RequestSocket ConnectToFirstMatchingPort(uint seed, int timeoutMs = 300)
+    public static RequestSocket ConnectToFirstMatchingPort(
+        uint seed,
+        int timeoutMs = 300,
+        int attempts = -1
+    )
     {
-        foreach (var port in Generate(seed))
+        foreach (var port in attempts < 1 ? Generate(seed) : Generate(seed).Take(attempts))
         {
             var req = new RequestSocket($">tcp://localhost:{port}");
 

@@ -17,6 +17,9 @@ public class Crosshair
 
     private float _activityState = 0;
 
+    private Vector2 CrosshairPartSize =>
+        new(CrosshairConfig.CrosshairPartSizeX, CrosshairConfig.CrosshairPartSizeY);
+
     public Crosshair(Session session)
     {
         session.Update += Update;
@@ -25,7 +28,7 @@ public class Crosshair
 
         session.RootUi.AddChild(_controlsParent);
         _controlsParent.SetAnchorsAndMarginsPreset(Control.LayoutPreset.Center);
-        _controlsParent.RectPosition -= CrosshairConfig.CrosshairPartSize / 2;
+        _controlsParent.RectPosition -= CrosshairPartSize / 2;
         _controlsParent.MouseFilter = Control.MouseFilterEnum.Ignore;
 
         foreach (var part in (CrosshairPart[])Enum.GetValues(typeof(CrosshairPart)))
@@ -41,7 +44,7 @@ public class Crosshair
             var rect = new TextureRect();
             _controlsParent.AddChild(rect);
             rect.Texture = GD.Load<Texture>($"res://Assets/Textures/Ui/CrosshairParts/{part}.png");
-            rect.RectSize = CrosshairConfig.CrosshairPartSize;
+            rect.RectSize = CrosshairPartSize / 2;
             rect.RectPivotOffset = rect.RectSize / 2;
             rect.MouseFilter = Control.MouseFilterEnum.Ignore;
             return rect;
