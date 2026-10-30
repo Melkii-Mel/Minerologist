@@ -201,7 +201,7 @@ public record DiggerConfig
     public float DamageChance { get; init; } = 0.8f;
     public float DamageScaleMin { get; init; } = 0.5f;
     public float DamageScaleMax { get; init; } = 2.0f;
-    public float DamageTicksPerSecond { get; init; } = 40.0f;
+    public float DamageTicksPerSecond { get; init; } = 30.0f;
     public float DiggingBuildupSeconds { get; init; } = 0.5f;
 }
 
@@ -216,6 +216,7 @@ public record Size(float Min = 0.5f, float Max = 1.5f);
 public sealed record RemnantsConfig
 {
     public Dictionary<string, int> TypeWeights { get; init; } = [];
+    public Dictionary<string, Dictionary<string, int>> WeightOverrides { get; init; } = [];
     public int SkeletonPieceProbabilityWeight { get; init; } = 10;
 }
 
@@ -348,7 +349,7 @@ public sealed record ExpConfig
     public string DigDamage { get; init; } = "200 * pow(1.3, lvl)";
     public string DigArea { get; init; } = "0.5 + log(lvl, 4)";
     public string DigRange { get; init; } = "5 + lvl / 2";
-    public string DigOutSpeed { get; init; } = "0.5 + log(lvl, 2)";
+    public string DigOutSpeed { get; init; } = "0.5 + log(lvl / 2, 4)";
     public string ExpMultiplier { get; init; } = "1";
     public string JumpVelocity { get; init; } = "20 + lvl * 2";
     public string MaxVelocity { get; init; } = "10 + lvl * 1.5";

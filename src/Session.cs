@@ -15,6 +15,9 @@ public class Session
 
     public readonly TerrainStreamer<VoxelGrid, GodotMeshBuilder> TerrainStreamer;
     public readonly TerrainStreamer<byte, byte> DiggablesStreamer;
+
+    public DigParticles DigParticles { get; }
+
     public readonly Terrain Terrain;
     public readonly DiggablesTerrain DiggablesTerrain;
     public readonly Border Border;
@@ -90,7 +93,7 @@ public class Session
             DiggablesTerrain
         );
 
-        SimpleParticles.Initialize(root3d, u => Update += u);
+        DigParticles = new(root3d, u => Update += u);
 
         Update += _ =>
         {

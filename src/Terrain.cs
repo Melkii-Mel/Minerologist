@@ -149,15 +149,16 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
             );
         }
 
-        if (!healthDepleted && _rng.NextDouble() > 0.8 || healthJustDepleted)
+        if (!healthDepleted && _rng.NextDouble() > 0.9)
         {
-            var particlesSettings = new SimpleParticles.Settings()
+            var particlesSettings = new DigParticles.Settings()
             {
                 Direction =
                     Session.Player.PlayerNode.Center.GlobalPosition - worldPosition.ToGdVector3(),
                 Spread = 35,
+                MaxCount = 8,
             };
-            SimpleParticles.Emit(worldPosition.ToGdVector3());
+            Session.DigParticles.Emit(worldPosition.ToGdVector3(), particlesSettings);
         }
 
         chunk.VoxelGrid.Set(localPos, newHealth);

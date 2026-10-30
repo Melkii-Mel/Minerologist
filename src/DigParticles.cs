@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Godot;
 
-public static class SimpleParticles
+public class DigParticles
 {
     public sealed class Settings
     {
@@ -30,36 +30,27 @@ public static class SimpleParticles
 
     private sealed class Emitter
     {
-        public Particles Node;
-        public ParticlesMaterial ProcessMaterial;
-        public SpatialMaterial DrawMaterial;
-        public SphereMesh Mesh;
+        public required Particles Node;
+        public required ParticlesMaterial ProcessMaterial;
+        public required SpatialMaterial DrawMaterial;
+        public required SphereMesh Mesh;
         public float Remaining;
     }
 
-    private static readonly Stack<Emitter> Pool = new();
-    private static readonly List<Emitter> Active = [];
+    private readonly Stack<Emitter> Pool = new();
+    private readonly List<Emitter> Active = [];
     private static readonly Random Rng = new();
 
-    private static Spatial _root;
-    private static bool _initialized;
+    private readonly Spatial _root;
 
-    public static void Initialize(Spatial root, Action<Action<float>> subscribeToUpdate)
+    public DigParticles(Spatial root, Action<Action<float>> subscribeToUpdate)
     {
         _root = root;
-
-        if (_initialized)
-            return;
-
-        _initialized = true;
         subscribeToUpdate(Update);
     }
 
-    public static void Emit(Vector3 position, Settings settings = null)
+    public void Emit(Vector3 position, Settings? settings = null)
     {
-        if (_root == null)
-            return;
-
         settings ??= new Settings();
 
         int count = RandInt(settings.MinCount, settings.MaxCount);
@@ -97,7 +88,7 @@ public static class SimpleParticles
         Active.Add(emitter);
     }
 
-    private static Emitter GetEmitter()
+    private Emitter GetEmitter()
     {
         if (Pool.Count > 0)
             return Pool.Pop();
@@ -146,7 +137,7 @@ public static class SimpleParticles
         };
     }
 
-    private static void Update(float delta)
+    private void Update(float delta)
     {
         for (int i = Active.Count - 1; i >= 0; i--)
         {

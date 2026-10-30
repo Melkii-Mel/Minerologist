@@ -1,3 +1,6 @@
+#define USE_FALLBACK_CONFIG
+#define WRITE_FALLBACK_CONFIG
+
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -5,9 +8,6 @@ using Tomlyn;
 
 public class ConfigLoader : IDisposable
 {
-    public const bool USE_FALLBACK_CONFIG = true;
-    public const bool WRITE_FALLBACK_CONFIG = false;
-
     private readonly string _configPath;
     private readonly Action<Config> _configSetter;
     private readonly FileSystemWatcher _watcher;
@@ -43,7 +43,11 @@ public class ConfigLoader : IDisposable
     public Config LoadConfig()
     {
         Config config;
-        if (File.Exists(_configPath) || !USE_FALLBACK_CONFIG)
+#if USE_FALLBACK_CONFIG
+        if (File.Exists(_configPath))
+#else
+        if (true)
+#endif
         {
             var toml = File.ReadAllText(_configPath);
             config =
@@ -53,10 +57,9 @@ public class ConfigLoader : IDisposable
         else
         {
             config = new Config();
-            if (WRITE_FALLBACK_CONFIG)
-            {
-                WriteConfigToFile(_configPath, config);
-            }
+#if WRITE_FALLBACK_CONFIG
+            WriteConfigToFile(_configPath, config);
+#endif
         }
         _configSetter(config);
         config.Initialize();

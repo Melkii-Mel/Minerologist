@@ -212,8 +212,9 @@ public class PlayerDigger
         var entitySupportingTiles = _terrain.DiggablesTerrain.GlobalEntitySupportingTilesIndex[
             entity
         ];
-        var count = Mathf.Min(
+        var count = Mathf.Clamp(
             (float)ExpConfig.F.DigOutSpeed.Calculate(Level),
+            1,
             entitySupportingTiles.Length
         );
         for (var i = 0; i < count; i++)
