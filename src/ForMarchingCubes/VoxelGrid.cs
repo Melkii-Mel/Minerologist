@@ -194,7 +194,7 @@ public class VoxelGrid : IScalarField
 
     private void InvalidateNeighbor(int x, int y, int z)
     {
-        var neighbor = TryGetNeighbor(new(x, y, z));
+        var neighbor = GetOrCreateNeighbor(new(x, y, z));
         if (neighbor != null)
         {
             neighbor.InvalidateBorder();
