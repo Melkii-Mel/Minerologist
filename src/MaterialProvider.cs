@@ -7,10 +7,10 @@ public class MaterialProvider
     {
         var noise = new OpenSimplexNoise
         {
-            Period = 8,
+            Period = 16,
             Octaves = 4,
             Persistence = 0.8f,
-            Lacunarity = 10,
+            Lacunarity = 3,
         };
 
         var noiseTexture = new NoiseTexture
@@ -18,6 +18,7 @@ public class MaterialProvider
             Width = 256,
             Height = 256,
             Noise = noise,
+            Seamless = true,
         };
 
         var spatialMaterial = new SpatialMaterial
@@ -26,6 +27,7 @@ public class MaterialProvider
             AlbedoTexture = noiseTexture,
 
             Uv1Triplanar = true,
+            FlagsWorldTriplanar = true,
             Uv1Scale = new Vector3(0.1f, 0.1f, 0.1f),
         };
 

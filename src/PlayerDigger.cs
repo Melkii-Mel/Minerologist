@@ -201,7 +201,7 @@ public class PlayerDigger
     private void DigDiggable(RayHit rayHit, float delta)
     {
         if (
-            !_terrain.GlobalMeshInstanceEntityMap.TryGetValue(
+            !_terrain.DiggablesTerrain.GlobalMeshInstanceEntityMap.TryGetValue(
                 (MeshInstance)rayHit.Collider.GetParent(),
                 out var entity
             )
@@ -209,7 +209,9 @@ public class PlayerDigger
         {
             return;
         }
-        var entitySupportingTiles = _terrain.GlobalEntitySupportingTilesIndex[entity];
+        var entitySupportingTiles = _terrain.DiggablesTerrain.GlobalEntitySupportingTilesIndex[
+            entity
+        ];
         var count = Mathf.Min(
             (float)ExpConfig.F.DigOutSpeed.Calculate(Level),
             entitySupportingTiles.Length

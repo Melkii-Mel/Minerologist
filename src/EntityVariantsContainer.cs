@@ -14,7 +14,7 @@ public static class EntityVariantsContainer
     private static readonly Random _rng = new();
 
     public static int ConfigurationsCount =>
-        Config.Instance.GenerationConfig.EntityVariationsDetalization;
+        Config.Instance.GenerationConfig.EntitiesGenerationConfig.EntityVariationsDetalization;
 
     public static void Init()
     {

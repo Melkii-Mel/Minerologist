@@ -7,8 +7,8 @@ public abstract class PeriodicVerticalSpawner<TItem>(int count)
     public abstract float UnitHeight { get; }
 
     public float BorderDiameter =>
-        Config.Instance.GenerationConfig.ChunkSize.X
-        * Config.Instance.GenerationConfig.HoleRadiusChunks
+        Config.Instance.GenerationConfig.TerrainGenerationConfig.ChunkSize.X
+        * Config.Instance.GenerationConfig.TerrainGenerationConfig.HoleRadiusChunks
         * 2
         * Config.Instance.GenerationConfig.BorderPadding;
 

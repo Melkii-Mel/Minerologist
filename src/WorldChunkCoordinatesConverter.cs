@@ -5,7 +5,7 @@ public class WorldChunkCoordinatesConverter(Vector3I chunkSize)
     private Vector3I _chunkSize = chunkSize;
 
     public WorldChunkCoordinatesConverter()
-        : this(Config.Instance.GenerationConfig.ChunkSize) { }
+        : this(Config.Instance.GenerationConfig.TerrainGenerationConfig.ChunkSize) { }
 
     public Vector3I WorldToChunk(Vector3I worldPosition)
     {

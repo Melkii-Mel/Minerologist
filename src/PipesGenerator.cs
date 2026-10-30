@@ -6,7 +6,8 @@ public class Pipes(Node parent, MeshInstance pipeMeshInstance, Random rng)
 {
     private readonly Node _parent = parent;
 
-    private Vector3I ChunkSize => Config.Instance.GenerationConfig.ChunkSize;
+    private Vector3I ChunkSize =>
+        Config.Instance.GenerationConfig.TerrainGenerationConfig.ChunkSize;
 
     private Vector2 Offset => new(ChunkSize.X / 2, ChunkSize.Z / 2);
 

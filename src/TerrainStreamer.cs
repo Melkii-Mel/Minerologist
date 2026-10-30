@@ -50,10 +50,15 @@ public class TerrainStreamer<TTerrainUpdateSnapshot, TTerrainUpdateResult>
 
     private readonly WorldChunkCoordinatesConverter _worldChunkCoordinatesConverter;
 
+    private readonly int _unloadRadius;
+    private readonly int _unloadHeight;
+
     public TerrainStreamer(
         Vector3I chunkSize,
         int loadRadius,
         int loadHeight,
+        int unloadRadius,
+        int unloadHeight,
         ITerrain<TTerrainUpdateSnapshot, TTerrainUpdateResult> terrain
     )
     {
@@ -62,6 +67,11 @@ public class TerrainStreamer<TTerrainUpdateSnapshot, TTerrainUpdateResult>
 
         _loadRadius = loadRadius;
         _loadHeight = loadHeight;
+
+        // Unload volume must never be smaller than the load volume,
+        // otherwise chunks would be loaded and immediately unloaded.
+        _unloadRadius = Math.Max(unloadRadius, loadRadius);
+        _unloadHeight = Math.Max(unloadHeight, loadHeight);
 
         _terrain = terrain;
         terrain.ChunkChanged += MarkDirty;
@@ -74,47 +84,38 @@ public class TerrainStreamer<TTerrainUpdateSnapshot, TTerrainUpdateResult>
 
     public void Update(Vector3I centerChunk)
     {
-        var requiredChunks = new HashSet<Vector3I>();
-
         if (_lastUpdateChunkCount == _updateResults.Count)
         {
             UpdateDirtyChunks();
         }
 
         var loadRadiusSquared = _loadRadius * _loadRadius;
+        var unloadRadiusSquared = _unloadRadius * _unloadRadius;
 
         lock (_lock)
         {
+            // Load / queue everything inside the load volume
             for (var x = -_loadRadius; x <= _loadRadius; x++)
             {
                 for (var y = -_loadHeight; y <= _loadHeight; y++)
                 {
                     for (var z = -_loadRadius; z <= _loadRadius; z++)
                     {
-                        var vec = new Vector3I(x, y, z);
-
-                        var chunk = centerChunk + vec;
-
                         var distanceSquared = (int)new Vector2(x, z).LengthSquared();
-
-                        var chunkIsClose =
-                            (
-                                chunk.X == centerChunk.X
-                                && chunk.Z == centerChunk.Z
-                                && chunk.Y == centerChunk.Y
-                            ) || chunk.IsNeighborOf(centerChunk);
 
                         if (distanceSquared > loadRadiusSquared)
                         {
                             continue;
                         }
 
-                        requiredChunks.Add(chunk);
+                        var chunk = centerChunk + new Vector3I(x, y, z);
 
                         if (_instantiatedChunks.ContainsKey(chunk))
                         {
                             continue;
                         }
+
+                        var chunkIsClose = chunk == centerChunk || chunk.IsNeighborOf(centerChunk);
 
                         if (!_terrain.IsGenerated(chunk))
                         {
@@ -130,9 +131,17 @@ public class TerrainStreamer<TTerrainUpdateSnapshot, TTerrainUpdateResult>
                 }
             }
 
+            // Unload only what has left the (larger) unload volume
             foreach (var chunk in _instantiatedChunks.Keys.Concat(_queuedChunks.Keys).ToList())
             {
-                if (!requiredChunks.Contains(chunk))
+                var offset = chunk - centerChunk;
+                var horizontalDistanceSquared = offset.X * offset.X + offset.Z * offset.Z;
+
+                var outsideUnloadVolume =
+                    horizontalDistanceSquared > unloadRadiusSquared
+                    || Math.Abs(offset.Y) > _unloadHeight;
+
+                if (outsideUnloadVolume)
                 {
                     UnloadOrDequeue(chunk);
                 }

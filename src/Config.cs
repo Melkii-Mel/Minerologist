@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 using Tomlyn.Serialization;
@@ -233,19 +234,29 @@ public sealed record ControlsConfig
 
 public sealed record GenerationConfig
 {
-    public NoiseConfig NoiseConfig { get; init; } = new();
-    public int HoleRadiusChunks { get; init; } = 2;
     public bool XRay { get; init; } = false;
+    public float BorderPadding { get; init; } = 0.8f;
+    public TerrainGenerationConfig TerrainGenerationConfig { get; init; } = new();
+    public EntitiesGenerationConfig EntitiesGenerationConfig { get; init; } = new();
+
+    public void Init()
+    {
+        TerrainGenerationConfig.Init();
+        EntitiesGenerationConfig.Init();
+    }
+}
+
+public sealed record TerrainGenerationConfig
+{
     public Vector3I ChunkSize { get; init; } = new(8, 8, 8);
+    public int HoleRadiusChunks { get; init; } = 2;
     public string CellHealth { get; init; } = "50 * pow(2, (depth / 8 - 1))";
     public int VerticalGenerationDistanceChunks { get; init; } = 6;
-    public float BorderPadding { get; init; } = 0.8f;
     public float MinCellHealthMultiplier { get; init; } = -1.0f;
     public float CellThresholdMultiplier { get; init; } = 0.05f;
 
     [TomlIgnore]
     public GenerationConfigFormulas F { get; private set; } = null!;
-    public int EntityVariationsDetalization { get; init; } = 25;
 
     public void Init()
     {
@@ -253,11 +264,24 @@ public sealed record GenerationConfig
     }
 }
 
+public sealed record EntitiesGenerationConfig
+{
+    public int EntityVariationsDetalization { get; init; } = 25;
+    public NoiseConfig NoiseConfig { get; init; } = new();
+    public Vector3I ChunkSize { get; init; } = new(4, 4, 4);
+    public int LoadRadiusChunks { get; init; } = 2;
+    public int UnloadRadiusChunks { get; init; } = 10;
+    public int VerticalLoadDistanceChunks { get; init; } = 2;
+    public int VerticalUnloadDistanceChunks { get; init; } = 10;
+
+    public void Init() { }
+}
+
 public record GenerationConfigFormulas
 {
     public GenerationFormula CellHealth { get; }
 
-    public GenerationConfigFormulas(GenerationConfig c)
+    public GenerationConfigFormulas(TerrainGenerationConfig c)
     {
         CellHealth = new(c.CellHealth);
     }
@@ -345,16 +369,16 @@ public sealed record ExpConfig
 
 public sealed record LevelFormulas
 {
-    public LevelFormula ExpReq { get; private set; }
-    public LevelFormula DigDamage { get; private set; }
-    public LevelFormula DigArea { get; private set; }
-    public LevelFormula DigRange { get; private set; }
-    public LevelFormula DigOutSpeed { get; private set; }
-    public LevelFormula ExpMultiplier { get; private set; }
-    public LevelFormula JumpVelocity { get; private set; }
-    public LevelFormula MaxVelocity { get; private set; }
-    public LevelFormula DigConeRadius { get; private set; }
-    public LevelFormula DigOutDamage { get; internal set; }
+    public LevelFormula ExpReq { get; }
+    public LevelFormula DigDamage { get; }
+    public LevelFormula DigArea { get; }
+    public LevelFormula DigRange { get; }
+    public LevelFormula DigOutSpeed { get; }
+    public LevelFormula ExpMultiplier { get; }
+    public LevelFormula JumpVelocity { get; }
+    public LevelFormula MaxVelocity { get; }
+    public LevelFormula DigConeRadius { get; }
+    public LevelFormula DigOutDamage { get; }
 
     public LevelFormulas(ExpConfig c)
     {

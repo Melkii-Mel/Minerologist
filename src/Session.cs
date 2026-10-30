@@ -14,7 +14,9 @@ public class Session
     public Crosshair Crosshair { get; }
 
     public readonly TerrainStreamer<VoxelGrid, GodotMeshBuilder> TerrainStreamer;
+    public readonly TerrainStreamer<byte, byte> DiggablesStreamer;
     public readonly Terrain Terrain;
+    public readonly DiggablesTerrain DiggablesTerrain;
     public readonly Border Border;
     public readonly Pipes Pipes;
     public readonly ItemsDepositor ItemsDepositor;
@@ -39,7 +41,8 @@ public class Session
         Root3d = root3d;
         RootUi = rootUi;
 
-        Terrain = new Terrain(root3d, this);
+        DiggablesTerrain = new(root3d);
+        Terrain = new Terrain(root3d, this, DiggablesTerrain);
         Terrain.EntityRemoved += OnEntityRemove;
         GD.Print(string.Join(", ", MeshCollection.OtherMeshes.Keys));
         Border = new Border(root3d, MeshCollection.OtherMeshes["границы.Cylinder001"]);
@@ -70,10 +73,21 @@ public class Session
         var genConfig = Config.Instance.GenerationConfig;
 
         TerrainStreamer = new(
-            genConfig.ChunkSize,
-            genConfig.HoleRadiusChunks,
-            genConfig.VerticalGenerationDistanceChunks,
+            genConfig.TerrainGenerationConfig.ChunkSize,
+            genConfig.TerrainGenerationConfig.HoleRadiusChunks,
+            genConfig.TerrainGenerationConfig.VerticalGenerationDistanceChunks,
+            0,
+            0,
             Terrain
+        );
+
+        DiggablesStreamer = new(
+            genConfig.EntitiesGenerationConfig.ChunkSize,
+            genConfig.EntitiesGenerationConfig.LoadRadiusChunks,
+            genConfig.EntitiesGenerationConfig.VerticalLoadDistanceChunks,
+            genConfig.EntitiesGenerationConfig.UnloadRadiusChunks,
+            genConfig.EntitiesGenerationConfig.VerticalUnloadDistanceChunks,
+            DiggablesTerrain
         );
 
         SimpleParticles.Initialize(root3d, u => Update += u);
@@ -82,6 +96,7 @@ public class Session
         {
             var duration = new DurationDebug();
             TerrainStreamer.Update(Player.VerticalOriginPosition);
+            DiggablesStreamer.Update(Player.PlayerNode.Position);
             Border.Update(Player.VerticalOriginPosition);
             Pipes.Update(Player.VerticalOriginPosition);
         };

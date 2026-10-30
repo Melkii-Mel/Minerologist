@@ -6,7 +6,8 @@ public class Border(Node parent, MeshInstance borderMeshInstance)
     private readonly Node _parent = parent;
     private readonly MeshInstance _borderMeshInstance = borderMeshInstance;
 
-    private Vector3I ChunkSize => Config.Instance.GenerationConfig.ChunkSize;
+    private Vector3I ChunkSize =>
+        Config.Instance.GenerationConfig.TerrainGenerationConfig.ChunkSize;
 
     private Vector2 Offset => new(ChunkSize.X / 2, ChunkSize.Z / 2);
 
