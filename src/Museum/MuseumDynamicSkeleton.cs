@@ -78,7 +78,7 @@ public class MuseumDynamicSkeleton
             scale.y += Mathf.Sin(clock) * delta;
             _placement.Anchor.Rotation = rot;
             // _placement.Anchor.Scale = scale;
-            clock += delta;
+            // clock += delta;
         };
         /// /TEMP
     }

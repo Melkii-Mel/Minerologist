@@ -223,7 +223,7 @@ public record DiggerConfig
     public float DamageChance { get; init; } = 0.8f;
     public float DamageScaleMin { get; init; } = 0.5f;
     public float DamageScaleMax { get; init; } = 2.0f;
-    public float DamageTicksPerSecond { get; init; } = 30.0f;
+    public float DamageTicksPerSecond { get; init; } = 60.0f;
     public float DiggingBuildupSeconds { get; init; } = 0.5f;
 }
 
@@ -294,7 +294,7 @@ public sealed record EntitiesGenerationConfig
     public Vector3I ChunkSize { get; init; } = new(4, 4, 4);
     public int LoadRadiusChunks { get; init; } = 2;
     public int UnloadRadiusChunks { get; init; } = 10;
-    public int VerticalLoadDistanceChunks { get; init; } = 2;
+    public int VerticalLoadDistanceChunks { get; init; } = 1;
     public int VerticalUnloadDistanceChunks { get; init; } = 10;
 
     public void Init() { }

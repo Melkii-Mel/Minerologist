@@ -31,8 +31,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
     public event Action<Vector3I>? ChunkChanged;
     public event Action<Entity>? EntityRemoved;
 
-    public float CellHealth(int depth) =>
-        Config.Instance.GenerationConfig.TerrainGenerationConfig.F.CellHealth.Calculate(depth);
+    private readonly List<float> _cellHealths = [];
 
     public Node Parent { get; }
 
@@ -96,37 +95,16 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
 
         var depth = -worldPosition.Y;
 
-        var maxCellHealth = CellHealth(depth);
+        var maxCellHealth = CellHealthForChunk(chunk.VoxelGrid.ChunkPosition.Y);
+
         var minHealth =
             Config.Instance.GenerationConfig.TerrainGenerationConfig.MinCellHealthMultiplier
             * maxCellHealth;
 
-        if (onlyIfContactsAir)
+        if (onlyIfContactsAir && !ContactsAir(worldPosition, isoLevel))
         {
-            for (var x = -1; x < 2; x++)
-            {
-                for (var y = -1; y < 2; y++)
-                {
-                    for (var z = -1; z < 2; z++)
-                    {
-                        var offset = new Vector3I(x, y, z);
-
-                        if (offset == Vector3I.Zero)
-                        {
-                            continue;
-                        }
-
-                        var value = TryGetCellValue(worldPosition + new Vector3I(x, y, z));
-                        if (!value.HasValue || value.Value <= isoLevel)
-                        {
-                            goto BREAK;
-                        }
-                    }
-                }
-            }
             return false;
         }
-        BREAK:
 
         var newHealth = currentHealth + delta;
 
@@ -142,11 +120,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
 
         if (healthDepleted)
         {
-            newHealth = Mathf.Clamp(
-                newHealth,
-                Mathf.Min(minHealth - 1, Config.Instance.MarchingCubesOptions.IsoLevel),
-                Config.Instance.MarchingCubesOptions.IsoLevel
-            );
+            newHealth = Mathf.Clamp(newHealth, Mathf.Min(minHealth, isoLevel), isoLevel);
         }
 
         if (!healthDepleted && _rng.NextDouble() > 0.9)
@@ -164,17 +138,13 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         chunk.VoxelGrid.Set(localPos, newHealth);
         InvokeOrCollectChunkChange(chunk.VoxelGrid.ChunkPosition, notify);
 
-        foreach (var neighbor in chunk.VoxelGrid.InvalidatedNeighbors)
+        foreach (var neighbor in chunk.VoxelGrid.DrainInvalidatedNeighbors())
         {
-            if (
-                neighbor?.UpdateBorderIfInvalid()
-                ?? false && _terrainMeshContainer.ContainsMesh(neighbor.ChunkPosition)
-            )
+            if (_terrainMeshContainer.ContainsMesh(neighbor.ChunkPosition))
             {
                 InvokeOrCollectChunkChange(neighbor.ChunkPosition, notify);
             }
         }
-        chunk.VoxelGrid.InvalidatedNeighbors.Clear();
 
         if (
             healthJustDepleted
@@ -196,23 +166,45 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
                     );
                 if (!entitySupported)
                 {
-                    e.MeshInstance.GetParent().RemoveChild(e.MeshInstance);
-                    EntityRemoved?.Invoke(e);
-                    foreach (var tile in DiggablesTerrain.GlobalEntitySupportingTilesIndex[e])
-                    {
-                        var list = DiggablesTerrain.GlobalTileSupportedEntitiesIndex[tile]; // here
-                        list.Remove(e);
-                        if (list.Count == 0)
-                        {
-                            DiggablesTerrain.GlobalTileSupportedEntitiesIndex.Remove(tile);
-                        }
-                    }
-                    DiggablesTerrain.GlobalEntitySupportingTilesIndex.Remove(e);
+                    RemoveEntity(e);
                 }
             }
         }
 
+        GD.Print(currentHealth);
+
         return true;
+    }
+
+    private bool ContactsAir(Vector3I pos, float isoLevel)
+    {
+        for (var x = -1; x <= 1; x++)
+        for (var y = -1; y <= 1; y++)
+        for (var z = -1; z <= 1; z++)
+        {
+            if (x == 0 && y == 0 && z == 0)
+                continue;
+            var v = TryGetCellValue(pos + new Vector3I(x, y, z));
+            if (!v.HasValue || v.Value <= isoLevel)
+                return true;
+        }
+        return false;
+    }
+
+    public void RemoveEntity(Entity e)
+    {
+        e.MeshInstance.GetParent().RemoveChild(e.MeshInstance);
+        EntityRemoved?.Invoke(e);
+        foreach (var tile in DiggablesTerrain.GlobalEntitySupportingTilesIndex[e])
+        {
+            var list = DiggablesTerrain.GlobalTileSupportedEntitiesIndex[tile];
+            list.Remove(e);
+            if (list.Count == 0)
+            {
+                DiggablesTerrain.GlobalTileSupportedEntitiesIndex.Remove(tile);
+            }
+        }
+        DiggablesTerrain.GlobalEntitySupportingTilesIndex.Remove(e);
     }
 
     private void InvokeOrCollectChunkChange(Vector3I chunkPosition, bool notify)
@@ -331,14 +323,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         var grid = new VoxelGrid(
             chunkPosition,
             this,
-            ChunkOfValues(
-                chunkPosition.Y < 0
-                    ? Config.Instance.GenerationConfig.TerrainGenerationConfig.F.CellHealth.Calculate(
-                        -chunkPosition.Y * ChunkSize.Y
-                    )
-                    : 0,
-                ChunkSizeFlat
-            )
+            ChunkOfValues(CellHealthForChunk(chunkPosition.Y), ChunkSizeFlat)
         );
         _chunks[chunkPosition] = new Chunk(grid);
         return grid;
@@ -352,6 +337,27 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
             values[i] = value;
         }
         return values;
+    }
+
+    public int ChunkSizeY => Config.Instance.GenerationConfig.TerrainGenerationConfig.ChunkSize.Y;
+
+    public float CellHealthForChunk(int chunkY)
+    {
+        var level = -chunkY;
+        if (level <= 0)
+            return 0;
+
+        while (_cellHealths.Count <= level)
+        {
+            var l = _cellHealths.Count;
+            _cellHealths.Add(
+                Config.Instance.GenerationConfig.TerrainGenerationConfig.F.CellHealth.Calculate(
+                    l * ChunkSize.Y
+                )
+            );
+        }
+
+        return _cellHealths[level];
     }
 
     private GodotMeshBuilder CreatePreparedMeshBuilderForVoxelGrid(VoxelGrid voxelGrid)

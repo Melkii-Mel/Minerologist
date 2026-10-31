@@ -27,8 +27,19 @@ public abstract class AbstractDynamicFormula
         _lambda = interpreter.Parse(expression, typeof(double), parameters);
     }
 
-    protected double Evaluate(params double[] arguments) =>
-        (double)_lambda.Invoke(arguments.Cast<object>().ToArray());
+    private double[] _lastArgs = [];
+    private double _lastResult;
+
+    protected double Evaluate(params double[] arguments)
+    {
+        if (arguments.SequenceEqual(_lastArgs))
+        {
+            return _lastResult;
+        }
+        _lastArgs = arguments;
+
+        return _lastResult = (double)_lambda.Invoke(arguments.Cast<object>().ToArray());
+    }
 
     private static double Clamp(double x, double min, double max) =>
         Math.Min(Math.Max(x, min), max);

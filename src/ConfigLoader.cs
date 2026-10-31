@@ -1,5 +1,5 @@
 #define USE_FALLBACK_CONFIG
-#define WRITE_FALLBACK_CONFIG
+// #define WRITE_FALLBACK_CONFIG
 
 using System;
 using System.IO;

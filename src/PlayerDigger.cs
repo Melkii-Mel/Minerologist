@@ -209,23 +209,41 @@ public class PlayerDigger
         {
             return;
         }
-        var entitySupportingTiles = _terrain.DiggablesTerrain.GlobalEntitySupportingTilesIndex[
-            entity
-        ];
+        var entitySupportingTiles = _terrain
+            .DiggablesTerrain.GlobalEntitySupportingTilesIndex[entity]
+            .Where(pos =>
+            {
+                var value = _terrain.TryGetCellValue(pos);
+                if (!value.HasValue)
+                {
+                    return false;
+                }
+                return value.Value > Config.MarchingCubesOptions.IsoLevel;
+            })
+            .ToList();
+
         var count = Mathf.Clamp(
             (float)ExpConfig.F.DigOutSpeed.Calculate(Level),
             1,
             entitySupportingTiles.Count
         );
+        bool dugAny = false;
         for (var i = 0; i < count; i++)
         {
-            Dig(
+            dugAny |= Dig(
                 entitySupportingTiles[_rng.Next(entitySupportingTiles.Count())],
-                delta * (float)ExpConfig.F.DigOutDamage.Calculate(Level),
+                delta,
                 onlyIfContactsAir: false
             );
         }
-        _terrain.FlushChunkChangeEvents();
+        if (dugAny)
+        {
+            _terrain.FlushChunkChangeEvents();
+        }
+        else
+        {
+            _terrain.RemoveEntity(entity);
+        }
     }
 
     public void Dig(Vector3 worldPosition, float delta)
@@ -263,17 +281,15 @@ public class PlayerDigger
         _terrain.FlushChunkChangeEvents();
     }
 
-    private void Dig(Vector3I point, float damage, bool onlyIfContactsAir = true)
+    private bool Dig(Vector3I point, float damage, bool onlyIfContactsAir = true)
     {
         var randomMultiplier = RandomUtils.FromRange(DamageScaleMin, DamageScaleMax, _rng);
 
-        if (
-            _terrain.TryChangeCellValue(
-                point,
-                -damage * DigDamage * randomMultiplier,
-                notify: false,
-                onlyIfContactsAir
-            )
-        ) { }
+        return _terrain.TryChangeCellValue(
+            point,
+            -damage * DigDamage * randomMultiplier,
+            notify: false,
+            onlyIfContactsAir
+        );
     }
 }

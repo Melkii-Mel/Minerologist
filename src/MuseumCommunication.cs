@@ -19,6 +19,8 @@ public static class MuseumCommunication
 public class MuseumCommunicator
 {
     private readonly RequestSocket _socket;
+    private const float DELAY = 0.1f;
+    private float _timer = 0;
 
     public MuseumCommunicator(GameRoot root)
     {
@@ -28,6 +30,12 @@ public class MuseumCommunicator
 
     private void Update(float delta)
     {
+        _timer += delta;
+        if (_timer < DELAY)
+        {
+            return;
+        }
+        _timer -= DELAY;
         _socket.SendFrame(ToJson(new IpcMessageRequestSkeleton()));
         MuseumCommunication.CurrentSkeleton = _socket.ReceiveFrameString();
 

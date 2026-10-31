@@ -5,21 +5,25 @@ using System.Linq;
 public class VoxelGrid : IScalarField
 {
     private const int NEIGHBORS_COUNT = 26;
+
     public readonly Vector3I ChunkPosition;
     public readonly Vector3I WorldPosition;
     public Vector3I Size { get; }
 
-    private bool _valueInitialized = false;
+    private readonly float[] _data;
     public float Min { get; private set; }
     public float Max { get; private set; }
 
-    private bool _borderSnapshotValueInitialized = false;
+    private float[] _borderSnapshot;
+    private bool _borderValid = false;
     public float BorderSnapshotMin { get; private set; }
     public float BorderSnapshotMax { get; private set; }
 
-    private readonly float[] _data;
-    private float[] _borderSnapshot;
     private VoxelGrid?[] _neighbors;
+    private readonly HashSet<VoxelGrid> _pendingNeighbors = [];
+
+    private bool _isSnapshot = false;
+
     private readonly IVoxelGridContainer _container;
 
     public VoxelGrid(Vector3I chunkPosition, IVoxelGridContainer container, float[]? data = null)
@@ -38,17 +42,14 @@ public class VoxelGrid : IScalarField
             );
         }
 
-        _data = data ?? new float[Size.X * Size.Y * Size.Z];
+        _data = data ?? new float[dataLength];
         _neighbors = new VoxelGrid?[NEIGHBORS_COUNT];
         _borderSnapshot = new float[
             Size.Y * Size.Z + Size.X * Size.Z + Size.X * Size.Y + Size.X + Size.Y + Size.Z + 1
         ];
 
-        if (data != null)
-        {
-            Min = data.Min();
-            Max = data.Max();
-        }
+        Min = _data.Min();
+        Max = _data.Max();
     }
 
     public float Sample(Vector3I pos)
@@ -111,9 +112,12 @@ public class VoxelGrid : IScalarField
 
         var neighbor = GetOrCreateNeighbor(new Vector3I(neighborX, neighborY, neighborZ));
 
-        var sample = neighbor.Sample(localX, localY, localZ);
+        return neighbor.Sample(localX, localY, localZ);
+    }
 
-        return sample;
+    public float GetValue(Vector3I localPosition)
+    {
+        return _data[GetIndex(localPosition)];
     }
 
     public void Set(Vector3I localPosition, float v)
@@ -125,105 +129,95 @@ public class VoxelGrid : IScalarField
     {
         var index = GetIndex(x, y, z);
         var oldValue = _data[index];
+        if (oldValue == v)
+            return;
+
         _data[index] = v;
-        if (!_valueInitialized)
-        {
-            _valueInitialized = true;
-            Min = v;
-            Max = v;
-        }
+
         if (v < Min)
-        {
             Min = v;
-        }
         else if (oldValue == Min && v > oldValue)
-        {
             Min = _data.Min();
-        }
+
         if (v > Max)
-        {
             Max = v;
-        }
         else if (oldValue == Max && v < oldValue)
-        {
             Max = _data.Max();
-        }
-        if (x == 0)
+
+        for (var dx = x == 0 ? -1 : 0; dx <= 0; dx++)
+        for (var dy = y == 0 ? -1 : 0; dy <= 0; dy++)
+        for (var dz = z == 0 ? -1 : 0; dz <= 0; dz++)
         {
-            InvalidateNeighbor(-1, 0, 0);
-        }
-        if (y == 0)
-        {
-            InvalidateNeighbor(0, -1, 0);
-        }
-        if (z == 0)
-        {
-            InvalidateNeighbor(0, 0, -1);
-        }
-        if (x == 0 && y == 0)
-        {
-            InvalidateNeighbor(-1, -1, 0);
-        }
-        if (x == 0 && z == 0)
-        {
-            InvalidateNeighbor(-1, 0, -1);
-        }
-        if (y == 0 && z == 0)
-        {
-            InvalidateNeighbor(0, -1, -1);
-        }
-        if (x == 0 && y == 0 && z == 0)
-        {
-            InvalidateNeighbor(-1, -1, -1);
+            if (dx == 0 && dy == 0 && dz == 0)
+                continue;
+            InvalidateNeighbor(dx, dy, dz);
         }
     }
-
-    public bool UpdateBorderIfInvalid()
-    {
-        if (_borderSnapshotValueInitialized)
-        {
-            return false;
-        }
-
-        SnapshotBorder();
-
-        return true;
-    }
-
-    public readonly List<VoxelGrid> InvalidatedNeighbors = [];
 
     private void InvalidateNeighbor(int x, int y, int z)
     {
-        var neighbor = GetOrCreateNeighbor(new(x, y, z));
-        if (neighbor != null)
-        {
-            neighbor.InvalidateBorder();
-            InvalidatedNeighbors.Add(neighbor);
-        }
+        var neighbor = TryGetNeighbor(new Vector3I(x, y, z));
+        if (neighbor == null)
+            return;
+
+        neighbor._borderValid = false;
+        _pendingNeighbors.Add(neighbor);
     }
 
-    private void InvalidateBorder()
+    public List<VoxelGrid> DrainInvalidatedNeighbors()
     {
-        _borderSnapshotValueInitialized = false;
+        var result = new List<VoxelGrid>(_pendingNeighbors.Count);
+        foreach (var neighbor in _pendingNeighbors)
+        {
+            neighbor.RefreshBorder();
+            result.Add(neighbor);
+        }
+        _pendingNeighbors.Clear();
+        return result;
+    }
+
+    public bool RefreshBorder()
+    {
+        if (_borderValid)
+        {
+            return false;
+        }
+        SnapshotBorder();
+        return true;
     }
 
     private void SnapshotBorder()
     {
+        if (_isSnapshot)
+            return;
+
+        var min = float.PositiveInfinity;
+        var max = float.NegativeInfinity;
+
         for (var i = 0; i < _borderSnapshot.Length; i++)
         {
             var position = BorderIndexToPosition(i);
             var value = Sample(position.X, position.Y, position.Z);
-            if (BorderSnapshotMin > value || !_borderSnapshotValueInitialized)
-            {
-                BorderSnapshotMin = value;
-            }
-            if (BorderSnapshotMax < value || !_borderSnapshotValueInitialized)
-            {
-                BorderSnapshotMax = value;
-            }
+
+            if (value < min)
+                min = value;
+            if (value > max)
+                max = value;
+
             _borderSnapshot[i] = value;
-            _borderSnapshotValueInitialized = true;
         }
+
+        BorderSnapshotMin = min;
+        BorderSnapshotMax = max;
+        _borderValid = true;
+    }
+
+    public bool IsEmpty(float isoLevel)
+    {
+        RefreshBorder();
+
+        return Min > isoLevel && BorderSnapshotMin > isoLevel
+            || Max < isoLevel && BorderSnapshotMax < isoLevel;
     }
 
     private Vector3I BorderIndexToPosition(int index)
@@ -326,8 +320,8 @@ public class VoxelGrid : IScalarField
 
     private VoxelGrid? TryGetNeighbor(Vector3I offset)
     {
-        int i = NeighborIndex(offset);
-        return _neighbors[i] ??= _neighbors[i] = _container.TryGetVoxelGrid(ChunkPosition + offset);
+        var i = NeighborIndex(offset);
+        return _neighbors[i] ??= _container.TryGetVoxelGrid(ChunkPosition + offset);
     }
 
     private static int NeighborIndex(Vector3I offset)
@@ -339,7 +333,6 @@ public class VoxelGrid : IScalarField
     {
         var index = x + 1 + (y + 1) * 3 + (z + 1) * 9;
 
-        // Skip the center chunk.
         return index > 13 ? index - 1 : index;
     }
 
@@ -354,19 +347,9 @@ public class VoxelGrid : IScalarField
         return new(x, y, z);
     }
 
-    public bool IsEmpty(float isoLevel)
-    {
-        if (!_borderSnapshotValueInitialized)
-        {
-            SnapshotBorder();
-        }
-        return Min > isoLevel && BorderSnapshotMin > isoLevel
-            || Max < isoLevel && BorderSnapshotMax < isoLevel;
-    }
-
     public IEnumerable<VoxelGrid> Neighbors()
     {
-        for (int i = 0; i < NEIGHBORS_COUNT; i++)
+        for (var i = 0; i < NEIGHBORS_COUNT; i++)
         {
             yield return GetOrCreateNeighbor(FlatNeighborPositionToOffset(i));
         }
@@ -374,33 +357,27 @@ public class VoxelGrid : IScalarField
 
     public IEnumerable<VoxelGrid?> ExistingNeighbors()
     {
-        for (int i = 0; i < NEIGHBORS_COUNT; i++)
+        for (var i = 0; i < NEIGHBORS_COUNT; i++)
         {
             yield return TryGetNeighbor(FlatNeighborPositionToOffset(i));
         }
     }
 
-    private bool _isSnapshot = false;
-
     public VoxelGrid CreateSnapshot()
     {
+        RefreshBorder();
+
         return new(ChunkPosition, _container, (float[])_data.Clone())
         {
+            Min = Min,
+            Max = Max,
             BorderSnapshotMin = BorderSnapshotMin,
             BorderSnapshotMax = BorderSnapshotMax,
-            Max = Max,
-            Min = Min,
             _borderSnapshot = (float[])_borderSnapshot.Clone(),
-            _borderSnapshotValueInitialized = _borderSnapshotValueInitialized,
+            _borderValid = true,
             _neighbors = (VoxelGrid?[])_neighbors.Clone(),
-            _valueInitialized = _valueInitialized,
             _isSnapshot = true,
         };
-    }
-
-    public float GetValue(Vector3I localPosition)
-    {
-        return _data[GetIndex(localPosition)];
     }
 }
 
@@ -413,8 +390,5 @@ public interface IVoxelGridContainer
     public Vector3I WorldToChunk(Vector3I worldPosition);
     public Vector3I ChunkToWorld(Vector3I chunkPosition);
 
-    /// <summary>
-    /// An atomic operation for either getting or initializing a voxel grid
-    /// </summary>
     public VoxelGrid GetOrCreateVoxelGrid(Vector3I chunkPosition);
 }

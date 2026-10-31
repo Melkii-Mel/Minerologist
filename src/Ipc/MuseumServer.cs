@@ -40,8 +40,6 @@ public class MuseumServer
             }
             else if (value is IpcMessageRequestRemainingPieceIds sendRemainingPieceIds)
             {
-                Console.WriteLine("This ");
-
                 Socket.SendFrame(
                     JsonConvert.SerializeObject(
                         Root.State.CurrentSkeletonPiecesAmounts.Where(p => p.Value == 0)
