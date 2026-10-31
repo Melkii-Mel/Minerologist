@@ -68,6 +68,28 @@ public record MuseumPlacerConfig
     public string MainSkeletonPlaceholderName { get; init; } = "placeholder_current_skeleton";
     public string OtherSkeletonsParentName { get; init; } = "placeholders_other_skeletons";
     public string DiggablesParentName { get; init; } = "placeholders_diggables";
+
+    public Dictionary<string, Vector3I> RotationsDegrees { get; init; } =
+        new()
+        {
+            ["Мамонт"] = new(0, -75, 0),
+            [MeshCollection.SKELETONS] = new(0, -105, 0),
+            [MeshCollection.OTHERS] = Vector3I.Zero,
+        };
+    public Dictionary<string, float> Scales { get; init; } =
+        new()
+        {
+            ["Мамонт"] = 1.5f,
+            [MeshCollection.SKELETONS] = 1,
+            [MeshCollection.OTHERS] = 1,
+        };
+    public Dictionary<string, Vector3I> Offsets { get; init; } =
+        new()
+        {
+            ["Мамонт"] = Vector3I.Zero,
+            [MeshCollection.SKELETONS] = Vector3I.Zero,
+            [MeshCollection.OTHERS] = Vector3I.Zero,
+        };
 }
 
 public record MuseumCameraConfig

@@ -1,24 +1,44 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 public record MuseumState
 {
     public const string CURRENT_SKELETON_UNINITIALIZED = "UNINITIALIZED";
 
-    public Dictionary<string, int> SkeletonAmounts { get; set; } = [];
     public Dictionary<string, int> OtherDiggablesAmounts { get; set; } = [];
+    public Dictionary<string, int> SkeletonsAmounts { get; set; } = [];
     public string CurrentSkeleton { get; set; } = "UNINITIALIZED";
     public Dictionary<string, int> CurrentSkeletonPiecesAmounts { get; set; } = [];
-    public Dictionary<string, int> SkeletonsAmounts = [];
 
     public const string SavePath = "melkii_mel/minerologist/saves/0.json";
     public const string BackupSuffix = ".bak";
 
+    public void ReplaceSkeleton(MuseumRoot root)
+    {
+        CurrentSkeleton = root.SkeletonSelector.SelectSkeleton();
+        CurrentSkeletonPiecesAmounts = MeshCollection
+            .Skeletons[CurrentSkeleton]
+            .Keys.ToDictionary(k => k, _ => 0);
+    }
+
     public static MuseumState LoadOrCreate()
     {
-        return Load() ?? new();
+        var state = Load();
+        if (state != null)
+        {
+            return state;
+        }
+        state = new()
+        {
+            SkeletonsAmounts = MeshCollection.Skeletons.Keys.ToDictionary(k => k, _ => 0),
+            OtherDiggablesAmounts = MeshCollection
+                .OtherDiggables.SelectMany(d => d.Value.Keys)
+                .ToDictionary(d => d, _ => 0),
+        };
+        return state;
     }
 
     public static MuseumState? Load()

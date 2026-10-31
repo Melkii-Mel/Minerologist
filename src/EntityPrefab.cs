@@ -63,7 +63,7 @@ public record EntityPrefab(string Type, string Id, MeshInstance MeshInstance)
     {
         var skeletonPieces = EntityPrefabs.Skeletons[MuseumCommunication.CurrentSkeleton];
         var remainingPieces = skeletonPieces
-            .Where(p => !MuseumCommunication.CollectedSkeletonPieces.Contains(p.Key))
+            .Where(p => MuseumCommunication.RemainingSkeletonPieces.Contains(p.Key))
             .ToList();
         if (remainingPieces.Count == 0)
         {
@@ -90,7 +90,7 @@ public class Entity
     public EntityPrefab Prefab { get; }
 
     public MeshInstance MeshInstance { get; }
-    public Vector3I[] SupportingTiles { get; }
+    public List<Vector3I> SupportingTiles { get; }
 
     private readonly WorldChunkCoordinatesConverter _coordinatesConverter = new();
 
@@ -106,13 +106,15 @@ public class Entity
         LocalPosition = GlobalPosition - _coordinatesConverter.ChunkToWorld(ChunkPosition);
 
         MeshInstance = (MeshInstance)entityData.EntityInstance.Duplicate();
-        SupportingTiles = new Vector3I[entityData.EntitySupporingTiles.Length];
+#pragma warning disable IDE0028 // Упростите инициализацию коллекции
+        SupportingTiles = new List<Vector3I>(entityData.EntitySupporingTiles.Length);
+#pragma warning restore IDE0028 // Упростите инициализацию коллекции
 
         MeshInstance.Position += GlobalPosition.ToGdVector3();
         for (var i = 0; i < entityData.EntitySupporingTiles.Length; i++)
         {
             var cell = entityData.EntitySupporingTiles[i];
-            SupportingTiles[i] = cell + globalPosition;
+            SupportingTiles.Add(cell + globalPosition);
         }
 
         _staticBody = new StaticBody();

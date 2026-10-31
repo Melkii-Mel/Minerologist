@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://src/Debugging/FreeCamera.cs" type="Script" id=1]
+
+[sub_resource type="CubeMesh" id=1]
+
+[node name="MuseumBuilding" type="Spatial"]
+
+[node name="Camera" type="Camera" parent="."]
+transform = Transform( 0.932122, -0.127228, -0.339061, 0, 0.936256, -0.351319, 0.362145, 0.327472, 0.872704, -0.863, -0.875, -2.809 )
+fov = 78.8873
+script = ExtResource( 1 )
+
+[node name="placeholder_current_skeleton" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5.22262 )
+mesh = SubResource( 1 )
+
+[node name="placeholders_other_skeletons" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -2.40453, 0, -4.8916 )
+mesh = SubResource( 1 )
+
+[node name="placeholders_diggables" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.46342, 0, -5.07925 )
+mesh = SubResource( 1 )

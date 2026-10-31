@@ -18,13 +18,16 @@ public static class SocketProvider
         }
     }
 
-    public static ResponseSocket GetFirstFreePort(uint seed)
+    public static ResponseSocket CreateSocket(uint seed)
     {
         foreach (var port in Generate(seed))
         {
+            Console.WriteLine($"Trying port {port} ...");
             try
             {
-                return new ResponseSocket($"@tcp://localhost:{port}");
+                var socket = new ResponseSocket($"@tcp://localhost:{port}");
+                Console.WriteLine("Socket established");
+                return socket;
             }
             catch (AddressAlreadyInUseException) { }
         }
@@ -40,6 +43,7 @@ public static class SocketProvider
     {
         foreach (var port in attempts < 1 ? Generate(seed) : Generate(seed).Take(attempts))
         {
+            Console.WriteLine($"Trying connecting to port {port} ...");
             var req = new RequestSocket($">tcp://localhost:{port}");
 
             if (!req.TrySendFrame(TimeSpan.FromMilliseconds(timeoutMs), "minerologist"))
@@ -51,6 +55,8 @@ public static class SocketProvider
             {
                 continue;
             }
+
+            Console.WriteLine("Connected successfully");
 
             return req;
         }

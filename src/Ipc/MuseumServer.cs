@@ -1,51 +1,62 @@
+using System;
 using System.Linq;
 using NetMQ;
+using NetMQ.Sockets;
 using Newtonsoft.Json;
 
 public class MuseumServer
 {
     public MuseumRoot Root { get; }
 
+    public ResponseSocket Socket { get; }
+    public NetMQPoller Poller { get; }
+
     public MuseumServer(MuseumRoot root)
     {
         Root = root;
-        using var server = SocketProvider.ConnectToFirstMatchingPort(
-            Config.Instance.ServerConfig.PortSeed
-        );
-        server.ReceiveReady += (sernder, args) =>
+        Socket = SocketProvider.CreateSocket(Config.Instance.ServerConfig.PortSeed);
+        Socket.ReceiveReady += (sernder, args) =>
         {
-            var json = server.ReceiveFrameString();
+            var json = Socket.ReceiveFrameString();
             if (json == "minerologist")
             {
-                server.SendFrame("Ok");
+                Console.WriteLine("Received connection request");
+                Socket.SendFrame("Ok");
+                Console.WriteLine("Responded");
                 return;
             }
-            var value = JsonConvert.DeserializeObject<IcpMessage>(
+            var value = JsonConvert.DeserializeObject<IpcMessage>(
                 json,
-                IcpMessage.SerializerSettings
+                IpcMessage.SerializerSettings
             );
-            if (value is IcpMessageAskSkeleton askSkeleton)
+            if (value is IpcMessageRequestSkeleton askSkeleton)
             {
-                server.SendFrame(Root.State.CurrentSkeleton);
+                Socket.SendFrame(Root.State.CurrentSkeleton);
             }
-            else if (value is IcpMessageSendDiggable sendDiggable)
+            else if (value is IpcMessageSendDiggable sendDiggable)
             {
                 Root.DiggablesReceiver.AddDiggable(sendDiggable);
-                server.SendFrame("Ok");
+                Socket.SendFrame("Ok");
             }
-            else if (value is IcpMessageSendRemainingPieceIds sendRemainingPieceIds)
+            else if (value is IpcMessageRequestRemainingPieceIds sendRemainingPieceIds)
             {
-                server.SendFrame(
+                Console.WriteLine("This ");
+
+                Socket.SendFrame(
                     JsonConvert.SerializeObject(
                         Root.State.CurrentSkeletonPiecesAmounts.Where(p => p.Value == 0)
-                            .Select(p => p.Key)
+                            .Select(p => p.Key),
+                        IpcMessage.SerializerSettings
                     )
                 );
             }
             else
             {
-                server.SendFrame($"Request `{json}` is not supported");
+                Socket.SendFrame($"Request `{json}` is not supported");
             }
         };
+
+        Poller = [Socket];
+        Poller.RunAsync();
     }
 }

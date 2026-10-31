@@ -1,13 +1,13 @@
 using Newtonsoft.Json;
 
-public record IcpMessage
+public record IpcMessage
 {
     public static JsonSerializerSettings SerializerSettings =>
-        new() { TypeNameHandling = TypeNameHandling.Auto };
+        new() { TypeNameHandling = TypeNameHandling.Objects };
 }
 
-public record IcpMessageSendRemainingPieceIds : IcpMessage;
+public record IpcMessageRequestRemainingPieceIds : IpcMessage;
 
-public record IcpMessageAskSkeleton : IcpMessage;
+public record IpcMessageRequestSkeleton : IpcMessage;
 
-public record IcpMessageSendDiggable(string Type, string Id) : IcpMessage;
+public record IpcMessageSendDiggable(string Type, string Id) : IpcMessage;

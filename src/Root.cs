@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using Godot;
 
 public class Root : Node
@@ -9,13 +10,16 @@ public class Root : Node
 
     public override void _Ready()
     {
+        Console.OutputEncoding = Encoding.UTF8;
+        AsyncIO.ForceDotNet.Force();
+
         Manifest.Root = "Assets";
         MeshCollection.Initialize();
 
         AudioCollection.Init();
         SoundPlayer.Init(this);
 
-        var args = OS.GetCmdlineArgs();
+        var args = System.Environment.GetCommandLineArgs();
         bool isMuseum = Array.IndexOf(args, "--museum") != -1;
 
         if (isMuseum)

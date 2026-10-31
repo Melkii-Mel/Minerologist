@@ -187,6 +187,7 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
             for (int i = entities.Count - 1; i >= 0; i--)
             {
                 var e = entities[i];
+                DiggablesTerrain.GlobalEntitySupportingTilesIndex[e].Remove(worldPosition);
                 var entitySupported = DiggablesTerrain
                     .GlobalEntitySupportingTilesIndex[e]
                     .Any(t =>

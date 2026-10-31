@@ -21,8 +21,11 @@ public class SkeletonSelector
     public string SelectSkeleton()
     {
         var min = SkeletonsAmounts.Values.Min();
+        var max = SkeletonsAmounts.Values.Max();
         return RandomUtils.ChooseRandomItem(
-            SkeletonsAmounts.Where(a => a.Value > min).Select(kvp => kvp.Key).ToList(),
+            (min == max ? SkeletonsAmounts : SkeletonsAmounts.Where(a => a.Value > min))
+                .Select(kvp => kvp.Key)
+                .ToList(),
             _rng
         );
     }

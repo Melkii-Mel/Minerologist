@@ -215,15 +215,17 @@ public class PlayerDigger
         var count = Mathf.Clamp(
             (float)ExpConfig.F.DigOutSpeed.Calculate(Level),
             1,
-            entitySupportingTiles.Length
+            entitySupportingTiles.Count
         );
         for (var i = 0; i < count; i++)
         {
             Dig(
-                entitySupportingTiles[_rng.Next(entitySupportingTiles.Count())].ToGdVector3(),
-                delta * (float)ExpConfig.F.DigOutDamage.Calculate(Level)
+                entitySupportingTiles[_rng.Next(entitySupportingTiles.Count())],
+                delta * (float)ExpConfig.F.DigOutDamage.Calculate(Level),
+                onlyIfContactsAir: false
             );
         }
+        _terrain.FlushChunkChangeEvents();
     }
 
     public void Dig(Vector3 worldPosition, float delta)
@@ -254,24 +256,24 @@ public class PlayerDigger
                         multipliers[offsetDistanceSquared] = Mathf.Pow(DistanceDamageScaling, len);
                     }
                     var damageMultiplier = multipliers[offsetDistanceSquared];
-                    var randomMultiplier = RandomUtils.FromRange(
-                        DamageScaleMin,
-                        DamageScaleMax,
-                        _rng
-                    );
-
-                    Dig(
-                        globalPosition + offset,
-                        delta * DigDamage * damageMultiplier * randomMultiplier
-                    );
+                    Dig(globalPosition + offset, delta * damageMultiplier);
                 }
             }
         }
         _terrain.FlushChunkChangeEvents();
     }
 
-    private void Dig(Vector3I point, float damage)
+    private void Dig(Vector3I point, float damage, bool onlyIfContactsAir = true)
     {
-        if (_terrain.TryChangeCellValue(point, -damage, notify: false, onlyIfContactsAir: true)) { }
+        var randomMultiplier = RandomUtils.FromRange(DamageScaleMin, DamageScaleMax, _rng);
+
+        if (
+            _terrain.TryChangeCellValue(
+                point,
+                -damage * DigDamage * randomMultiplier,
+                notify: false,
+                onlyIfContactsAir
+            )
+        ) { }
     }
 }

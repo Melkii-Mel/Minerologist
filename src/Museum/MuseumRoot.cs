@@ -21,7 +21,7 @@ public class MuseumRoot : Node
 
         if (State.CurrentSkeleton == MuseumState.CURRENT_SKELETON_UNINITIALIZED)
         {
-            State.CurrentSkeleton = SkeletonSelector.SelectSkeleton();
+            State.ReplaceSkeleton(this);
         }
 
         Building = new(this);

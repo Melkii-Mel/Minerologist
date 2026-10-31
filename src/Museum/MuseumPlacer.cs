@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 
 public class MuseumPlacer
 {
+    public MuseumRoot Root { get; }
     public MuseumPlacerConfig PlacerConfig => Config.Instance.MuseumConfig.MuseumPlacerConfig;
 
     private readonly Spatial _dynamicSkeletonParent;
@@ -15,12 +17,15 @@ public class MuseumPlacer
     private MuseumDynamicSkeleton _dynamicSkeleton = null!;
     private readonly Dictionary<string, MuseumDiggable> _diggables = [];
 
-    public MuseumPlacer(Spatial building)
+    public MuseumPlacer(Spatial building, MuseumRoot root)
     {
+        Root = root;
+
         _dynamicSkeletonPlaceholder = (MeshInstance)
             building.FindNode(PlacerConfig.MainSkeletonPlaceholderName);
 
-        _dynamicSkeletonParent = (Spatial)_dynamicSkeletonPlaceholder.GetParent();
+        _dynamicSkeletonParent = new();
+        _dynamicSkeletonPlaceholder.GetParent().AddChild(_dynamicSkeletonParent);
         _otherSkeletonsParent = (Spatial)building.FindNode(PlacerConfig.OtherSkeletonsParentName);
         _diggablesParent = (Spatial)building.FindNode(PlacerConfig.DiggablesParentName);
 
@@ -28,10 +33,18 @@ public class MuseumPlacer
         CollectChildren(_diggablesParent, _diggablesPlaceholders = []);
 
         ReplacePlaceholders();
+        InitSkeleton();
+    }
+
+    private void InitSkeleton()
+    {
+        ReplaceCurrentSkeleton(Root.State.CurrentSkeleton);
     }
 
     private void ReplacePlaceholders()
     {
+        _dynamicSkeletonPlaceholder.GetParent().RemoveChild(_dynamicSkeletonPlaceholder);
+
         foreach (var skeletonName in _otherSkeletonPlaceholders.Keys)
         {
             var placeholder = _otherSkeletonPlaceholders[skeletonName];
@@ -66,9 +79,16 @@ public class MuseumPlacer
 
     public void ReplaceCurrentSkeleton(string skeletonName)
     {
-        _dynamicSkeleton = new MuseumDynamicSkeleton(skeletonName, _dynamicSkeletonPlaceholder);
-        _dynamicSkeletonParent.RemoveChild(_dynamicSkeletonParent.GetChild(0));
-        _dynamicSkeletonParent.AddChild(_dynamicSkeleton);
+        for (var i = _dynamicSkeletonParent.GetChildCount() - 1; i > -1; i--)
+        {
+            _dynamicSkeletonParent.RemoveChild(_dynamicSkeletonParent.GetChild(i));
+        }
+        _dynamicSkeleton = new MuseumDynamicSkeleton(
+            skeletonName,
+            _dynamicSkeletonPlaceholder,
+            _dynamicSkeletonParent,
+            Root
+        );
     }
 
     public void UpdateItem(string id)

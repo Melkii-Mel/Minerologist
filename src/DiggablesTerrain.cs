@@ -5,7 +5,7 @@ using Godot;
 public class DiggablesTerrain : ITerrain<byte, byte>
 {
     public readonly Dictionary<Vector3I, List<Entity>> GlobalTileSupportedEntitiesIndex = [];
-    public readonly Dictionary<Entity, Vector3I[]> GlobalEntitySupportingTilesIndex = [];
+    public readonly Dictionary<Entity, List<Vector3I>> GlobalEntitySupportingTilesIndex = [];
     public readonly Dictionary<MeshInstance, Entity> GlobalMeshInstanceEntityMap = [];
     public readonly Dictionary<Vector3I, EntitiesChunk> EntitiesChunks = [];
 

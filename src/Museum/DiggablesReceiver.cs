@@ -7,9 +7,10 @@ public class DiggablesReceiver(MuseumRoot root)
 
     private MuseumState State => root.State;
 
-    public void AddDiggable(IcpMessageSendDiggable value)
+    public void AddDiggable(IpcMessageSendDiggable value)
     {
-        if (value.Type == "Skeleton")
+        Console.WriteLine(value.Type);
+        if (MeshCollection.Skeletons.Keys.Contains(value.Type))
         {
             if (!root.State.CurrentSkeletonPiecesAmounts.TryGetValue(value.Id, out var amount))
             {
@@ -25,7 +26,7 @@ public class DiggablesReceiver(MuseumRoot root)
             Placer.UpdateCurrentSkeleton(value.Id);
             if (currentPieces.All(p => p.Value > 0))
             {
-                State.CurrentSkeleton = root.SkeletonSelector.SelectSkeleton();
+                State.ReplaceSkeleton(root);
                 Placer.ReplaceCurrentSkeleton(State.CurrentSkeleton);
             }
         }
