@@ -198,7 +198,15 @@ public class FileSystemDir(
         }
     }
 
-    public FileSystemDir? Dir(string dirName)
+    public FileSystemDir Dir(string dirName)
+    {
+        return DirOrDefault(dirName)
+            ?? throw new System.IO.DirectoryNotFoundException(
+                $"Directory '{dirName}' was not found in '{FullPath}'."
+            );
+    }
+
+    public FileSystemDir? DirOrDefault(string dirName)
     {
         foreach (var subDir in SubDirs)
         {

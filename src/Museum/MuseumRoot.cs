@@ -9,6 +9,7 @@ public class MuseumRoot : Node
     public DiggablesReceiver DiggablesReceiver { get; }
     public SkeletonSelector SkeletonSelector { get; }
     public MuseumServer Server { get; }
+    public DescriptionsCollection DescriptionsCollection { get; }
 
     public MuseumRoot(Root root)
     {
@@ -18,6 +19,7 @@ public class MuseumRoot : Node
         DiggablesReceiver = new(this);
         SkeletonSelector = new(this);
         Server = new(this);
+        DescriptionsCollection = new();
 
         if (State.CurrentSkeleton == MuseumState.CURRENT_SKELETON_UNINITIALIZED)
         {

@@ -60,11 +60,11 @@ public static class MeshCollection
         }
         Initialized = true;
 
-        var modelsManifest = Manifest.Instance.Dir(MODELS) ?? throw DirectoryNotFound;
-        var otherMeshesManifest = modelsManifest.Dir(OTHERS) ?? throw DirectoryNotFound;
-        var diggablesManifest = modelsManifest.Dir(DIGGABLES) ?? throw DirectoryNotFound;
-        var skeletonsManifest = diggablesManifest.Dir(SKELETONS) ?? throw DirectoryNotFound;
-        var otherDiggablesManifest = diggablesManifest.Dir(OTHERS) ?? throw DirectoryNotFound;
+        var modelsManifest = Manifest.Instance.DirOrDefault(MODELS) ?? throw DirectoryNotFound;
+        var otherMeshesManifest = modelsManifest.DirOrDefault(OTHERS) ?? throw DirectoryNotFound;
+        var diggablesManifest = modelsManifest.DirOrDefault(DIGGABLES) ?? throw DirectoryNotFound;
+        var skeletonsManifest = diggablesManifest.DirOrDefault(SKELETONS) ?? throw DirectoryNotFound;
+        var otherDiggablesManifest = diggablesManifest.DirOrDefault(OTHERS) ?? throw DirectoryNotFound;
 
         LoadDir(skeletonsManifest, groupByFile: true, Skeletons);
         LoadDir(otherDiggablesManifest, groupByFile: false, OtherDiggables);

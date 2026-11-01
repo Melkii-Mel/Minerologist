@@ -15,9 +15,9 @@ public static class AudioCollection
 
     public static void Init()
     {
-        var audioManifest = Manifest.Instance.Dir("Audio") ?? throw AudioLoadingException;
-        var soundsManifest = audioManifest.Dir("Sounds") ?? throw AudioLoadingException;
-        var musicManifest = audioManifest.Dir("Music") ?? throw AudioLoadingException;
+        var audioManifest = Manifest.Instance.DirOrDefault("Audio") ?? throw AudioLoadingException;
+        var soundsManifest = audioManifest.DirOrDefault("Sounds") ?? throw AudioLoadingException;
+        var musicManifest = audioManifest.DirOrDefault("Music") ?? throw AudioLoadingException;
         foreach (
             var file in musicManifest.RecursiveFiles().Where(f => SupportedFormats.Contains(f.Ext))
         )
