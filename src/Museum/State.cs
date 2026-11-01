@@ -64,11 +64,16 @@ public record MuseumState
         return state;
     }
 
-    public static void Save(MuseumState state)
+    public void Save()
     {
-        var json = JsonSerializer.Serialize(state);
+        var json = JsonSerializer.Serialize(this);
         SaveMain(json);
         SaveBackup(json);
+    }
+
+    public void AutoSave(MuseumRoot museumRoot)
+    {
+        museumRoot.Root.Update += _ => Save();
     }
 
     private static void SaveMain(string json)

@@ -25,6 +25,8 @@ public class MuseumRoot : Node
         }
 
         Building = new(this);
+
+        State.AutoSave(this);
     }
 
     public override void _Ready() { }
