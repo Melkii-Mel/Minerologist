@@ -61,8 +61,8 @@ public class ConfigLoader : IDisposable
             WriteConfigToFile(_configPath, config);
 #endif
         }
-        _configSetter(config);
         config.Initialize();
+        _configSetter(config);
         return config;
     }
 
