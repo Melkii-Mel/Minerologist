@@ -243,8 +243,7 @@ public record Size(float Min = 0.5f, float Max = 1.5f);
 
 public sealed record RemnantsConfig
 {
-    public Dictionary<string, int> TypeWeights { get; init; } = [];
-    public Dictionary<string, Dictionary<string, int>> WeightOverrides { get; init; } = [];
+    public Dictionary<string, int> TypeWeights { get; init; } = new() { ["Common"] = 20 };
     public int SkeletonPieceProbabilityWeight { get; init; } = 10;
 }
 
@@ -338,7 +337,7 @@ public sealed record PlayerVisualsConfig
 
 public sealed record DiggerVisualsConfig
 {
-    public string ToolModel { get; init; } = "Tools.Default.Plane";
+    public string ToolModel { get; init; } = "Tools.Default";
     public Vector3I ToolRotationDegrees { get; init; } = new(0, 180, 0);
     public float ToolScale { get; init; } = 0.8f;
     public Vector3I ToolOffset { get; init; } = new(80, -160, -180);

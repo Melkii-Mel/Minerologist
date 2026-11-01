@@ -139,17 +139,22 @@ public static class MeshCollection
     {
         var scene = GD.Load<PackedScene>(filePath);
         var spatial = (Spatial)scene.Instance();
+        if (spatial.GetChildCount() == 0)
+        {
+            return;
+        }
+        var joinName = spatial.GetChildCount() > 1 || spatial.GetChild(0).GetChildCount() > 0;
         foreach (var child in spatial.GetChildren())
         {
-            HandleNode((Node)child, destination, prefix);
+            HandleNode((Node)child, destination, prefix, joinName);
         }
     }
 
-    private static void HandleNode(Node node, MeshGroup container, string? prefix)
+    private static void HandleNode(Node node, MeshGroup container, string? prefix, bool joinName)
     {
         if (node is MeshInstance mesh)
         {
-            var id = JoinName(prefix, mesh.Name);
+            var id = (joinName || prefix == null) ? JoinName(prefix, mesh.Name) : prefix;
             if (container.ContainsKey(id))
             {
                 var item = container[id];
@@ -171,7 +176,7 @@ public static class MeshCollection
         foreach (var child in node.GetChildren())
         {
             var childNode = (Node)child;
-            HandleNode((Node)child, container, JoinName(prefix, childNode.Name));
+            HandleNode((Node)child, container, JoinName(prefix, childNode.Name), joinName);
         }
     }
 

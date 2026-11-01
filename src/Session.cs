@@ -48,8 +48,8 @@ public class Session
         Terrain = new Terrain(root3d, this, DiggablesTerrain);
         Terrain.EntityRemoved += OnEntityRemove;
         GD.Print(string.Join(", ", MeshCollection.OtherMeshes.Keys));
-        Border = new Border(root3d, MeshCollection.OtherMeshes["границы.Cylinder001"]);
-        Pipes = new Pipes(root3d, MeshCollection.OtherMeshes["труба.Cylinder"], rng);
+        Border = new Border(root3d, MeshCollection.OtherMeshes["границы"]);
+        Pipes = new Pipes(root3d, MeshCollection.OtherMeshes["труба"], rng);
 
         Player = new(this, Root3d, Vector3.Zero, Terrain);
         Player.DepositItemsStart += OnDepositItemsStart;
