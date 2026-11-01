@@ -93,6 +93,13 @@ public class MuseumPlacer
 
     public void UpdateItem(string id)
     {
-        _diggables[id].InceraseNumber();
+        if (_diggables.TryGetValue(id, out var diggable))
+        {
+            diggable.InceraseNumber();
+        }
+        else
+        {
+            Out.Error($"Museum does not contains a placeholder for `{id}`");
+        }
     }
 }

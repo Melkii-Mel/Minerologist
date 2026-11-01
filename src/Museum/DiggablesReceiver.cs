@@ -9,7 +9,6 @@ public class DiggablesReceiver(MuseumRoot root)
 
     public void AddDiggable(IpcMessageSendDiggable value)
     {
-        Console.WriteLine(value.Type);
         if (MeshCollection.Skeletons.Keys.Contains(value.Type))
         {
             if (!root.State.CurrentSkeletonPiecesAmounts.TryGetValue(value.Id, out var amount))
