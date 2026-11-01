@@ -10,7 +10,7 @@ public record MuseumState
 
     public Dictionary<string, int> OtherDiggablesAmounts { get; set; } = [];
     public Dictionary<string, int> SkeletonsAmounts { get; set; } = [];
-    public string CurrentSkeleton { get; set; } = "UNINITIALIZED";
+    public string CurrentSkeleton { get; set; } = CURRENT_SKELETON_UNINITIALIZED;
     public Dictionary<string, int> CurrentSkeletonPiecesAmounts { get; set; } = [];
 
     public const string SavePath = "melkii_mel/minerologist/saves/0.json";

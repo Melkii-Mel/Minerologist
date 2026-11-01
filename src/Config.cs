@@ -230,7 +230,13 @@ public record DiggerConfig
 public record RemnantsSizeConfig
 {
     public Dictionary<string, Size> Sizes { get; init; } =
-        new() { ["Мамонт"] = new(10.0f, 12.0f), ["Others"] = new(0.5f, 1.5f) };
+        new()
+        {
+            ["Мамонт"] = new(10.0f, 12.0f),
+            ["deer"] = new(10, 12),
+            ["bear"] = new(3, 4),
+            ["Others"] = new(0.5f, 1.5f),
+        };
 }
 
 public record Size(float Min = 0.5f, float Max = 1.5f);
@@ -289,7 +295,7 @@ public sealed record TerrainGenerationConfig
 
 public sealed record EntitiesGenerationConfig
 {
-    public int EntityVariationsDetalization { get; init; } = 25;
+    public int EntityVariationsDetalization { get; init; } = 5;
     public NoiseConfig NoiseConfig { get; init; } = new();
     public Vector3I ChunkSize { get; init; } = new(4, 4, 4);
     public int LoadRadiusChunks { get; init; } = 2;

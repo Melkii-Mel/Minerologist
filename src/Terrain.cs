@@ -95,6 +95,11 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
 
         var depth = -worldPosition.Y;
 
+        if (depth <= 0)
+        {
+            return false;
+        }
+
         var maxCellHealth = CellHealthForChunk(chunk.VoxelGrid.ChunkPosition.Y);
 
         var minHealth =
@@ -170,8 +175,6 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
                 }
             }
         }
-
-        GD.Print(currentHealth);
 
         return true;
     }
@@ -320,11 +323,9 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         {
             return chunk.VoxelGrid;
         }
-        var grid = new VoxelGrid(
-            chunkPosition,
-            this,
-            ChunkOfValues(CellHealthForChunk(chunkPosition.Y), ChunkSizeFlat)
-        );
+        var health = CellHealthForChunk(chunkPosition.Y);
+        health = (health <= 0) ? -100 : health;
+        var grid = new VoxelGrid(chunkPosition, this, ChunkOfValues(health, ChunkSizeFlat));
         _chunks[chunkPosition] = new Chunk(grid);
         return grid;
     }

@@ -91,6 +91,7 @@ public class SessionContainer : ISession
         Root.Root.Update -= _sessionUpdate;
         Root.Root.PhysicsUpdate -= _sessionPhysicsUpdate;
         Root.Root.Input -= _sessionInput;
+        Session?.Dispose();
         _viewportContainer?.QueueFree();
 
         Start();

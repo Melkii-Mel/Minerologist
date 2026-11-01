@@ -222,6 +222,11 @@ public class PlayerDigger
             })
             .ToList();
 
+        if (entitySupportingTiles.Count == 0)
+        {
+            _terrain.RemoveEntity(entity);
+            return;
+        }
         var count = Mathf.Clamp(
             (float)ExpConfig.F.DigOutSpeed.Calculate(Level),
             1,
@@ -291,5 +296,10 @@ public class PlayerDigger
             notify: false,
             onlyIfContactsAir
         );
+    }
+
+    public void Dispose()
+    {
+        _soundPlayer.Dispose();
     }
 }

@@ -264,6 +264,14 @@ public class DiggerSoundPlayer
         player.PlaybackFinished += () => player.VolumeDb = 0;
         return true;
     }
+
+    public void Dispose()
+    {
+        foreach (var player in _players.Values)
+        {
+            player.QueueFree();
+        }
+    }
 }
 
 public enum DiggerSound

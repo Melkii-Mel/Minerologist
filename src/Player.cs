@@ -180,4 +180,9 @@ public class Player
         HVelocity = Vector2.Zero;
         VVelocity = 0;
     }
+
+    public void Dispose()
+    {
+        _digger.Dispose();
+    }
 }

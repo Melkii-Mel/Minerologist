@@ -160,4 +160,9 @@ public class Session
     {
         Input?.Invoke(e);
     }
+
+    public void Dispose()
+    {
+        Player.Dispose();
+    }
 }
