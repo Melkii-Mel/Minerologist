@@ -1,60 +1,95 @@
 using System;
 using System.Linq;
+using System.Text;
 using NetMQ;
 using NetMQ.Sockets;
 using Newtonsoft.Json;
 
-public class MuseumServer
+public class MuseumServer : IDisposable
 {
     public MuseumRoot Root { get; }
-
-    public ResponseSocket Socket { get; }
-    public NetMQPoller Poller { get; }
+    public RouterSocket Socket { get; }
 
     public MuseumServer(MuseumRoot root)
     {
         Root = root;
-        Socket = SocketProvider.CreateSocket(Config.Instance.ServerConfig.PortSeed);
-        Socket.ReceiveReady += (sernder, args) =>
+        Socket = SocketProvider.CreateRouter(Config.Instance.ServerConfig.PortSeed);
+
+        Root.Root.Update += HandleMessages;
+    }
+
+    private void HandleMessages(float delta)
+    {
+        var request = new NetMQMessage();
+
+        while (Socket.TryReceiveMultipartMessage(ref request, 2))
         {
-            var json = Socket.ReceiveFrameString();
+            if (request.FrameCount != 2)
+            {
+                continue;
+            }
+
+            var identity = request[0].ToByteArray();
+            var json = Encoding.UTF8.GetString(request[1].ToByteArray());
+
             if (json == "minerologist")
             {
-                Console.WriteLine("Received connection request");
-                Socket.SendFrame("Ok");
-                Console.WriteLine("Responded");
-                return;
+                Send(identity, "Ok");
+                continue;
             }
-            var value = JsonConvert.DeserializeObject<IpcMessage>(
-                json,
-                IpcMessage.SerializerSettings
-            );
-            if (value is IpcMessageRequestSkeleton askSkeleton)
+
+            IpcMessage? message;
+            try
             {
-                Socket.SendFrame(Root.State.CurrentSkeleton);
-            }
-            else if (value is IpcMessageSendDiggable sendDiggable)
-            {
-                Root.DiggablesReceiver.AddDiggable(sendDiggable);
-                Socket.SendFrame("Ok");
-            }
-            else if (value is IpcMessageRequestRemainingPieceIds sendRemainingPieceIds)
-            {
-                Socket.SendFrame(
-                    JsonConvert.SerializeObject(
-                        Root.State.CurrentSkeletonPiecesAmounts.Where(p => p.Value == 0)
-                            .Select(p => p.Key),
-                        IpcMessage.SerializerSettings
-                    )
+                message = JsonConvert.DeserializeObject<IpcMessage>(
+                    json,
+                    IpcMessage.SerializerSettings
                 );
+            }
+            catch (JsonException)
+            {
+                Send(identity, $"Invalid message: `{json}`");
+                continue;
+            }
+
+            if (message is IpcMessageRequestCurrentSkeleton)
+            {
+                Send(identity, new IpcMessageRespondCurrentSkeleton(Root.State.CurrentSkeleton));
+            }
+            else if (message is IpcMessageSubmitDiggable diggable)
+            {
+                Root.DiggablesReceiver.AddDiggable(diggable);
+            }
+            else if (message is IpcMessageRequestRemainingPieceIds)
+            {
+                var ids = Root
+                    .State.CurrentSkeletonPiecesAmounts.Where(p => p.Value == 0)
+                    .Select(p => p.Key)
+                    .ToArray();
+
+                Send(identity, new IpcMessageRespondRemainingPieceIds(ids));
             }
             else
             {
-                Socket.SendFrame($"Request `{json}` is not supported");
+                Send(identity, $"Request `{json}` is not supported");
             }
-        };
+        }
+    }
 
-        Poller = [Socket];
-        Poller.RunAsync();
+    private void Send(byte[] identity, IpcMessage message)
+    {
+        Send(identity, JsonConvert.SerializeObject(message, IpcMessage.SerializerSettings));
+    }
+
+    private void Send(byte[] identity, string message)
+    {
+        Socket.SendMoreFrame(identity);
+        Socket.SendFrame(message);
+    }
+
+    public void Dispose()
+    {
+        Root.Root.Update -= HandleMessages;
+        Socket.Dispose();
     }
 }

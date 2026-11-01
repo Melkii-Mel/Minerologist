@@ -7,7 +7,7 @@ public class DiggablesReceiver(MuseumRoot root)
 
     private MuseumState State => root.State;
 
-    public void AddDiggable(IpcMessageSendDiggable value)
+    public void AddDiggable(IpcMessageSubmitDiggable value)
     {
         if (MeshCollection.Skeletons.Keys.Contains(value.Type))
         {

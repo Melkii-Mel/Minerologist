@@ -6,8 +6,12 @@ public record IpcMessage
         new() { TypeNameHandling = TypeNameHandling.Objects };
 }
 
+public record IpcMessageRequestCurrentSkeleton : IpcMessage;
+
 public record IpcMessageRequestRemainingPieceIds : IpcMessage;
 
-public record IpcMessageRequestSkeleton : IpcMessage;
+public record IpcMessageSubmitDiggable(string Type, string Id) : IpcMessage;
 
-public record IpcMessageSendDiggable(string Type, string Id) : IpcMessage;
+public record IpcMessageRespondCurrentSkeleton(string SkeletonName) : IpcMessage;
+
+public record IpcMessageRespondRemainingPieceIds(string[] Ids) : IpcMessage;

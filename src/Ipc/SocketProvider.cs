@@ -18,14 +18,14 @@ public static class SocketProvider
         }
     }
 
-    public static ResponseSocket CreateSocket(uint seed)
+    public static RouterSocket CreateRouter(uint seed)
     {
         foreach (var port in Generate(seed))
         {
             Console.WriteLine($"Trying port {port} ...");
             try
             {
-                var socket = new ResponseSocket($"@tcp://localhost:{port}");
+                var socket = new RouterSocket($"@tcp://*:{port}");
                 Console.WriteLine("Socket established");
                 return socket;
             }
@@ -35,30 +35,24 @@ public static class SocketProvider
         throw new Exception();
     }
 
-    public static RequestSocket ConnectToFirstMatchingPort(
-        uint seed,
-        int timeoutMs = 300,
-        int attempts = -1
-    )
+    public static DealerSocket CreateDealer(uint seed, int timeoutMs = 300, int attempts = -1)
     {
         foreach (var port in attempts < 1 ? Generate(seed) : Generate(seed).Take(attempts))
         {
-            Console.WriteLine($"Trying connecting to port {port} ...");
-            var req = new RequestSocket($">tcp://localhost:{port}");
+            var dealer = new DealerSocket();
+            dealer.Connect($"tcp://localhost:{port}");
 
-            if (!req.TrySendFrame(TimeSpan.FromMilliseconds(timeoutMs), "minerologist"))
+            dealer.SendFrame("minerologist");
+
+            if (
+                dealer.TryReceiveFrameString(TimeSpan.FromMilliseconds(timeoutMs), out var response)
+                && response == "Ok"
+            )
             {
-                continue;
+                return dealer;
             }
 
-            if (req.ReceiveFrameString() != "Ok")
-            {
-                continue;
-            }
-
-            Console.WriteLine("Connected successfully");
-
-            return req;
+            dealer.Dispose();
         }
 
         throw new Exception();
