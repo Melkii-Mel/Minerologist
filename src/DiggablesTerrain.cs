@@ -9,10 +9,10 @@ public class DiggablesTerrain : ITerrain<byte, byte>
     public readonly Dictionary<MeshInstance, Entity> GlobalMeshInstanceEntityMap = [];
     public readonly Dictionary<Vector3I, EntitiesChunk> EntitiesChunks = [];
 
-    private static readonly EntitiesGenerationConfig EntitiesGenerationConfig = Config
-        .Instance
-        .GenerationConfig
-        .EntitiesGenerationConfig;
+    private static EntitiesGenerationConfig EntitiesGenerationConfig =>
+        Config.Instance.GenerationConfig.EntitiesGenerationConfig;
+
+    private static NoiseConfig NoiseConfig => EntitiesGenerationConfig.NoiseConfig;
 
     public Vector3I ChunkSize => EntitiesGenerationConfig.ChunkSize;
 
@@ -35,15 +35,7 @@ public class DiggablesTerrain : ITerrain<byte, byte>
         _entityNodesContainer = new();
 
         parent.AddChild(_entityNodesContainer);
-        var noiseConfig = EntitiesGenerationConfig.NoiseConfig;
-        _noise = new OpenSimplexNoise
-        {
-            Seed = (int)GD.Randi(),
-            Octaves = noiseConfig.Octaves,
-            Period = noiseConfig.Period,
-            Persistence = noiseConfig.Persistence,
-            Lacunarity = noiseConfig.Lacunarity,
-        };
+        _noise = new OpenSimplexNoise { Seed = (int)GD.Randi() };
     }
 
     private EntitiesChunk GenerateEntitiesChunk(Vector3I chunkPosition)
@@ -57,7 +49,12 @@ public class DiggablesTerrain : ITerrain<byte, byte>
     public EntitiesChunk GenerateEntitiesChunk(Vector3I chunkPos, bool empty)
     {
         var globalPos = _worldChunkCoordinatesConverter.ChunkToWorld(chunkPos);
-        // TODO: Configure noise here
+        var depth = -globalPos.Y;
+        _noise.Octaves = (int)NoiseConfig.F.Octaves.Calculate(depth);
+        _noise.Period = (float)NoiseConfig.F.Period.Calculate(depth);
+        _noise.Persistence = (float)NoiseConfig.F.Persistence.Calculate(depth);
+        _noise.Lacunarity = (float)NoiseConfig.F.Lacunarity.Calculate(depth);
+        var spawnThreshold = NoiseConfig.F.SpawnThreshold.Calculate(depth);
         var entities = new List<Entity>();
         if (!empty)
         {
@@ -69,7 +66,7 @@ public class DiggablesTerrain : ITerrain<byte, byte>
                     {
                         var globalCellPos = globalPos + new Vector3I(x, y, z);
                         var sample = _noise.GetNoise3dv(globalCellPos.ToGdVector3()) / 2 + 0.5;
-                        if (sample > EntitiesGenerationConfig.NoiseConfig.SpawnThreshold)
+                        if (sample > spawnThreshold)
                         {
                             entities.Add(CreateRandomEntity(globalCellPos));
                         }

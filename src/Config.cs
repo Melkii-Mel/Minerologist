@@ -303,7 +303,10 @@ public sealed record EntitiesGenerationConfig
     public int VerticalLoadDistanceChunks { get; init; } = 1;
     public int VerticalUnloadDistanceChunks { get; init; } = 10;
 
-    public void Init() { }
+    public void Init()
+    {
+        NoiseConfig.Init();
+    }
 }
 
 public record GenerationConfigFormulas
@@ -351,11 +354,37 @@ public sealed record DiggerAnimationConfig
 
 public sealed record NoiseConfig
 {
-    public int Octaves { get; init; } = 2;
-    public float Period { get; init; } = 0.5f;
-    public float Persistence { get; init; } = 0.8f;
-    public float SpawnThreshold { get; init; } = 0.76f;
-    public float Lacunarity { get; init; } = 10.0f;
+    public string Octaves { get; init; } = "2";
+    public string Period { get; init; } = "0.5f + depth / 32";
+    public string Persistence { get; init; } = "0.8f";
+    public string SpawnThreshold { get; init; } = "0.76f";
+    public string Lacunarity { get; init; } = "10.0f / (depth / 32)";
+
+    [TomlIgnore]
+    public NoiseFormulas F { get; private set; } = null!;
+
+    public void Init()
+    {
+        F = new(this);
+    }
+}
+
+public sealed record NoiseFormulas
+{
+    public NoiseFormula Octaves { get; }
+    public NoiseFormula Period { get; }
+    public NoiseFormula Persistence { get; }
+    public NoiseFormula SpawnThreshold { get; }
+    public NoiseFormula Lacunarity { get; }
+
+    public NoiseFormulas(NoiseConfig c)
+    {
+        Octaves = new(c.Octaves);
+        Period = new(c.Period);
+        Persistence = new(c.Persistence);
+        SpawnThreshold = new(c.SpawnThreshold);
+        Lacunarity = new(c.Lacunarity);
+    }
 }
 
 public sealed record WorldConfig
