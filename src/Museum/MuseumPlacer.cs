@@ -99,7 +99,7 @@ public class MuseumPlacer
         }
         else
         {
-            Out.Error($"Museum does not contains a placeholder for `{id}`");
+            Out.Error($"Museum does not contain a placeholder for `{id}`");
         }
     }
 }
