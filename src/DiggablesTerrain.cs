@@ -64,6 +64,10 @@ public class DiggablesTerrain : ITerrain<byte, byte>
                 {
                     for (var z = 0; z < ChunkSize.Z; z++)
                     {
+                        if (depth + y < EntitiesGenerationConfig.MinDepth)
+                        {
+                            continue;
+                        }
                         var globalCellPos = globalPos + new Vector3I(x, y, z);
                         var sample = _noise.GetNoise3dv(globalCellPos.ToGdVector3()) / 2 + 0.5;
                         if (sample > spawnThreshold)

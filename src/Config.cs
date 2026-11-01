@@ -302,6 +302,7 @@ public sealed record EntitiesGenerationConfig
     public int UnloadRadiusChunks { get; init; } = 10;
     public int VerticalLoadDistanceChunks { get; init; } = 1;
     public int VerticalUnloadDistanceChunks { get; init; } = 10;
+    public int MinDepth { get; init; } = 4;
 
     public void Init()
     {

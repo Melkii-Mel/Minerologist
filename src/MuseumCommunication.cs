@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using NetMQ;
 using NetMQ.Sockets;
@@ -6,7 +5,7 @@ using Newtonsoft.Json;
 
 public static class MuseumCommunication
 {
-    public static string CurrentSkeleton { get; internal set; } = "Мамонт";
+    public static string CurrentSkeleton { get; internal set; } = null!;
     public static HashSet<string> RemainingSkeletonPieces { get; internal set; } = [];
     public static Queue<EntityPrefab> ItemsToSend { get; } = [];
 
@@ -26,6 +25,8 @@ public class MuseumCommunicator
     {
         _socket = SocketProvider.ConnectToFirstMatchingPort(Config.Instance.ServerConfig.PortSeed);
         root.Root.Update += Update;
+
+        Update();
     }
 
     private void Update(float delta)
@@ -36,6 +37,11 @@ public class MuseumCommunicator
             return;
         }
         _timer -= DELAY;
+        Update();
+    }
+
+    private void Update()
+    {
         _socket.SendFrame(ToJson(new IpcMessageRequestSkeleton()));
         MuseumCommunication.CurrentSkeleton = _socket.ReceiveFrameString();
 
