@@ -46,12 +46,12 @@ public class MuseumCommunicator
 
     private void PollSocket(bool receive = true)
     {
-        _socket.SendFrame(ToJson(new IpcMessageRequestCurrentSkeleton()));
-        _socket.SendFrame(ToJson(new IpcMessageRequestRemainingPieceIds()));
+        Send(new IpcMessageRequestCurrentSkeleton());
+        Send(new IpcMessageRequestRemainingPieceIds());
 
         foreach (var item in MuseumCommunication.ItemsToSend)
         {
-            _socket.SendFrame(ToJson(new IpcMessageSubmitDiggable(item.Type, item.Id)));
+            Send(new IpcMessageSubmitDiggable(item.Type, item.Id));
         }
         MuseumCommunication.ItemsToSend.Clear();
 
@@ -75,7 +75,7 @@ public class MuseumCommunicator
         {
             if (response.FrameCount != 1)
             {
-                return true;
+                return received;
             }
 
             var json = Encoding.UTF8.GetString(response.First.ToByteArray());
@@ -92,6 +92,16 @@ public class MuseumCommunicator
         }
 
         return received;
+    }
+
+    private void Send(IpcMessage message)
+    {
+        Send(ToJson(message));
+    }
+
+    private void Send(string message)
+    {
+        _socket.SendFrame(Encoding.UTF8.GetBytes(message));
     }
 
     private string ToJson<T>(T message)

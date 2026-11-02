@@ -58,7 +58,7 @@ public class MuseumServer : IDisposable
             }
             else if (message is IpcMessageSubmitDiggable diggable)
             {
-                Root.DiggablesReceiver.AddDiggable(diggable);
+                Root.DiggablesReceiver.AddDiggable(diggable); //there
             }
             else if (message is IpcMessageRequestRemainingPieceIds)
             {
@@ -84,7 +84,7 @@ public class MuseumServer : IDisposable
     private void Send(byte[] identity, string message)
     {
         Socket.SendMoreFrame(identity);
-        Socket.SendFrame(message);
+        Socket.SendFrame(Encoding.UTF8.GetBytes(message));
     }
 
     public void Dispose()
