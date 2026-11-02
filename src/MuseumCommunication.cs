@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using NetMQ;
 using NetMQ.Sockets;
@@ -25,6 +26,12 @@ public class MuseumCommunicator
 
     public MuseumCommunicator(GameRoot root)
     {
+        MuseumCommunication.CurrentSkeleton = MeshCollection.Skeletons.Keys.First();
+        MuseumCommunication.RemainingSkeletonPieces =
+        [
+            .. MeshCollection.Skeletons.Values.First().Keys,
+        ];
+
         _socket = SocketProvider.CreateDealer(Config.Instance.ServerConfig.PortSeed);
         root.Root.Update += Update;
 
@@ -66,7 +73,7 @@ public class MuseumCommunicator
         var response = new NetMQMessage();
 
         Func<bool> receive = blocking
-            ? () => _socket.TryReceiveMultipartMessage(TimeSpan.FromDays(365), ref response, 1)
+            ? () => _socket.TryReceiveMultipartMessage(TimeSpan.FromSeconds(1), ref response, 1)
             : () => _socket.TryReceiveMultipartMessage(ref response, 1);
 
         var received = receive();
