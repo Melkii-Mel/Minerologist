@@ -1,22 +1,29 @@
-// AI-generated
+// AI-Generated
+using System;
+using System.Collections.Generic;
 using Godot;
 
-public class FrameRateMonitor
+public class FrameRateMonitor(Action<string> print)
 {
-    private const float ReportInterval = 1.0f;
-    private float _elapsed;
-    private int _frames;
+    private const float WindowSeconds = 3.0f;
+    private const int ReportEveryFrames = 5;
+
+    private readonly Queue<float> _frameTimes = new();
+
+    private float _windowTime;
+    private float _worstFrameTime;
     private int _over20Ms;
     private int _over33Ms;
-    private float _totalFrameTime;
-    private float _worstFrameTime;
+    private int _framesSinceReport;
 
     public void Update(float delta)
     {
-        _elapsed += delta;
-        _frames++;
-        _totalFrameTime += delta;
-        _worstFrameTime = Mathf.Max(_worstFrameTime, delta);
+        _frameTimes.Enqueue(delta);
+        _windowTime += delta;
+        _framesSinceReport++;
+
+        if (delta > _worstFrameTime)
+            _worstFrameTime = delta;
 
         if (delta > 0.020f)
             _over20Ms++;
@@ -24,22 +31,53 @@ public class FrameRateMonitor
         if (delta > 1f / 30f)
             _over33Ms++;
 
-        if (_elapsed < ReportInterval)
+        // Keep samples spanning at most the most recent 3 seconds.
+        while (_windowTime > WindowSeconds && _frameTimes.Count > 1)
+        {
+            var oldest = _frameTimes.Dequeue();
+            _windowTime -= oldest;
+
+            if (oldest >= _worstFrameTime)
+                RecalculateWindowStats();
+            else
+            {
+                if (oldest > 0.020f)
+                    _over20Ms--;
+
+                if (oldest > 1f / 30f)
+                    _over33Ms--;
+            }
+        }
+
+        if (_framesSinceReport < ReportEveryFrames)
             return;
 
-        var averageFps = _frames / _totalFrameTime;
+        _framesSinceReport = 0;
 
-        GD.Print(
+        var averageFps = _frameTimes.Count / _windowTime;
+
+        print(
             $"FPS avg: {averageFps:0.0} | "
                 + $"worst: {_worstFrameTime * 1000:0.0} ms | "
                 + $">20 ms: {_over20Ms} | >33 ms: {_over33Ms}"
         );
+    }
 
-        _elapsed = 0;
-        _frames = 0;
-        _totalFrameTime = 0;
+    private void RecalculateWindowStats()
+    {
         _worstFrameTime = 0;
         _over20Ms = 0;
         _over33Ms = 0;
+
+        foreach (var frameTime in _frameTimes)
+        {
+            _worstFrameTime = Mathf.Max(_worstFrameTime, frameTime);
+
+            if (frameTime > 0.020f)
+                _over20Ms++;
+
+            if (frameTime > 1f / 30f)
+                _over33Ms++;
+        }
     }
 }

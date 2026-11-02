@@ -21,6 +21,7 @@ public class Root : Node
 
         var args = System.Environment.GetCommandLineArgs();
         bool isMuseum = Array.IndexOf(args, "--museum") != -1;
+        _ = new DebugUI(this, false);
 
         if (isMuseum)
         {
