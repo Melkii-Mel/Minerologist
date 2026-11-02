@@ -58,17 +58,17 @@ public class DiggablesTerrain : ITerrain<byte, byte>
         var entities = new List<Entity>();
         if (!empty)
         {
-            for (var x = 0; x < ChunkSize.X; x++)
+            for (var y = 0; y < ChunkSize.Y; y++)
             {
-                for (var y = 0; y < ChunkSize.Y; y++)
+                if (depth + y - ChunkSize.Y < EntitiesGenerationConfig.MinDepth)
+                {
+                    continue;
+                }
+                for (var x = 0; x < ChunkSize.X; x++)
                 {
                     for (var z = 0; z < ChunkSize.Z; z++)
                     {
-                        if (depth + y < EntitiesGenerationConfig.MinDepth)
-                        {
-                            continue;
-                        }
-                        var globalCellPos = globalPos + new Vector3I(x, -y, z);
+                        var globalCellPos = globalPos + new Vector3I(x, y, z);
                         var sample = _noise.GetNoise3dv(globalCellPos.ToGdVector3()) / 2 + 0.5;
                         if (sample > spawnThreshold)
                         {
