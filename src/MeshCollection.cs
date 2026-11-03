@@ -43,6 +43,7 @@ public static class MeshCollection
 
     public static MeshGroups Skeletons { get; private set; } = [];
     public static MeshGroups OtherDiggables { get; private set; } = [];
+    public static MeshGroup OtherDiggablesFlat { get; private set; } = [];
     public static MeshGroup OtherMeshes { get; private set; } = [];
 
     public const string MODELS = "Models";
@@ -67,6 +68,10 @@ public static class MeshCollection
 
         LoadDir(skeletonsManifest, groupByFile: true, Skeletons);
         LoadDir(otherDiggablesManifest, groupByFile: false, OtherDiggables);
+        OtherDiggablesFlat =
+        [
+            with(OtherDiggables.SelectMany(d => d.Value).ToDictionary(d => d.Key, d => d.Value)),
+        ];
         var otherMeshes = new MeshGroups { [OTHERS] = [] };
         LoadDir(otherMeshesManifest, groupByFile: false, otherMeshes, groupName: OTHERS);
         GD.Print(
