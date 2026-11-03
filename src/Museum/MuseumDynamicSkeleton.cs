@@ -65,7 +65,6 @@ public class MuseumDynamicSkeleton
 
         Reveal(revealedParts);
 
-        /// TEMP
         var initialScale = _placement.Anchor.Scale;
         var clock = 0f;
         root.Root.Update += delta =>
@@ -75,10 +74,7 @@ public class MuseumDynamicSkeleton
             rot.y += delta;
             scale.y += Mathf.Sin(clock) * delta;
             _placement.Anchor.Rotation = rot;
-            // _placement.Anchor.Scale = scale;
-            // clock += delta;
         };
-        /// /TEMP
     }
 
     // TODO: Juicify
