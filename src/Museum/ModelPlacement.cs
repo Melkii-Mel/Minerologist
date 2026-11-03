@@ -47,3 +47,10 @@ public class ModelPlacement
         Anchor.Transform = new Transform(extra * _fit.Transform.basis, anchorPosition + offset);
     }
 }
+
+public static class ModelPlacementAnchorPresets
+{
+    public static Vector3 Top => new(0.5f, 1, 0.5f);
+    public static Vector3 Bottom => new(0.5f, 0, 0.5f);
+    public static Vector3 Center => new(0.5f, 0.5f, 0.5f);
+}
