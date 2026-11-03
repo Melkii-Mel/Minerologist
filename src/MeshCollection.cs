@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Godot;
 
@@ -60,11 +59,11 @@ public static class MeshCollection
         }
         Initialized = true;
 
-        var modelsManifest = Manifest.Instance.DirOrDefault(MODELS) ?? throw DirectoryNotFound;
-        var otherMeshesManifest = modelsManifest.DirOrDefault(OTHERS) ?? throw DirectoryNotFound;
-        var diggablesManifest = modelsManifest.DirOrDefault(DIGGABLES) ?? throw DirectoryNotFound;
-        var skeletonsManifest = diggablesManifest.DirOrDefault(SKELETONS) ?? throw DirectoryNotFound;
-        var otherDiggablesManifest = diggablesManifest.DirOrDefault(OTHERS) ?? throw DirectoryNotFound;
+        var modelsManifest = Manifest.Instance.Dir(MODELS);
+        var otherMeshesManifest = modelsManifest.Dir(OTHERS);
+        var diggablesManifest = modelsManifest.Dir(DIGGABLES);
+        var skeletonsManifest = diggablesManifest.Dir(SKELETONS);
+        var otherDiggablesManifest = diggablesManifest.Dir(OTHERS);
 
         LoadDir(skeletonsManifest, groupByFile: true, Skeletons);
         LoadDir(otherDiggablesManifest, groupByFile: false, OtherDiggables);
@@ -77,8 +76,6 @@ public static class MeshCollection
         OtherMeshes = otherMeshes[OTHERS];
         GD.Print("Other loaded meshes: ", ToCodeUnits(string.Join(", ", OtherMeshes.Keys)));
     }
-
-    private static readonly IOException DirectoryNotFound = new("Directory not found");
 
     private static string ToCodeUnits(string value)
     {
@@ -186,6 +183,20 @@ public static class MeshCollection
     }
 }
 
-public class MeshGroup : Dictionary<string, MeshInstance> { }
+public class MeshGroup : Dictionary<string, MeshInstance>
+{
+    public MeshGroup() { }
+
+    public MeshGroup(Dictionary<string, MeshInstance> dict)
+        : base(dict) { }
+
+    public MeshGroup Duplicate()
+    {
+        return
+        [
+            with(this.ToDictionary(kvp => kvp.Key, kvp => (MeshInstance)kvp.Value.Duplicate())),
+        ];
+    }
+}
 
 public class MeshGroups : Dictionary<string, MeshGroup> { }
