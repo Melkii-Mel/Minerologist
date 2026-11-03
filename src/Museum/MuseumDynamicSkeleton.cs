@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Godot;
 
 public class MuseumDynamicSkeleton
@@ -35,7 +33,7 @@ public class MuseumDynamicSkeleton
             .Select(a => a.Key)
             .ToArray();
 
-        var model = MeshCollection.Skeletons[skeletonName];
+        var model = MeshCollection.Skeletons[skeletonName].Duplicate();
 
         _skeletonParent = new Spatial();
         _meshes = [];
@@ -105,27 +103,14 @@ public class MuseumDynamicSkeleton
         SilhouetteOverlay.SetMixLevel(_silhouetteOverlays[original], 0);
     }
 
-    private static Vector3[] GetAabbCorners(AABB aabb)
-    {
-        var min = aabb.Position;
-        var max = aabb.End;
-
-        return
-        [
-            new Vector3(min.x, min.y, min.z),
-            new Vector3(max.x, min.y, min.z),
-            new Vector3(min.x, max.y, min.z),
-            new Vector3(max.x, max.y, min.z),
-            new Vector3(min.x, min.y, max.z),
-            new Vector3(max.x, min.y, max.z),
-            new Vector3(min.x, max.y, max.z),
-            new Vector3(max.x, max.y, max.z),
-        ];
-    }
-
     private T SelectRelevant<T>(Dictionary<string, T> values)
     {
-        if (values.TryGetValue(_skeletonName, out var v))
+        return SelectRelevant(values, _skeletonName);
+    }
+
+    public static T SelectRelevant<T>(Dictionary<string, T> values, string skeletonName)
+    {
+        if (values.TryGetValue(skeletonName, out var v))
         {
             return v;
         }
