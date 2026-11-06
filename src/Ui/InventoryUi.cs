@@ -136,8 +136,7 @@ public class InventoryUi
             if (stack.HasValue)
             {
                 var node = (MeshInstance)stack.Value.Item.MeshInstance.Duplicate();
-                var nodeScale = SlotSize / node.GetAabb().Size.Max() * SLOT_RELATIVE_HEIGHT;
-                node.Scale = new(nodeScale, nodeScale, nodeScale);
+                SpatialAabbUtils.FitInsideRect(node, Vector2.One * SlotSize * SLOT_RELATIVE_HEIGHT);
                 parent.AddChild(node);
             }
         }

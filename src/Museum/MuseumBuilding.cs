@@ -8,7 +8,9 @@ public class MuseumBuilding
 
     public MuseumBuilding(MuseumRoot root)
     {
-        Building = SceneLoader.Instantiate<Spatial>("MuseumBuilding");
+        var buildingRoot = SceneLoader.Instantiate<Spatial>("MuseumBuilding");
+        Building = (Spatial)buildingRoot.GetChild(0);
+        buildingRoot.RemoveChild(Building);
         Building.Position = Config.Instance.MuseumConfig.MuseumBuildingConfig.Offset.ToGdVector3();
         root.AddChild(Building);
         Placer = new(Building, root);

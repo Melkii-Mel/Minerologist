@@ -2,9 +2,9 @@ using System;
 
 public static class Out
 {
-    public static void Message(string message)
+    public static void Message(params object[] message)
     {
-        Console.WriteLine(message);
+        Console.WriteLine(string.Join(" ", message));
     }
 
     public static void Error(string message)

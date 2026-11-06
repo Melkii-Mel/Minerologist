@@ -68,10 +68,9 @@ public static class MeshCollection
 
         LoadDir(skeletonsManifest, groupByFile: true, Skeletons);
         LoadDir(otherDiggablesManifest, groupByFile: false, OtherDiggables);
-        OtherDiggablesFlat =
-        [
-            with(OtherDiggables.SelectMany(d => d.Value).ToDictionary(d => d.Key, d => d.Value)),
-        ];
+        OtherDiggablesFlat = new(
+            OtherDiggables.SelectMany(d => d.Value).ToDictionary(d => d.Key, d => d.Value)
+        );
         var otherMeshes = new MeshGroups { [OTHERS] = [] };
         LoadDir(otherMeshesManifest, groupByFile: false, otherMeshes, groupName: OTHERS);
         GD.Print(
@@ -195,13 +194,23 @@ public class MeshGroup : Dictionary<string, MeshInstance>
     public MeshGroup(Dictionary<string, MeshInstance> dict)
         : base(dict) { }
 
+    public MeshInstance? Get(string key)
+    {
+        TryGetValue(key, out var mesh);
+        return mesh;
+    }
+
     public MeshGroup Duplicate()
     {
-        return
-        [
-            with(this.ToDictionary(kvp => kvp.Key, kvp => (MeshInstance)kvp.Value.Duplicate())),
-        ];
+        return new(this.ToDictionary(kvp => kvp.Key, kvp => (MeshInstance)kvp.Value.Duplicate()));
     }
 }
 
-public class MeshGroups : Dictionary<string, MeshGroup> { }
+public class MeshGroups : Dictionary<string, MeshGroup>
+{
+    public MeshGroup? Get(string key)
+    {
+        TryGetValue(key, out var group);
+        return group;
+    }
+}

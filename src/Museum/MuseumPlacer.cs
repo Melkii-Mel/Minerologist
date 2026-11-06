@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Godot;
 
@@ -15,19 +14,27 @@ public class MuseumPlacer
     private readonly Dictionary<string, MeshInstance> _diggablesPlaceholders;
 
     private MuseumDynamicSkeleton _dynamicSkeleton = null!;
-    private readonly Dictionary<string, MuseumDiggable> _diggables = [];
+    public readonly Dictionary<string, MuseumDiggable> Diggables = [];
+    public readonly Dictionary<MeshInstance, string> MeshDiggableMap = [];
+    public readonly Dictionary<string, MuseumItem> OtherSkeletons = [];
+    public readonly Dictionary<MeshInstance, string> MeshSkeletonMap = [];
 
     public MuseumPlacer(Spatial building, MuseumRoot root)
     {
         Root = root;
 
-        _dynamicSkeletonPlaceholder = (MeshInstance)
-            building.FindNode(PlacerConfig.MainSkeletonPlaceholderName);
+        _dynamicSkeletonPlaceholder = building.GetChildOfTypeByName<MeshInstance>(
+            PlacerConfig.MainSkeletonPlaceholderName
+        )!;
 
         _dynamicSkeletonParent = new();
         _dynamicSkeletonPlaceholder.GetParent().AddChild(_dynamicSkeletonParent);
-        _otherSkeletonsParent = (Spatial)building.FindNode(PlacerConfig.OtherSkeletonsParentName);
-        _diggablesParent = (Spatial)building.FindNode(PlacerConfig.DiggablesParentName);
+        _otherSkeletonsParent = building.GetChildOfTypeByName<Spatial>(
+            PlacerConfig.OtherSkeletonsParentName
+        )!;
+        _diggablesParent = building.GetChildOfTypeByName<Spatial>(
+            PlacerConfig.DiggablesParentName
+        )!;
 
         CollectChildren(_otherSkeletonsParent, _otherSkeletonPlaceholders = []);
         CollectChildren(_diggablesParent, _diggablesPlaceholders = []);
@@ -48,7 +55,9 @@ public class MuseumPlacer
         foreach (var skeletonName in _otherSkeletonPlaceholders.Keys)
         {
             var placeholder = _otherSkeletonPlaceholders[skeletonName];
-            var node = new MuseumStaticSkeleton(skeletonName, placeholder);
+            var node = new MuseumStaticSkeleton(skeletonName, placeholder, _otherSkeletonsParent);
+            OtherSkeletons[skeletonName] = node;
+            MeshSkeletonMap[node.MeshInstance] = skeletonName;
             _otherSkeletonsParent.AddChild(node);
             _otherSkeletonsParent.RemoveChild(placeholder);
         }
@@ -56,8 +65,9 @@ public class MuseumPlacer
         foreach (var diggableName in _diggablesPlaceholders.Keys)
         {
             var placeholder = _diggablesPlaceholders[diggableName];
-            var node = new MuseumDiggable(diggableName, placeholder);
-            _diggables[diggableName] = node;
+            var node = new MuseumDiggable(diggableName, placeholder, _diggablesParent);
+            Diggables[diggableName] = node;
+            MeshDiggableMap[node.MeshInstance] = diggableName;
             _diggablesParent.AddChild(node);
             _diggablesParent.RemoveChild(placeholder);
         }
@@ -93,7 +103,7 @@ public class MuseumPlacer
 
     public void UpdateItem(string id)
     {
-        if (_diggables.TryGetValue(id, out var diggable))
+        if (Diggables.TryGetValue(id, out var diggable))
         {
             diggable.InceraseNumber();
         }

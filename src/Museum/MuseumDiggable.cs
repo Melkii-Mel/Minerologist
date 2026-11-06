@@ -1,20 +1,14 @@
-using System;
 using Godot;
 
-public class MuseumDiggable : Node
+public class MuseumDiggable(string diggableName, MeshInstance placeholder, Spatial parent)
+    : MuseumItem(
+        placeholder,
+        parent,
+        (
+            (MeshInstance?)MeshCollection.OtherDiggablesFlat.Get(diggableName)?.Duplicate()
+        ).ToArrayNullable(),
+        diggableName
+    )
 {
-    private readonly string _diggableName;
-    private readonly MeshInstance _placeholder;
-
-    public MuseumDiggable(string diggableName, MeshInstance placeholder)
-    {
-        _diggableName = diggableName;
-        _placeholder = placeholder;
-    }
-
-    // TODO:
-    public void InceraseNumber()
-    {
-        throw new NotImplementedException();
-    }
+    public override string GroupName => "MUSEUM_DIGGABLE_GROUP";
 }

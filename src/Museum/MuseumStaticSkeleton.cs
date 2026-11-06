@@ -1,13 +1,12 @@
 using Godot;
 
-public class MuseumStaticSkeleton : Node
+public class MuseumStaticSkeleton(string skeletonName, MeshInstance placeholder, Spatial parent)
+    : MuseumItem(
+        placeholder,
+        parent,
+        MeshCollection.Skeletons.Get(skeletonName)?.Duplicate()?.Values,
+        skeletonName
+    )
 {
-    private readonly string _skeletonName;
-    private readonly MeshInstance _placeholder;
-
-    public MuseumStaticSkeleton(string skeletonName, MeshInstance placeholder)
-    {
-        _skeletonName = skeletonName;
-        _placeholder = placeholder;
-    }
+    public override string GroupName => "MUSEUM_STATIC_SKELETON_GROUP";
 }

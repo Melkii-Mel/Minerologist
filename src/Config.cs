@@ -61,12 +61,32 @@ public record MuseumConfig
     public MuseumBuildingConfig MuseumBuildingConfig { get; init; } = new();
     public MuseumCameraConfig MuseumCameraConfig { get; init; } = new();
     public MuseumPlacerConfig MuseumPlacerConfig { get; init; } = new();
+    public MuseumPointerConfig MuseumPointerConfig { get; init; } = new();
+    public MuseumDescriptionPopupConfig MuseumDescriptionPopupConfig { get; init; } = new();
+}
+
+public record MuseumDescriptionPopupConfig
+{
+    public float MeshRotationSpeed { get; init; } = new();
+    public int FontSize { get; init; } = 14;
+
+    // without file extension
+    public string FontName { get; init; } = "";
+}
+
+public record MuseumPointerConfig
+{
+    public float ScanRange { get; init; } = 100;
+    public float ScanConeRadius { get; init; } = 10;
+    public float MagnetForce { get; init; } = 1;
+    public int MagnetCapacity { get; init; } = 1;
+    public int MagnetSpeed { get; init; } = 4;
 }
 
 public record MuseumPlacerConfig
 {
     public string MainSkeletonPlaceholderName { get; init; } = "placeholder_current_skeleton";
-    public string OtherSkeletonsParentName { get; init; } = "placeholders_other_skeletons";
+    public string OtherSkeletonsParentName { get; init; } = "placeholders_others_skeletons";
     public string DiggablesParentName { get; init; } = "placeholders_diggables";
 
     public Dictionary<string, Vector3I> RotationsDegrees { get; init; } =
@@ -94,24 +114,27 @@ public record MuseumPlacerConfig
 
 public record MuseumCameraConfig
 {
-    public Vector3I Offset { get; init; } = Vector3I.Zero;
+    public Vector3I Offset { get; init; } = new(230, 50, 0);
+    public Vector3I RotationDegrees { get; init; } = new(20, 90, 0);
     public float Fov { get; init; } = 93;
-    public Dictionary<string, Vector3I> Offsets { get; init; } =
+    public Dictionary<string, MuseumCameraMode> CameraModes { get; init; } =
         new()
         {
-            ["Left"] = Vector3I.Zero,
-            ["Center"] = Vector3I.Zero,
-            ["Right"] = Vector3I.Zero,
+            ["Left"] = new() { Rotation = new(-35, 90, 0), Offset = new(-200, 100, 50) },
+            ["Front"] = new() { Rotation = new(10, 0, 0), Offset = new(-170, -30, 0) },
+            ["Right"] = new() { Rotation = new(-35, -90, 0), Offset = new(-200, 100, -50) },
+            ["Back"] = new(),
         };
-    public Dictionary<string, float> Rotations { get; init; } =
-        new()
-        {
-            ["Left"] = 90,
-            ["Center"] = 0,
-            ["Right"] = -90,
-        };
-    public float PositionTransitionSpeed { get; init; } = 10;
-    public float RotationTransitionSpeed { get; init; } = 45;
+    public float RelativeTransitionSpeed { get; init; } = 5;
+    public float MinPositionTransitionSpeed { get; init; } = 0.1f;
+    public float MinRotationTransitionSpeed { get; init; } = 2.0f;
+}
+
+public record MuseumCameraMode
+{
+    public Vector3I Offset { get; init; }
+    public Vector3I Rotation { get; init; }
+    public string[] GroupNames { get; init; } = [];
 }
 
 public record MuseumBuildingConfig
@@ -257,7 +280,7 @@ public sealed record ControlsConfig
     public int CoyoteTime { get; init; } = 250;
     public int BufferTime { get; init; } = 250;
     public float RestartDuration { get; init; } = 3;
-    public float Fov { get; init; } = 75;
+    public float Fov { get; init; } = 93;
 }
 
 public sealed record GenerationConfig
@@ -349,7 +372,9 @@ public sealed record DiggerAnimationConfig
     public Vector3I AnimationPivotOffset { get; init; } = new(0, 120, 90);
     public Vector3I OffsetIdle { get; init; } = new(20, -30, 20);
     public Vector3I RotationIdleDegrees { get; init; } = new(-740, -20, 0);
-    public float RotationDurationSeconds { get; init; } = 0.25f;
+    public float TransitionDurationSeconds { get; init; } = 0.25f;
+    public float MinRotationDegreesSpeed { get; init; } = 30;
+    public float MinOffsetSpeed { get; init; } = 10;
 }
 
 public sealed record NoiseConfig

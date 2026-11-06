@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Godot;
@@ -106,8 +107,8 @@ public class FileSystemNode(string name, FileSystemDir? parent = null)
         }
         else if (this is FileSystemFile thisFile)
         {
-            Parent?.Files.Remove(thisFile);
-            parent.Files.Add(thisFile);
+            Parent?.RemoveFile(thisFile);
+            parent.AddFile(thisFile);
         }
         else
         {
@@ -150,6 +151,10 @@ public class FileSystemDir(
 {
     public List<FileSystemDir> SubDirs { get; } = subDirs ?? [];
     public List<FileSystemFile> Files { get; } = files ?? [];
+    private Dictionary<string, FileSystemFile> FileNamesMap { get; } =
+        (files ?? []).ToDictionary(f => f.Name, f => f);
+    private Dictionary<string, FileSystemFile> FileNameWithoutExtensionMap { get; } =
+        (files ?? []).ToDictionary(f => f.NameWithoutExtension, f => f);
 
     public void AddChild(FileSystemNode node)
     {
@@ -216,6 +221,30 @@ public class FileSystemDir(
             }
         }
         return null;
+    }
+
+    public FileSystemFile File(string name)
+    {
+        return FileNamesMap[name];
+    }
+
+    public FileSystemFile FileWithoutExtension(string name)
+    {
+        return FileNameWithoutExtensionMap[name];
+    }
+
+    public void AddFile(FileSystemFile file)
+    {
+        Files.Add(file);
+        FileNameWithoutExtensionMap[file.NameWithoutExtension] = file;
+        FileNamesMap[file.Name] = file;
+    }
+
+    public void RemoveFile(FileSystemFile file)
+    {
+        Files.Remove(file);
+        FileNameWithoutExtensionMap.Remove(file.NameWithoutExtension);
+        FileNamesMap.Remove(file.Name);
     }
 }
 

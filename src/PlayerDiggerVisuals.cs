@@ -39,15 +39,21 @@ public class PlayerDiggerVisuals
     private void Update(float delta)
     {
         _root3d.Rotation = Session.Player.PlayerNode.Rotation;
-        _stateRotationDegrees = Move(
+
+        _stateRotationDegrees = MoveTowards.Calculate(
             _stateRotationDegrees,
             _isIdle() ? DiggerAnimationConfig.RotationIdleDegrees.ToGdVector3() : Vector3.Zero,
-            delta / DiggerAnimationConfig.RotationDurationSeconds
+            1 / DiggerAnimationConfig.TransitionDurationSeconds,
+            DiggerAnimationConfig.MinRotationDegreesSpeed,
+            delta
         );
-        _stateOffset = Move(
+
+        _stateOffset = MoveTowards.Calculate(
             _stateOffset,
             _isIdle() ? DiggerAnimationConfig.OffsetIdle.ToGdVector3() / 100 : Vector3.Zero,
-            delta / DiggerAnimationConfig.RotationDurationSeconds
+            1 / DiggerAnimationConfig.TransitionDurationSeconds,
+            DiggerAnimationConfig.MinOffsetSpeed,
+            delta
         );
 
         _pivot.RotationDegrees = _stateRotationDegrees;
@@ -87,20 +93,15 @@ public class PlayerDiggerVisuals
         }
         else
         {
-            GD.PrintErr("Tool model not found");
+            Out.Error("Tool model not found");
             _digger = new();
         }
+
         _pivot = new Spatial();
         var pivotOffset = DiggerAnimationConfig.AnimationPivotOffset.ToGdVector3() / 100;
         _root3d.AddChild(_pivot);
         _pivot.Position = ToolOffset + pivotOffset;
         _digger.Position = -pivotOffset;
         _pivot.AddChild(_digger);
-    }
-
-    private Vector3 Move(Vector3 from, Vector3 to, float delta)
-    {
-        var deltaPosition = (to - from) * delta;
-        return from + deltaPosition;
     }
 }

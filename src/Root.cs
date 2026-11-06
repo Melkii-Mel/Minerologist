@@ -7,6 +7,7 @@ public class Root : Node
     public event Action<float>? Update;
     public event Action<float>? PhysicsUpdate;
     public event Action<InputEvent>? Input;
+    public event Action<InputEvent>? UnhandledInput;
 
     public override void _Ready()
     {
@@ -20,7 +21,7 @@ public class Root : Node
         SoundPlayer.Init(this);
 
         var args = System.Environment.GetCommandLineArgs();
-        bool isMuseum = Array.IndexOf(args, "--museum") != -1;
+        bool isMuseum = Array.IndexOf(args, "--museum") != -1 || true;
         _ = new DebugUI(this, false);
 
         if (isMuseum)
@@ -46,5 +47,10 @@ public class Root : Node
     public override void _Input(InputEvent @event)
     {
         Input?.Invoke(@event);
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        UnhandledInput?.Invoke(@event);
     }
 }

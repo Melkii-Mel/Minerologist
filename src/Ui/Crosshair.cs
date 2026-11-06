@@ -73,18 +73,13 @@ public class Crosshair
 
     private void UpdateState(float delta)
     {
-        var activityDifference =
-            (Active ? CrosshairConfig.ActiveScale : CrosshairConfig.InactiveScale) - _activityState;
-        var activitySign = Mathf.Sign(activityDifference);
-        activityDifference = Mathf.Abs(activityDifference);
-        _activityState +=
-            Mathf.Min(
-                Mathf.Max(
-                    activityDifference * CrosshairConfig.RelativeTransitionSpeed,
-                    CrosshairConfig.MinScaleTransitionSpeed
-                ) * delta,
-                activityDifference
-            ) * activitySign;
+        _activityState = MoveTowards.Calculate(
+            _activityState,
+            Active ? CrosshairConfig.ActiveScale : CrosshairConfig.InactiveScale,
+            CrosshairConfig.RelativeTransitionSpeed,
+            CrosshairConfig.MinScaleTransitionSpeed,
+            delta
+        );
 
         foreach (var crosshairPart in _states.Keys)
         {
@@ -93,45 +88,35 @@ public class Crosshair
                 crosshairPart.ToString()
             ];
 
-            var offsetDifference =
-                new Vector2(targetState.OffsetX, targetState.OffsetY)
-                - new Vector2(currentState.OffsetX, currentState.OffsetY);
-            var offsetDifferenceDirection = offsetDifference.Normalized();
-            var offsetDifferenceLength = offsetDifference.Length();
+            var currentOffset = new Vector2(currentState.OffsetX, currentState.OffsetY);
+            var targetOffset = new Vector2(targetState.OffsetX, targetState.OffsetY);
 
-            var offsetDelta =
-                Mathf.Min(
-                    Mathf.Max(
-                        offsetDifferenceLength * CrosshairConfig.RelativeTransitionSpeed,
-                        CrosshairConfig.MinOffsetTransitionSpeed
-                    ) * delta,
-                    offsetDifferenceLength
-                ) * offsetDifferenceDirection;
-            currentState.OffsetX += offsetDelta.x;
-            currentState.OffsetY += offsetDelta.y;
+            var offset = MoveTowards.Calculate(
+                currentOffset,
+                targetOffset,
+                CrosshairConfig.RelativeTransitionSpeed,
+                CrosshairConfig.MinOffsetTransitionSpeed,
+                delta
+            );
 
-            var rotationDifference = targetState.Rotation - currentState.Rotation;
-            var rotationSign = Mathf.Sign(rotationDifference);
-            rotationDifference = Mathf.Abs(rotationDifference);
+            currentState.OffsetX = offset.x;
+            currentState.OffsetY = offset.y;
 
-            currentState.Rotation +=
-                Mathf.Min(
-                    Mathf.Max(
-                        rotationDifference * CrosshairConfig.RelativeTransitionSpeed,
-                        CrosshairConfig.MinRotationSpeedDegrees
-                    ) * delta,
-                    rotationDifference
-                ) * rotationSign;
+            currentState.Rotation = MoveTowards.Calculate(
+                currentState.Rotation,
+                targetState.Rotation,
+                CrosshairConfig.RelativeTransitionSpeed,
+                CrosshairConfig.MinRotationSpeedDegrees,
+                delta
+            );
 
-            var scaleDifference = targetState.Scale - currentState.Scale;
-            var scaleSign = Mathf.Sign(scaleDifference);
-            scaleDifference = Mathf.Abs(scaleDifference);
-
-            currentState.Scale +=
-                Mathf.Min(
-                    Mathf.Max(scaleDifference, CrosshairConfig.MinScaleTransitionSpeed) * delta,
-                    scaleDifference
-                ) * scaleSign;
+            currentState.Scale = MoveTowards.Calculate(
+                currentState.Scale,
+                targetState.Scale,
+                CrosshairConfig.RelativeTransitionSpeed,
+                CrosshairConfig.MinScaleTransitionSpeed,
+                delta
+            );
         }
     }
 }
