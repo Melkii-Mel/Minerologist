@@ -10,16 +10,14 @@ public interface ISession
 }
 
 public class JoypadSessionDispatcher<TSession>(
-    Node root,
     Func<int, TSession> createSession,
     bool includeKeyboardInput
-)
+) : Godot.Object
     where TSession : ISession
 {
     private readonly List<TSession> _disconnectedSessions = [];
     private readonly Dictionary<int, TSession> _deviceIdSessionMap = [];
     public readonly List<TSession> Sessions = [];
-    private readonly Node _root = root;
     private readonly Func<int, TSession> _createSession = createSession;
     private readonly bool _includeKeyboardInput = includeKeyboardInput;
 
@@ -39,7 +37,7 @@ public class JoypadSessionDispatcher<TSession>(
 
     public void ListenForChanges()
     {
-        Input.Singleton.Connect("joy_connection_changed", _root, nameof(OnJoyConnectionChanged));
+        Input.Singleton.Connect("joy_connection_changed", this, nameof(OnJoyConnectionChanged));
     }
 
     private void OnJoyConnectionChanged(int deviceId, bool connected)

@@ -53,7 +53,10 @@ public static class Animations
             else
             {
                 RemoveAnimationAt(i);
-                onFinish?.Invoke();
+                if (!instance.Aborted)
+                {
+                    onFinish?.Invoke();
+                }
             }
         }
     }
@@ -71,6 +74,7 @@ public abstract class AnimationInstance
     public EasingFunction EasingFunction { get; private set; } = new EFLinear();
 
     public bool Initialized { get; private set; } = false;
+    public bool Aborted { get; protected set; }
 
     public void Init(float duration, EasingFunction easingFunction)
     {

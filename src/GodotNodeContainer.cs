@@ -4,7 +4,7 @@ using Godot;
 
 public class GodotNodeContainer : Node
 {
-    private readonly ConcurrentBag<Action> _actions = [];
+    private readonly ConcurrentQueue<Action> _actions = [];
 
     protected void DeferOrCall(Action action)
     {
@@ -14,13 +14,13 @@ public class GodotNodeContainer : Node
         }
         else
         {
-            _actions.Add(action);
+            _actions.Enqueue(action);
         }
     }
 
     public override void _Process(float delta)
     {
-        while (_actions.TryTake(out var action))
+        while (_actions.TryDequeue(out var action))
         {
             action();
         }

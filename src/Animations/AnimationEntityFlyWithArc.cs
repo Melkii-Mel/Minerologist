@@ -38,6 +38,7 @@ public class AnimationEntityFlyWithArc(
     {
         if (!Object.IsInstanceValid(from) || !Object.IsInstanceValid(to))
         {
+            Aborted = true;
             return;
         }
         Vector3 arrivalControlPoint =

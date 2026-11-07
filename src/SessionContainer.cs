@@ -56,7 +56,7 @@ public class SessionContainer : ISession
             },
             action =>
             {
-                _sessionInput += action;
+                _sessionInput = action;
                 Root.Root.Input += action;
             }
         );
@@ -67,7 +67,6 @@ public class SessionContainer : ISession
         Frozen = true;
         _deviceDisconnectedPopup = SceneLoader.Instantiate<Control>("PopupDeviceDisconnected");
         _localRootUi?.AddChild(_deviceDisconnectedPopup);
-        _viewportContainer?.AddChild(_deviceDisconnectedPopup);
         Session?.TimeScale = 0;
     }
 

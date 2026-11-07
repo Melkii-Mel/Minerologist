@@ -1,49 +1,186 @@
-[gd_scene format=2]
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://Assets/Textures/Ui/MuseumOverlay/Arrow.png" type="Texture" id=1]
+[ext_resource path="res://src_gd/RelativePivotOffsetButton.gd" type="Script" id=2]
+
+[sub_resource type="StyleBoxEmpty" id=5]
+
+[sub_resource type="StyleBoxTexture" id=1]
+texture = ExtResource( 1 )
+region_rect = Rect2( 0, 0, 1024, 1024 )
+modulate_color = Color( 0.670588, 0.670588, 0.670588, 1 )
+
+[sub_resource type="StyleBoxTexture" id=2]
+texture = ExtResource( 1 )
+region_rect = Rect2( 0, 0, 1024, 1024 )
+
+[sub_resource type="StyleBoxTexture" id=3]
+texture = ExtResource( 1 )
+region_rect = Rect2( 0, 0, 1024, 1024 )
+modulate_color = Color( 0.423529, 0.423529, 0.423529, 1 )
+
+[sub_resource type="Theme" id=4]
+Button/styles/focus = SubResource( 5 )
+Button/styles/hover = SubResource( 1 )
+Button/styles/normal = SubResource( 2 )
+Button/styles/pressed = SubResource( 3 )
 
 [node name="MuseumUiOverlay" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 1
+__meta__ = {
+"_edit_vertical_guides_": [ 961.0 ]
+}
 
 [node name="Buttons" type="Control" parent="."]
-anchor_left = 0.460938
-anchor_top = 0.812037
-anchor_right = 0.481771
-anchor_bottom = 0.849074
-margin_right = -6.10352e-05
+anchor_left = 0.385417
+anchor_top = 0.667593
+anchor_right = 0.617188
+anchor_bottom = 0.916667
 mouse_filter = 1
+theme = SubResource( 4 )
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="Left" type="Button" parent="Buttons"]
-margin_left = -116.0
-margin_top = 19.9999
-margin_right = -80.0
-margin_bottom = 39.9999
-rect_scale = Vector2( 3, 3 )
-text = "Left"
+[node name="VBoxContainer" type="VBoxContainer" parent="Buttons"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+alignment = 1
 
-[node name="Right" type="Button" parent="Buttons"]
-margin_left = 169.0
-margin_top = 22.9999
-margin_right = 213.0
-margin_bottom = 42.9999
-rect_scale = Vector2( 3, 3 )
-text = "Right"
+[node name="AspectRatioContainer" type="AspectRatioContainer" parent="Buttons/VBoxContainer"]
+margin_right = 445.0
+margin_bottom = 132.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
-[node name="Front" type="Button" parent="Buttons"]
-margin_left = 25.0001
-margin_top = -52.0001
-margin_right = 70.0001
-margin_bottom = -32.0001
-rect_scale = Vector2( 3, 3 )
-text = "Front"
+[node name="Front" type="Control" parent="Buttons/VBoxContainer/AspectRatioContainer"]
+margin_left = 156.5
+margin_right = 288.5
+margin_bottom = 132.0
+rect_min_size = Vector2( 120, 120 )
+rect_pivot_offset = Vector2( 60, 60 )
+__meta__ = {
+"_edit_use_anchors_": true
+}
 
-[node name="Back" type="Button" parent="Buttons"]
-margin_left = 25.9999
-margin_top = 99.0001
-margin_right = 67.9999
-margin_bottom = 119.0
-rect_scale = Vector2( 3, 3 )
-text = "Back"
+[node name="Front" type="Control" parent="Buttons/VBoxContainer/AspectRatioContainer/Front"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_pivot_offset = Vector2( 66, 66 )
+script = ExtResource( 2 )
+
+[node name="Front" type="Button" parent="Buttons/VBoxContainer/AspectRatioContainer/Front/Front"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_pivot_offset = Vector2( 66, 66 )
+script = ExtResource( 2 )
+
+[node name="AspectRatioContainer2" type="AspectRatioContainer" parent="Buttons/VBoxContainer"]
+margin_top = 136.0
+margin_right = 445.0
+margin_bottom = 269.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+ratio = 3.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Buttons/VBoxContainer/AspectRatioContainer2"]
+margin_left = 23.0
+margin_right = 422.0
+margin_bottom = 133.0
+
+[node name="AspectRatioContainer" type="AspectRatioContainer" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer"]
+margin_right = 130.0
+margin_bottom = 133.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Left" type="Control" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer"]
+margin_top = 1.5
+margin_right = 130.0
+margin_bottom = 131.5
+rect_min_size = Vector2( 120, 120 )
+rect_pivot_offset = Vector2( 60, 60 )
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="Left" type="Control" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer/Left"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_rotation = -90.0
+rect_pivot_offset = Vector2( 65, 65 )
+script = ExtResource( 2 )
+
+[node name="Left" type="Button" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer/Left/Left"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_pivot_offset = Vector2( 65, 65 )
+script = ExtResource( 2 )
+
+[node name="AspectRatioContainer2" type="AspectRatioContainer" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer"]
+margin_left = 134.0
+margin_right = 264.0
+margin_bottom = 133.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Back" type="Control" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer2"]
+margin_top = 1.5
+margin_right = 130.0
+margin_bottom = 131.5
+rect_min_size = Vector2( 120, 120 )
+rect_pivot_offset = Vector2( 60, 60 )
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="Back" type="Control" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer2/Back"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_rotation = -180.0
+rect_pivot_offset = Vector2( 65, 65 )
+script = ExtResource( 2 )
+
+[node name="Back" type="Button" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer2/Back/Back"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_pivot_offset = Vector2( 65, 65 )
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="AspectRatioContainer3" type="AspectRatioContainer" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer"]
+margin_left = 268.0
+margin_right = 399.0
+margin_bottom = 133.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Right" type="Control" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer3"]
+margin_top = 1.0
+margin_right = 131.0
+margin_bottom = 132.0
+rect_min_size = Vector2( 120, 120 )
+rect_pivot_offset = Vector2( 60, 60 )
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="Right" type="Control" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer3/Right"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_rotation = 90.0
+rect_pivot_offset = Vector2( 65.5, 65.5 )
+script = ExtResource( 2 )
+
+[node name="Right" type="Button" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer3/Right/Right"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_pivot_offset = Vector2( 65.5, 65.5 )
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": true
+}

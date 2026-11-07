@@ -26,13 +26,7 @@ public class MagneticPointer3d : Godot.Object
         // TODO: Add visuals
         _pointer = new();
         var texture = GD.Load<Texture>(
-            "res://"
-                + Manifest
-                    .Instance.Dir("Textures")
-                    .Dir("Ui")
-                    .Dir("CrosshairParts")
-                    .File("Bottom.png")
-                    .FullPath
+            "res://" + Manifest.Instance.Dir("Textures").Dir("Ui").File("Pointer.png").FullPath
         );
         var pointerVisuals = new TextureRect { Texture = texture, RectSize = texture.GetSize() };
         _pointer.AddChild(pointerVisuals);

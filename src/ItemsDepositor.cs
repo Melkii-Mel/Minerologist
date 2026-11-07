@@ -42,6 +42,7 @@ public class ItemsDepositor
     public void DepositDisable()
     {
         _depositEnabled = false;
+        CurrentPipe = null;
     }
 
     public void Update(float delta)

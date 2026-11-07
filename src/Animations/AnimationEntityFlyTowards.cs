@@ -13,6 +13,7 @@ public class AnimationEntityFlyTowards(Spatial from, Spatial to) : AnimationInst
     {
         if (!Object.IsInstanceValid(from) || !Object.IsInstanceValid(to))
         {
+            Aborted = true;
             return;
         }
         from.GlobalPosition =

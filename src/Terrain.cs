@@ -348,17 +348,20 @@ public class Terrain : ITerrain<VoxelGrid, GodotMeshBuilder>, IVoxelGridContaine
         if (level <= 0)
             return 0;
 
-        while (_cellHealths.Count <= level)
+        lock (_lock)
         {
-            var l = _cellHealths.Count;
-            _cellHealths.Add(
-                Config.Instance.GenerationConfig.TerrainGenerationConfig.F.CellHealth.Calculate(
-                    l * ChunkSize.Y
-                )
-            );
-        }
+            while (_cellHealths.Count <= level)
+            {
+                var l = _cellHealths.Count;
+                _cellHealths.Add(
+                    Config.Instance.GenerationConfig.TerrainGenerationConfig.F.CellHealth.Calculate(
+                        l * ChunkSize.Y
+                    )
+                );
+            }
 
-        return _cellHealths[level];
+            return _cellHealths[level];
+        }
     }
 
     private GodotMeshBuilder CreatePreparedMeshBuilderForVoxelGrid(VoxelGrid voxelGrid)

@@ -8,6 +8,7 @@ public class AnimationScale(Spatial target, float relativeScale) : AnimationInst
     {
         if (!Object.IsInstanceValid(target))
         {
+            Aborted = true;
             return;
         }
         var scaleDelta = _initialScale * relativeScale - _initialScale;

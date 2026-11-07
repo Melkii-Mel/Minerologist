@@ -261,8 +261,14 @@ public class DiggerSoundPlayer
         }
         var player = SoundPlayer.Play(stream);
         player.VolumeDb = VolumeToDb(volume);
-        player.PlaybackFinished += () => player.VolumeDb = 0;
+        player.PlaybackFinished += ResetVolume;
         return true;
+
+        void ResetVolume()
+        {
+            player.VolumeDb = 0;
+            player.PlaybackFinished -= ResetVolume;
+        }
     }
 
     public void Dispose()

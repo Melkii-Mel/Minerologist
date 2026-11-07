@@ -7,7 +7,7 @@ public class ItemsDepositorAnimator
         depositor.Deposited += entityPrefab =>
         {
             var pipe = depositor.CurrentPipe;
-            if (pipe == null)
+            if (pipe == null || !Object.IsInstanceValid(pipe))
             {
                 return;
             }

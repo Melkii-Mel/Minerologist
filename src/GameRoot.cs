@@ -16,7 +16,6 @@ public class GameRoot(Root root) : Node
         EntityVariantsContainer.Init();
 
         _sessionDispatcher = new JoypadSessionDispatcher<SessionContainer>(
-            this,
             id => new SessionContainer(id, this),
             includeKeyboardInput: true
         );

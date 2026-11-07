@@ -1,0 +1,147 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://Assets/Scenes/MuseumBuilding.glb" type="PackedScene" id=1]
+[ext_resource path="res://src_gd/apply_textures.gd" type="Script" id=2]
+[ext_resource path="res://Assets/Scenes/MuseumBuildingAlbedo.png" type="Texture" id=3]
+[ext_resource path="res://Assets/Scenes/MuseumBuildingOcclusionRoughnessMetallic.png" type="Texture" id=4]
+
+[sub_resource type="SpatialMaterial" id=1]
+albedo_texture = ExtResource( 3 )
+metallic_texture = ExtResource( 4 )
+metallic_texture_channel = 2
+roughness_texture = ExtResource( 4 )
+roughness_texture_channel = 1
+
+[node name="MuseumBuilding" instance=ExtResource( 1 )]
+script = ExtResource( 2 )
+albedo_texture = ExtResource( 3 )
+orm_texture = ExtResource( 4 )
+
+[node name="geometry" parent="Museum" index="0"]
+material_override = SubResource( 1 )
+
+[node name="placeholder_current_skeleton" parent="Museum" index="1"]
+material_override = SubResource( 1 )
+
+[node name="Азурит" parent="Museum/placeholders_diggables" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_5" parent="Museum/placeholders_diggables/Азурит" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_5" parent="Museum/placeholders_diggables/Азурит/counter_mesh_5" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Аммонит" parent="Museum/placeholders_diggables" index="1"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_8" parent="Museum/placeholders_diggables/Аммонит" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_8" parent="Museum/placeholders_diggables/Аммонит/counter_mesh_8" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Боксит" parent="Museum/placeholders_diggables" index="2"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_10" parent="Museum/placeholders_diggables/Боксит" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_10" parent="Museum/placeholders_diggables/Боксит/counter_mesh_10" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Окаменелость_с_отпечатком" parent="Museum/placeholders_diggables" index="3"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_7" parent="Museum/placeholders_diggables/Окаменелость_с_отпечатком" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_7" parent="Museum/placeholders_diggables/Окаменелость_с_отпечатком/counter_mesh_7" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Панцири_трилобитов" parent="Museum/placeholders_diggables" index="4"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_12" parent="Museum/placeholders_diggables/Панцири_трилобитов" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_12" parent="Museum/placeholders_diggables/Панцири_трилобитов/counter_mesh_12" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Позвонки_гигантской_акулы" parent="Museum/placeholders_diggables" index="5"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_6" parent="Museum/placeholders_diggables/Позвонки_гигантской_акулы" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_6" parent="Museum/placeholders_diggables/Позвонки_гигантской_акулы/counter_mesh_6" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Раковина_аммонита" parent="Museum/placeholders_diggables" index="6"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_9" parent="Museum/placeholders_diggables/Раковина_аммонита" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_9" parent="Museum/placeholders_diggables/Раковина_аммонита/counter_mesh_9" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Раковина_аммонита_2" parent="Museum/placeholders_diggables" index="7"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_13" parent="Museum/placeholders_diggables/Раковина_аммонита_2" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_13" parent="Museum/placeholders_diggables/Раковина_аммонита_2/counter_mesh_13" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Раковина_двустворчатого_моллюска" parent="Museum/placeholders_diggables" index="8"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_11" parent="Museum/placeholders_diggables/Раковина_двустворчатого_моллюска" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_11" parent="Museum/placeholders_diggables/Раковина_двустворчатого_моллюска/counter_mesh_11" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Bear" parent="Museum/placeholders_others_skeletons" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_2" parent="Museum/placeholders_others_skeletons/Bear" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_2" parent="Museum/placeholders_others_skeletons/Bear/counter_mesh_2" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Crocodile" parent="Museum/placeholders_others_skeletons" index="1"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_3" parent="Museum/placeholders_others_skeletons/Crocodile" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_3" parent="Museum/placeholders_others_skeletons/Crocodile/counter_mesh_3" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Deer" parent="Museum/placeholders_others_skeletons" index="2"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_4" parent="Museum/placeholders_others_skeletons/Deer" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_4" parent="Museum/placeholders_others_skeletons/Deer/counter_mesh_4" index="0"]
+material_override = SubResource( 1 )
+
+[node name="Mammoth" parent="Museum/placeholders_others_skeletons" index="3"]
+material_override = SubResource( 1 )
+
+[node name="counter_mesh_1" parent="Museum/placeholders_others_skeletons/Mammoth" index="0"]
+material_override = SubResource( 1 )
+
+[node name="counter_plane_1" parent="Museum/placeholders_others_skeletons/Mammoth/counter_mesh_1" index="0"]
+material_override = SubResource( 1 )
+
+[node name="OmniLight" type="OmniLight" parent="." index="1"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.75718, 0 )
+
+[node name="OmniLight2" type="OmniLight" parent="." index="2"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.54746, 3.75718, 0 )

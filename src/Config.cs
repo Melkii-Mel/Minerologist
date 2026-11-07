@@ -116,13 +116,13 @@ public record MuseumPlacerConfig
 
 public record MuseumCameraConfig
 {
-    public Vector3I Offset { get; init; } = new(230, 50, 0);
+    public Vector3I Offset { get; init; } = new(289, 50, 0);
     public Vector3I RotationDegrees { get; init; } = new(20, 90, 0);
     public float Fov { get; init; } = 93;
     public Dictionary<string, MuseumCameraMode> CameraModes { get; init; } =
         new()
         {
-            ["Left"] = new() { Rotation = new(-35, 90, 0), Offset = new(-200, 100, 50) },
+            ["Left"] = new() { Rotation = new(-35, 90, 0), Offset = new(-200, 120, 50) },
             ["Front"] = new() { Rotation = new(10, 0, 0), Offset = new(-170, -30, 0) },
             ["Right"] = new() { Rotation = new(-35, -90, 0), Offset = new(-200, 100, -50) },
             ["Back"] = new(),

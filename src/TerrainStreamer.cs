@@ -23,7 +23,7 @@ public interface ITerrain<TUpdateSnapshot, TUpdateResult>
     void FinalizeUpdate(Vector3I chunkPosition, TUpdateResult result);
 }
 
-public class TerrainStreamer<TTerrainUpdateSnapshot, TTerrainUpdateResult>
+public class TerrainStreamer<TTerrainUpdateSnapshot, TTerrainUpdateResult> : IDisposable
 {
     public const int CHUNK_UPDATE_PRIORITY = 999;
 
@@ -232,5 +232,10 @@ public class TerrainStreamer<TTerrainUpdateSnapshot, TTerrainUpdateResult>
         {
             _dirty.Add(chunkPosition);
         }
+    }
+
+    public void Dispose()
+    {
+        _scheduler.WorkersCount = 0;
     }
 }
