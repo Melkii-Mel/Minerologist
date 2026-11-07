@@ -36,6 +36,10 @@ public class AnimationEntityFlyWithArc(
 
     protected override void ApplyInternal(float completion)
     {
+        if (!Object.IsInstanceValid(from) || !Object.IsInstanceValid(to))
+        {
+            return;
+        }
         Vector3 arrivalControlPoint =
             to.GlobalPosition - arrivalDirection.Normalized() * _approachDistance;
 

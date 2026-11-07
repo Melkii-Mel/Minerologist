@@ -11,6 +11,10 @@ public class AnimationEntityFlyTowards(Spatial from, Spatial to) : AnimationInst
 
     protected override void ApplyInternal(float completion)
     {
+        if (!Object.IsInstanceValid(from) || !Object.IsInstanceValid(to))
+        {
+            return;
+        }
         from.GlobalPosition =
             _initialPosition + (to.GlobalPosition - _initialPosition) * completion;
     }

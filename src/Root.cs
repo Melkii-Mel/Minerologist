@@ -21,7 +21,7 @@ public class Root : Node
         SoundPlayer.Init(this);
 
         var args = System.Environment.GetCommandLineArgs();
-        bool isMuseum = Array.IndexOf(args, "--museum") != -1 || true;
+        bool isMuseum = Array.IndexOf(args, "--museum") != -1;
         _ = new DebugUI(this, false);
 
         if (isMuseum)

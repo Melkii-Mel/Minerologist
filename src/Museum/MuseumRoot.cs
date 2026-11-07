@@ -5,6 +5,7 @@ public class MuseumRoot : Node
     public Root Root { get; }
     public MuseumCamera Camera { get; }
     public MuseumBuilding Building { get; }
+    public MuseumDescriptions MuseumDescriptions { get; }
     public MuseumState State { get; }
     public DiggablesReceiver DiggablesReceiver { get; }
     public SkeletonSelector SkeletonSelector { get; }
@@ -46,6 +47,8 @@ public class MuseumRoot : Node
         }
 
         Building = new(this);
+
+        MuseumDescriptions = new(this);
 
         State.AutoSave(this);
     }

@@ -39,12 +39,15 @@ public class MuseumDescriptions : Object
             return;
         }
 
+        _currentVisuals = (Spatial)meshInstance.Duplicate();
+
         var popup = SceneLoader.Instantiate<Control>("MuseumDescriptionPopup");
         Root.RootUi.AddChild(popup);
 
         var meshContainer = popup.GetChildOfTypeByName<Spatial>("MeshContainer")!;
         var meshFrame = popup.GetChildOfTypeByName<Control>("MeshFrame")!;
-        var textLabel = popup.GetChildOfType<RichTextLabel>()!;
+        var textLabelNode = popup.GetChildOfTypeByName<RichTextLabel>("TextLabel")!;
+        var titleTextLabelNode = popup.GetChildOfTypeByName<RichTextLabel>("TitleTextLabel")!;
         var bgPanel = popup.GetChildOfTypeByName<Panel>("BgPanel")!;
         var closeButton = popup.GetChildOfTypeByName<Button>("Close")!;
 
@@ -55,25 +58,26 @@ public class MuseumDescriptions : Object
         SpatialAabbUtils.FitInsideRect(mesh, meshFrame.RectSize);
         meshContainer.AddChild(_currentVisuals);
 
-        textLabel.BbcodeEnabled = true;
-
         var fontSize = MuseumDescriptionPopupConfig.FontSize;
-        var fontName = System.IO.Path.Combine(
-            Manifest.Instance.Dir("Fonts").FullPath,
-            MuseumDescriptionPopupConfig.FontName + ".ttf"
+        var textColor = MuseumDescriptionPopupConfig.TextColor;
+        // TODO: Uncomment when fonts are ready
+        // var fontPath = System.IO.Path.Combine(
+        //     "res://" + Manifest.Instance.Dir("Fonts").FullPath,
+        //     MuseumDescriptionPopupConfig.FontName + ".ttf"
+        // );
+        var textLabel = new TextLabel(textLabelNode);
+        textLabel.Apply(
+            new()
+            {
+                BaseColor = textColor,
+                BaseFontSize = fontSize,
+                // FontPath = fontPath,
+            }
         );
-
-        var font = new DynamicFont
-        {
-            Size = fontSize,
-            FontData = new DynamicFontData { FontPath = fontName },
-        };
-
-        textLabel.AddFontOverride("normal_font", font);
         var descriptionsCollection = Root.DescriptionsCollection;
-        textLabel.BbcodeText = skeleton
-            ? descriptionsCollection.SkeletonDescriptions[name]
-            : descriptionsCollection.OtherDescriptions[name];
+        textLabel.MdText = skeleton
+            ? descriptionsCollection.SkeletonGetOrDefault(name)
+            : descriptionsCollection.OtherGetOrDefault(name);
     }
 
     private void OnBackgroundInput(InputEvent inputEvent, Control popup)

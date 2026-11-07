@@ -16,6 +16,12 @@ public record MuseumState
     public const string SavePath = "melkii_mel/minerologist/saves/0.json";
     public const string BackupSuffix = ".bak";
 
+    public void CompleteSkeleton(MuseumRoot root)
+    {
+        SkeletonsAmounts[CurrentSkeleton]++;
+        ReplaceSkeleton(root);
+    }
+
     public void ReplaceSkeleton(MuseumRoot root)
     {
         CurrentSkeleton = root.SkeletonSelector.SelectSkeleton();

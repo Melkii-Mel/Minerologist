@@ -51,11 +51,12 @@ public class MagneticPointer3d : Godot.Object
     private void Update(float delta)
     {
         _magnetCapacity += delta;
-        _magnetCapacity = Mathf.Min(_magnetCapacity, MuseumPointerConfig.MagnetCapacity);
+        _magnetCapacity = Mathf.Min(_magnetCapacity, MuseumPointerConfig.MagnetEnergyCapacity);
 
         var camera = Root.Camera.Camera;
-        var rayFrom = camera.GlobalPosition;
-        var direction = -camera.GlobalTransform.basis.z.Normalized();
+        var pointerPosition = _pointer.RectGlobalPosition;
+        var rayFrom = camera.ProjectRayOrigin(pointerPosition);
+        var direction = camera.ProjectRayNormal(pointerPosition);
         var rayTo = rayFrom + direction * MuseumPointerConfig.ScanRange;
         var scanRadius = MuseumPointerConfig.ScanConeRadius;
         var hits = ConeCaster.Cast(
@@ -119,7 +120,9 @@ public class MagneticPointer3d : Godot.Object
             if (!buttonEvent.Pressed)
             {
                 if (_pressedItem == _currentTarget && _currentTarget != null)
+                {
                     MeshClicked?.Invoke(_currentTarget);
+                }
 
                 _pressedItem = null;
             }
@@ -155,7 +158,7 @@ public class MagneticPointer3d : Godot.Object
 
         if (@event is InputEventMouseMotion motionEvent)
         {
-            Offset(motionEvent.Relative);
+            Offset(motionEvent.Relative * MuseumPointerConfig.Sensitivity);
 
             var e = new InputEventMouseMotion
             {
@@ -184,38 +187,39 @@ public class MagneticPointer3d : Godot.Object
     {
         var positionDifference = _currentTargetCenter - _pointer.RectGlobalPosition;
         var positionDifferenceLength = positionDifference.Length();
-        if (positionDifferenceLength > 0)
-        {
-            var direciton = positionDifference.Normalized();
-            var deltaCapacity = Mathf.Min(
-                _magnetCapacity,
-                Mathf.Min(delta * MuseumPointerConfig.MagnetSpeed, positionDifferenceLength)
-            );
-            _magnetCapacity -= deltaCapacity;
-            Offset(deltaCapacity * MuseumPointerConfig.MagnetForce * direciton);
-        }
+
+        if (positionDifferenceLength <= 0)
+            return;
+
+        var direction = positionDifference / positionDifferenceLength;
+
+        var maxMovement = delta * MuseumPointerConfig.MagnetStrength;
+        var affordableMovement =
+            _magnetCapacity
+            * MuseumPointerConfig.MagnetStrength
+            / MuseumPointerConfig.MagnetEnergyConsumptionRate;
+
+        var movement = Mathf.Min(
+            Mathf.Min(positionDifferenceLength, maxMovement),
+            affordableMovement
+        );
+
+        _magnetCapacity -=
+            movement
+            / MuseumPointerConfig.MagnetStrength
+            * MuseumPointerConfig.MagnetEnergyConsumptionRate;
+
+        Offset(movement * direction);
     }
 
     private void Offset(Vector2 delta)
     {
         var borders = Root.GetViewport().GetVisibleRect();
         var rectPosition = _pointer.RectGlobalPosition + delta;
-        if (rectPosition.x > borders.End.x)
-        {
-            rectPosition.x = borders.End.x;
-        }
-        if (rectPosition.y > borders.End.y)
-        {
-            rectPosition.y = borders.End.y;
-        }
-        if (rectPosition.x < borders.Position.x)
-        {
-            rectPosition.x = borders.Position.x;
-        }
-        if (rectPosition.x > borders.End.x)
-        {
-            rectPosition.y = borders.Position.y;
-        }
+
+        rectPosition.x = Mathf.Clamp(rectPosition.x, borders.Position.x, borders.End.x);
+        rectPosition.y = Mathf.Clamp(rectPosition.y, borders.Position.y, borders.End.y);
+
         _pointer.RectGlobalPosition = rectPosition;
     }
 

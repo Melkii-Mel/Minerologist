@@ -6,6 +6,10 @@ public class AnimationScale(Spatial target, float relativeScale) : AnimationInst
 
     protected override void ApplyInternal(float completion)
     {
+        if (!Object.IsInstanceValid(target))
+        {
+            return;
+        }
         var scaleDelta = _initialScale * relativeScale - _initialScale;
         scaleDelta *= completion;
         target.Scale = _initialScale + scaleDelta;

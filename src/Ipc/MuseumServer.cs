@@ -58,7 +58,7 @@ public class MuseumServer : IDisposable
             }
             else if (message is IpcMessageSubmitDiggable diggable)
             {
-                Root.DiggablesReceiver.AddDiggable(diggable); //there
+                Root.DiggablesReceiver.AddDiggable(diggable);
             }
             else if (message is IpcMessageRequestRemainingPieceIds)
             {

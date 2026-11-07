@@ -25,8 +25,9 @@ public class DiggablesReceiver(MuseumRoot root)
             Placer.UpdateCurrentSkeleton(value.Id);
             if (currentPieces.All(p => p.Value > 0))
             {
-                State.ReplaceSkeleton(root);
-                Placer.ReplaceCurrentSkeleton(State.CurrentSkeleton);
+                var oldSkeleton = State.CurrentSkeleton;
+                State.CompleteSkeleton(root);
+                Placer.ReplaceCurrentSkeleton(State.CurrentSkeleton, oldSkeleton);
             }
         }
         else

@@ -72,15 +72,17 @@ public record MuseumDescriptionPopupConfig
 
     // without file extension
     public string FontName { get; init; } = "";
+    public Color TextColor { get; init; }
 }
 
 public record MuseumPointerConfig
 {
     public float ScanRange { get; init; } = 100;
-    public float ScanConeRadius { get; init; } = 10;
-    public float MagnetForce { get; init; } = 1;
-    public int MagnetCapacity { get; init; } = 1;
-    public int MagnetSpeed { get; init; } = 4;
+    public float ScanConeRadius { get; init; } = 1f;
+    public float MagnetStrength { get; init; } = 600f;
+    public float MagnetEnergyCapacity { get; init; } = 0.5f;
+    public float MagnetEnergyConsumptionRate { get; init; } = 1f;
+    public float Sensitivity { get; init; } = 1.5f;
 }
 
 public record MuseumPlacerConfig
@@ -134,7 +136,6 @@ public record MuseumCameraMode
 {
     public Vector3I Offset { get; init; }
     public Vector3I Rotation { get; init; }
-    public string[] GroupNames { get; init; } = [];
 }
 
 public record MuseumBuildingConfig
@@ -152,31 +153,31 @@ public record CrosshairConfig
         {
             ["Air"] = new()
             {
-                ["Left"] = new(0, 0, 45),
-                ["Right"] = new(0, 0, -45),
-                ["Top"] = new(0, 0, -45),
-                ["Bottom"] = new(0, 0, 45),
+                ["Left"] = new(0, 0, 45, 1),
+                ["Right"] = new(0, 0, -45, 1),
+                ["Top"] = new(0, 0, -45, 1),
+                ["Bottom"] = new(0, 0, 45, 1),
             },
             ["Diggable"] = new()
             {
-                ["Left"] = new(-1.1f, 0, 0),
-                ["Right"] = new(1.1f, 0, 0),
-                ["Top"] = new(0, -1.1f, 90),
-                ["Bottom"] = new(0, 1.1f, 90),
+                ["Left"] = new(-0.75f, 0, 0, 1),
+                ["Right"] = new(0.75f, 0, 0, 1),
+                ["Top"] = new(0, -0.75f, 90, 1),
+                ["Bottom"] = new(0, 0.75f, 90, 1),
             },
             ["Ground"] = new()
             {
-                ["Left"] = new(-0.6f, -0.1f, -90),
-                ["Right"] = new(0.6f, 0.1f, -90),
-                ["Top"] = new(0.1f, -0.6f, -180),
-                ["Bottom"] = new(-0.1f, 0.6f, -180),
+                ["Left"] = new(-0.6f, -0.1f, -90, 1),
+                ["Right"] = new(0.6f, 0.1f, -90, 1),
+                ["Top"] = new(0.1f, -0.6f, -180, 1),
+                ["Bottom"] = new(-0.1f, 0.6f, -180, 1),
             },
             ["Pipe"] = new()
             {
-                ["Left"] = new(0, 0, 0),
-                ["Right"] = new(0, 0, 0),
-                ["Top"] = new(0, 0, 0),
-                ["Bottom"] = new(0, 0, 0),
+                ["Left"] = new(0, 0, 0, 1),
+                ["Right"] = new(0, 0, 0, 1),
+                ["Top"] = new(0, 0, 0, 1),
+                ["Bottom"] = new(0, 0, 0, 1),
             },
         };
 

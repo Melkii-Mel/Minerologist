@@ -128,7 +128,6 @@ public class InventoryUi
         else
         {
             var parent = _inventorySlotParents[id];
-            GD.Print("Id: ", id);
             foreach (var child in parent.GetChildren())
             {
                 ((Node)child).QueueFree();

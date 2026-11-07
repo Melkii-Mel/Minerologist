@@ -23,6 +23,10 @@ public class AnimationRotateRandomly : AnimationInstance
 
     protected override void ApplyInternal(float completion)
     {
+        if (!Godot.Object.IsInstanceValid(_target))
+        {
+            return;
+        }
         float scaled = Mathf.Clamp(completion, 0f, 1f) * Segments;
         int segment = Math.Min((int)scaled, Segments - 1);
         float u = scaled - segment;

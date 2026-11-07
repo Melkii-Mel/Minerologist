@@ -30,5 +30,6 @@ public class MuseumUiOverlay : Object
     {
         var camera = Root.Camera;
         camera.SetMode(name);
+        Root.MagneticPointer3d.CurrentTargetGroup = name;
     }
 }
