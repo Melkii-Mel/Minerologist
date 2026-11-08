@@ -123,7 +123,6 @@ public class Session
             new AnimationEntityFlyTowards(entity.MeshInstance, Player.PlayerNode.Center),
             onFinish: () =>
             {
-                GD.Print("OnFinished or something");
                 entity.MeshInstance.QueueFree();
                 Inventory.AddItem(entity);
                 // AudioCollection.PlayRandomSound(Sounds.Collect);

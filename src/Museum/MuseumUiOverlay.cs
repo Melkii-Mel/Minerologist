@@ -16,11 +16,6 @@ public class MuseumUiOverlay : Object
             var name = button.Name;
             button.Connect("pressed", this, nameof(CameraButtonClick), [name]);
             Control parent = button;
-            while (parent.GetParent() is Control control)
-            {
-                parent = control;
-                parent.MouseFilter = Control.MouseFilterEnum.Ignore;
-            }
         }
 
         Root = root;

@@ -23,8 +23,9 @@ public class MagneticPointer3d : Godot.Object
     public MagneticPointer3d(MuseumRoot root)
     {
         Root = root;
-        // TODO: Add visuals
         _pointer = new();
+        var canvasLayer = new CanvasLayer() { Layer = 10 };
+        root.RootUi.AddChild(canvasLayer);
         var texture = GD.Load<Texture>(
             "res://" + Manifest.Instance.Dir("Textures").Dir("Ui").File("Pointer.png").FullPath
         );
@@ -32,7 +33,7 @@ public class MagneticPointer3d : Godot.Object
         _pointer.AddChild(pointerVisuals);
         pointerVisuals.MouseFilter = Control.MouseFilterEnum.Ignore;
         _pointer.MouseFilter = Control.MouseFilterEnum.Ignore;
-        Root.RootUi.AddChild(_pointer);
+        canvasLayer.AddChild(_pointer);
 
         Root.Root.Update += Update;
         Root.Root.Input += Input;
@@ -148,6 +149,8 @@ public class MagneticPointer3d : Godot.Object
 
             _guiHandled = true;
             Godot.Input.ParseInputEvent(e);
+
+            Root.GetTree().SetInputAsHandled();
         }
 
         if (@event is InputEventMouseMotion motionEvent)
