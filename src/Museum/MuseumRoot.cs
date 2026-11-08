@@ -27,6 +27,7 @@ public class MuseumRoot : Node
         AddChild(RootUi);
         AddChild(Root2d);
         AddChild(Root3d);
+        RootUi.MouseFilter = Control.MouseFilterEnum.Ignore;
 
         AddChild(SceneLoader.Instantiate<Node>("Environment"));
 
