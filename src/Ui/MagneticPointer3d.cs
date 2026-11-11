@@ -34,6 +34,7 @@ public class MagneticPointer3d : Godot.Object
         pointerVisuals.MouseFilter = Control.MouseFilterEnum.Ignore;
         _pointer.MouseFilter = Control.MouseFilterEnum.Ignore;
         canvasLayer.AddChild(_pointer);
+        _pointer.Modulate = new(MuseumPointerConfig.ColorModulation);
 
         Root.Root.Update += Update;
         Root.Root.Input += Input;

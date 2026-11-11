@@ -67,8 +67,9 @@ public static class EntityVariantsContainer
         var sizes = Config.Instance.RemnantsSizeConfig.Sizes;
         var sizeFound =
             sizes.TryGetValue(prefab.Type + "." + prefab.Id, out var size)
+            || sizes.TryGetValue(prefab.Id, out size)
             || sizes.TryGetValue(prefab.Type, out size)
-            || sizes.TryGetValue(prefab.Id, out size);
+            || sizes.TryGetValue("Others", out size);
         if (!sizeFound)
         {
             size = new(1, 1);

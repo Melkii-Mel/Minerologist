@@ -1,3 +1,5 @@
+using System.Linq;
+using System.Text.RegularExpressions;
 using Godot;
 
 // TODO: No description until discovered
@@ -19,8 +21,8 @@ public class MuseumDescriptions : Object
 
     private void Update(float delta)
     {
-        _currentVisuals?.Rotation +=
-            Vector3.One * delta * MuseumDescriptionPopupConfig.MeshRotationSpeed;
+        _currentVisuals?.RotationDegrees +=
+            delta * MuseumDescriptionPopupConfig.MeshRotationSpeed.ToGdVector3();
     }
 
     private void CreatePopup(MeshInstance meshInstance)
@@ -29,6 +31,7 @@ public class MuseumDescriptions : Object
 
         var isDiggable = false;
         var skeleton = placer.MeshSkeletonMap.TryGetValue(meshInstance, out var name);
+        var amount = 0;
 
         if (!skeleton)
         {
@@ -38,8 +41,12 @@ public class MuseumDescriptions : Object
         {
             return;
         }
+        amount = skeleton
+            ? Root.State.SkeletonsAmounts[name]
+            : Root.State.OtherDiggablesAmounts[name];
 
-        _currentVisuals = (Spatial)meshInstance.Duplicate();
+        _currentVisuals = (Spatial?)placer.MuseumItems[name].ModelPlacement?.Anchor.Duplicate();
+        _currentVisuals?.Position = Vector3.Zero;
 
         var popup = SceneLoader.Instantiate<Control>("MuseumDescriptionPopup");
         Root.RootUi.AddChild(popup);
@@ -54,30 +61,47 @@ public class MuseumDescriptions : Object
         bgPanel.Connect("gui_input", this, nameof(OnBackgroundInput), [popup]);
         closeButton.Connect("pressed", this, nameof(OnCloseButtonPressed), [popup]);
 
-        var mesh = (MeshInstance)meshInstance.Duplicate();
-        SpatialAabbUtils.FitInsideRect(mesh, meshFrame.RectSize);
-        meshContainer.AddChild(_currentVisuals);
+        if (_currentVisuals != null)
+        {
+            var camera = new Camera();
+            meshContainer.AddChild(camera);
+            meshContainer.AddChild(_currentVisuals);
 
-        var fontSize = MuseumDescriptionPopupConfig.FontSize;
-        var textColor = MuseumDescriptionPopupConfig.TextColor;
-        // TODO: Uncomment when fonts are ready
-        // var fontPath = System.IO.Path.Combine(
-        //     "res://" + Manifest.Instance.Dir("Fonts").FullPath,
-        //     MuseumDescriptionPopupConfig.FontName + ".ttf"
-        // );
+            _currentVisuals.Position = new(0, 0, -10);
+
+            camera.SetOrthogonal(1, 0, 1000);
+            camera.Current = true;
+            camera.LookAt(_currentVisuals.GlobalPosition, Vector3.Up);
+        }
+
         var textLabel = new TextLabel(textLabelNode);
-        textLabel.Apply(
-            new()
-            {
-                BaseColor = textColor,
-                BaseFontSize = fontSize,
-                // FontPath = fontPath,
-            }
-        );
+        var titleTextLabel = new TextLabel(titleTextLabelNode);
+        MuseumDescriptionPopupConfig.BodyFontConfig.Apply(textLabel);
+        MuseumDescriptionPopupConfig.TitleFontConfig.Apply(titleTextLabel);
+
         var descriptionsCollection = Root.DescriptionsCollection;
-        textLabel.MdText = skeleton
-            ? descriptionsCollection.SkeletonGetOrDefault(name)
-            : descriptionsCollection.OtherGetOrDefault(name);
+        var text = Root.DescriptionsCollection.GetOrDefault(
+            amount > 0 ? name : "NotCollected",
+            skeleton
+                ? descriptionsCollection.SkeletonDescriptions
+                : descriptionsCollection.OtherDescriptions
+        );
+        var titleText = "";
+        var bodyText = text;
+        var match = Regex.Match(
+            text,
+            @"\[center\]\\?\s*\\?#\s*(.*?)\\?\s*\[/center\]\\?\s*(.*)",
+            RegexOptions.Singleline
+        );
+
+        if (match.Success)
+        {
+            titleText = match.Groups[1].Value.Trim();
+            bodyText = match.Groups[2].Value.Trim();
+        }
+
+        titleTextLabel.MdText = titleText;
+        textLabel.MdText = bodyText;
     }
 
     private void OnBackgroundInput(InputEvent inputEvent, Control popup)

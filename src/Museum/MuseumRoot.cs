@@ -10,6 +10,7 @@ public class MuseumRoot : Node
     public DiggablesReceiver DiggablesReceiver { get; }
     public SkeletonSelector SkeletonSelector { get; }
     public MuseumServer Server { get; }
+    public MuseumDebug MuseumDebug { get; }
     public DescriptionsCollection DescriptionsCollection { get; }
     public MagneticPointer3d MagneticPointer3d { get; }
     public MuseumUiOverlay MuseumUiOverlay { get; }
@@ -31,13 +32,14 @@ public class MuseumRoot : Node
 
         AddChild(SceneLoader.Instantiate<Node>("Environment"));
 
-        State = MuseumState.LoadOrCreate();
+        DescriptionsCollection = new();
+        State = MuseumState.LoadOrCreate(this);
         Root = root;
         Camera = new(this);
         DiggablesReceiver = new(this);
         SkeletonSelector = new(this);
         Server = new(this);
-        DescriptionsCollection = new();
+        MuseumDebug = new(this);
 
         MuseumUiOverlay = new(this);
         MagneticPointer3d = new MagneticPointer3d(this);

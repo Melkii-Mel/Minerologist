@@ -80,26 +80,26 @@ script = ExtResource( 2 )
 [node name="AspectRatioContainer2" type="AspectRatioContainer" parent="Buttons/VBoxContainer"]
 margin_top = 136.0
 margin_right = 445.0
-margin_bottom = 269.0
+margin_bottom = 268.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 ratio = 3.0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Buttons/VBoxContainer/AspectRatioContainer2"]
-margin_left = 23.0
-margin_right = 422.0
-margin_bottom = 133.0
+margin_left = 24.5
+margin_right = 420.5
+margin_bottom = 132.0
 
 [node name="AspectRatioContainer" type="AspectRatioContainer" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer"]
-margin_right = 130.0
-margin_bottom = 133.0
+margin_right = 129.0
+margin_bottom = 132.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="Left" type="Control" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer"]
 margin_top = 1.5
-margin_right = 130.0
-margin_bottom = 131.5
+margin_right = 129.0
+margin_bottom = 130.5
 rect_min_size = Vector2( 120, 120 )
 rect_pivot_offset = Vector2( 60, 60 )
 __meta__ = {
@@ -110,26 +110,26 @@ __meta__ = {
 anchor_right = 1.0
 anchor_bottom = 1.0
 rect_rotation = -90.0
-rect_pivot_offset = Vector2( 65, 65 )
+rect_pivot_offset = Vector2( 64.5, 64.5 )
 script = ExtResource( 2 )
 
 [node name="Left" type="Button" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer/Left/Left"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-rect_pivot_offset = Vector2( 65, 65 )
+rect_pivot_offset = Vector2( 64.5, 64.5 )
 script = ExtResource( 2 )
 
 [node name="AspectRatioContainer2" type="AspectRatioContainer" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer"]
-margin_left = 134.0
-margin_right = 264.0
-margin_bottom = 133.0
+margin_left = 133.0
+margin_right = 262.0
+margin_bottom = 132.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="Back" type="Control" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer2"]
 margin_top = 1.5
-margin_right = 130.0
-margin_bottom = 131.5
+margin_right = 129.0
+margin_bottom = 130.5
 rect_min_size = Vector2( 120, 120 )
 rect_pivot_offset = Vector2( 60, 60 )
 __meta__ = {
@@ -140,29 +140,29 @@ __meta__ = {
 anchor_right = 1.0
 anchor_bottom = 1.0
 rect_rotation = -180.0
-rect_pivot_offset = Vector2( 65, 65 )
+rect_pivot_offset = Vector2( 64.5, 64.5 )
 script = ExtResource( 2 )
 
 [node name="Back" type="Button" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer2/Back/Back"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-rect_pivot_offset = Vector2( 65, 65 )
+rect_pivot_offset = Vector2( 64.5, 64.5 )
 script = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
 [node name="AspectRatioContainer3" type="AspectRatioContainer" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer"]
-margin_left = 268.0
-margin_right = 399.0
-margin_bottom = 133.0
+margin_left = 266.0
+margin_right = 396.0
+margin_bottom = 132.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="Right" type="Control" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer3"]
 margin_top = 1.0
-margin_right = 131.0
-margin_bottom = 132.0
+margin_right = 130.0
+margin_bottom = 131.0
 rect_min_size = Vector2( 120, 120 )
 rect_pivot_offset = Vector2( 60, 60 )
 __meta__ = {
@@ -173,13 +173,13 @@ __meta__ = {
 anchor_right = 1.0
 anchor_bottom = 1.0
 rect_rotation = 90.0
-rect_pivot_offset = Vector2( 65.5, 65.5 )
+rect_pivot_offset = Vector2( 65, 65 )
 script = ExtResource( 2 )
 
 [node name="Right" type="Button" parent="Buttons/VBoxContainer/AspectRatioContainer2/HBoxContainer/AspectRatioContainer3/Right/Right"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-rect_pivot_offset = Vector2( 65.5, 65.5 )
+rect_pivot_offset = Vector2( 65, 65 )
 script = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": true

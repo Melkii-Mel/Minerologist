@@ -47,15 +47,15 @@ public record EntityPrefab(string Type, string Id, MeshInstance MeshInstance)
     public static EntityPrefab Random(Random rng)
     {
         var remnantsConfig = Config.Instance.RemnantsConfig;
-        var remnantTypeWeights = remnantsConfig.TypeWeights;
-        var keys = remnantTypeWeights.Keys.ToList();
-        var probabilities = keys.Select(k => remnantTypeWeights[k]).ToList();
-        probabilities.Add(remnantsConfig.SkeletonPieceProbabilityWeight);
-        var remnantTypeIndex = RandomUtils.ChooseWeighted(probabilities, rng);
-        if (remnantTypeIndex == probabilities.Count - 1)
+        if (rng.NextDouble() < remnantsConfig.SkeletonPieceProbabilityWeight / 100)
         {
             return RandomSkeletonPiece(rng);
         }
+        var remnantTypeWeights = remnantsConfig.TypeWeights;
+        var keys = remnantTypeWeights.Keys.ToList();
+        var probabilities = keys.Select(k => remnantTypeWeights[k]).ToList();
+        var remnantTypeIndex = RandomUtils.ChooseWeighted(probabilities, rng);
+        if (remnantTypeIndex == probabilities.Count - 1) { }
         return RandomOfType(keys[remnantTypeIndex], rng);
     }
 
@@ -106,9 +106,7 @@ public class Entity
         LocalPosition = GlobalPosition - _coordinatesConverter.ChunkToWorld(ChunkPosition);
 
         MeshInstance = (MeshInstance)entityData.EntityInstance.Duplicate();
-#pragma warning disable IDE0028 // Упростите инициализацию коллекции
         SupportingTiles = new List<Vector3I>(entityData.EntitySupporingTiles.Length);
-#pragma warning restore IDE0028 // Упростите инициализацию коллекции
 
         MeshInstance.Position += GlobalPosition.ToGdVector3();
         for (var i = 0; i < entityData.EntitySupporingTiles.Length; i++)

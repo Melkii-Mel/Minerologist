@@ -11,7 +11,8 @@ public class MuseumStaticSkeleton(
         parent,
         MeshCollection.Skeletons.Get(skeletonName)?.Duplicate()?.Values,
         skeletonName,
-        root.State.SkeletonsAmounts
+        root.State.SkeletonsAmounts,
+        root
     )
 {
     public override string GroupName => "Right";

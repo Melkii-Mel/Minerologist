@@ -26,8 +26,6 @@ public class GameRoot(Root root) : Node
 
         _sessionDispatcher.ListenForChanges();
 
-        Animations.Init(a => Root.Update += a);
-
         _ = new MuseumCommunicator(this);
     }
 }

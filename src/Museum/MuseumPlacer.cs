@@ -13,7 +13,7 @@ public class MuseumPlacer
     private readonly Spatial _diggablesParent;
     private readonly Dictionary<string, MeshInstance> _diggablesPlaceholders;
 
-    private MuseumDynamicSkeleton _dynamicSkeleton = null!;
+    private MuseumDynamicSkeleton? _dynamicSkeleton;
     public readonly Dictionary<string, StaticMuseumItem> MuseumItems = [];
     public readonly Dictionary<string, MuseumDiggable> Diggables = [];
     public readonly Dictionary<string, MuseumStaticSkeleton> OtherSkeletons = [];
@@ -92,35 +92,78 @@ public class MuseumPlacer
 
     public void UpdateCurrentSkeleton(string id)
     {
-        _dynamicSkeleton.Reveal(id);
+        _dynamicSkeleton?.Reveal(id);
     }
 
     public void ReplaceCurrentSkeleton(string newSkeletonName, string? oldSkeletonName)
     {
+        GD.Print("REPLACING");
         if (oldSkeletonName != null)
         {
             if (OtherSkeletons.TryGetValue(oldSkeletonName, out var skeleton))
             {
-                skeleton.InceraseNumber();
+                skeleton.UpdateNumber();
             }
         }
+
+        var meshVisualConfig = PlacerConfig.DynamicSkeletonVisualsConfig;
+        var rotationOffset = Vector3.Up * Mathf.Deg2Rad(meshVisualConfig.RotationDegrees);
+
+        if (_dynamicSkeleton != null)
+        {
+            var anchor = _dynamicSkeleton.AnimationPivot;
+
+            Animations.AddAnimation(
+                new AnimationTransform(
+                    anchor,
+                    anchor.Position,
+                    anchor.Rotation + rotationOffset,
+                    Vector3.Zero
+                ),
+                duration: meshVisualConfig.TransitionDuration / 2,
+                easingFunction: new EFEaseIn(2),
+                onFinish: NewSkeleton
+            );
+        }
+        else
+        {
+            NewSkeleton();
+        }
+
+        void NewSkeleton()
         {
             for (var i = _dynamicSkeletonParent.GetChildCount() - 1; i > -1; i--)
+            {
                 _dynamicSkeletonParent.RemoveChild(_dynamicSkeletonParent.GetChild(i));
+            }
+
+            _dynamicSkeleton = new MuseumDynamicSkeleton(
+                newSkeletonName,
+                _dynamicSkeletonPlaceholder,
+                _dynamicSkeletonParent,
+                Root
+            );
+
+            var anchor = _dynamicSkeleton.AnimationPivot;
+            var originalScale = anchor.Scale;
+            var originalRotation = anchor.Rotation;
+
+            anchor.Scale = Vector3.Zero;
+            anchor.Rotation = originalRotation - rotationOffset;
+
+            Animations.AddAnimation(
+                new AnimationTransform(anchor, anchor.Position, originalRotation, originalScale),
+                easingFunction: new EFEaseOut(2),
+                duration: meshVisualConfig.TransitionDuration / 2
+            );
         }
-        _dynamicSkeleton = new MuseumDynamicSkeleton(
-            newSkeletonName,
-            _dynamicSkeletonPlaceholder,
-            _dynamicSkeletonParent,
-            Root
-        );
     }
 
     public void UpdateItem(string id)
     {
         if (MuseumItems.TryGetValue(id, out var item))
         {
-            item.InceraseNumber();
+            item.UpdateNumber();
         }
         else
         {

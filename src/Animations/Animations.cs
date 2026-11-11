@@ -45,18 +45,21 @@ public static class Animations
         {
             var (instance, completion, onFinish) = _animations[i];
             completion += delta / instance.Duration;
-            if (completion <= 1)
+
+            if (completion >= 1)
             {
-                _animations[i] = (instance, completion, onFinish);
-                instance.Apply(Mathf.Min(completion, 1));
-            }
-            else
-            {
+                instance.Apply(1);
                 RemoveAnimationAt(i);
+
                 if (!instance.Aborted)
                 {
                     onFinish?.Invoke();
                 }
+            }
+            else
+            {
+                _animations[i] = (instance, completion, onFinish);
+                instance.Apply(completion);
             }
         }
     }
@@ -89,7 +92,7 @@ public abstract class AnimationInstance
 
     public void Apply(float progress)
     {
-        ApplyInternal(EasingFunction.Evalueate(progress));
+        ApplyInternal(EasingFunction.Evaluate(progress));
     }
 
     // completion is the value between 0 and 1 where 0 is the initial state and 1 is the final state of the animation

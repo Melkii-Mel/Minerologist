@@ -23,12 +23,12 @@ public class DescriptionsCollection
 
     public string OtherGetOrDefault(string otherName)
     {
-        return GetOrDefault(otherName, SkeletonDescriptions);
+        return GetOrDefault(otherName, OtherDescriptions);
     }
 
-    private string GetOrDefault(string otherName, Dictionary<string, string> descriptions)
+    public string GetOrDefault(string name, Dictionary<string, string> descriptions)
     {
-        if (descriptions.TryGetValue(otherName, out var description))
+        if (descriptions.TryGetValue(name, out var description))
         {
             return description;
         }
@@ -43,7 +43,7 @@ public class DescriptionsCollection
     private string LoadFile(FileSystemFile f)
     {
         using var file = new Godot.File();
-        var error = file.Open("res://" + f.FullPath, Godot.File.ModeFlags.Read);
+        var error = file.Open("res:/" + f.FullPath, Godot.File.ModeFlags.Read);
         if (error != Godot.Error.Ok)
         {
             throw new IOException($"Failed to open {f.FullPath}: {error}");

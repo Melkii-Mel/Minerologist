@@ -153,8 +153,15 @@ public class FileSystemDir(
     public List<FileSystemFile> Files { get; } = files ?? [];
     private Dictionary<string, FileSystemFile> FileNamesMap { get; } =
         (files ?? []).ToDictionary(f => f.Name, f => f);
-    private Dictionary<string, FileSystemFile> FileNameWithoutExtensionMap { get; } =
-        (files ?? []).ToDictionary(f => f.NameWithoutExtension, f => f);
+    private Dictionary<string, List<FileSystemFile>> FileNameWithoutExtensionMap { get; } =
+        (files ?? []).Aggregate(
+            new Dictionary<string, List<FileSystemFile>>(),
+            (dict, file) =>
+            {
+                dict.AddOrCreate(file.NameWithoutExtension, file);
+                return dict;
+            }
+        );
 
     public void AddChild(FileSystemNode node)
     {
@@ -228,7 +235,7 @@ public class FileSystemDir(
         return FileNamesMap[name];
     }
 
-    public FileSystemFile FileWithoutExtension(string name)
+    public IReadOnlyList<FileSystemFile> FileWithoutExtension(string name)
     {
         return FileNameWithoutExtensionMap[name];
     }
@@ -236,14 +243,14 @@ public class FileSystemDir(
     public void AddFile(FileSystemFile file)
     {
         Files.Add(file);
-        FileNameWithoutExtensionMap[file.NameWithoutExtension] = file;
+        FileNameWithoutExtensionMap.AddOrCreate(file.NameWithoutExtension, file);
         FileNamesMap[file.Name] = file;
     }
 
     public void RemoveFile(FileSystemFile file)
     {
         Files.Remove(file);
-        FileNameWithoutExtensionMap.Remove(file.NameWithoutExtension);
+        FileNameWithoutExtensionMap.RemoveOrDelete(file.NameWithoutExtension, file);
         FileNamesMap.Remove(file.Name);
     }
 }
@@ -256,4 +263,39 @@ public class FileSystemFile(string name, FileSystemDir? parent = null)
 
     [JsonIgnore]
     public string NameWithoutExtension => Path.GetFileNameWithoutExtension(Name);
+}
+
+public static class ListDictExtensions
+{
+    public static void AddOrCreate<TKey, TValue>(
+        this Dictionary<TKey, List<TValue>> dict,
+        TKey key,
+        TValue value
+    )
+    {
+        if (dict.TryGetValue(key, out var list))
+        {
+            list.Add(value);
+        }
+        else
+        {
+            dict[key] = [value];
+        }
+    }
+
+    public static void RemoveOrDelete<TKey, TValue>(
+        this Dictionary<TKey, List<TValue>> dict,
+        TKey key,
+        TValue value
+    )
+    {
+        if (dict.TryGetValue(key, out var list))
+        {
+            list.Remove(value);
+            if (list.Count == 0)
+            {
+                dict.Remove(key);
+            }
+        }
+    }
 }

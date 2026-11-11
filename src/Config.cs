@@ -63,26 +63,57 @@ public record MuseumConfig
     public MuseumPlacerConfig MuseumPlacerConfig { get; init; } = new();
     public MuseumPointerConfig MuseumPointerConfig { get; init; } = new();
     public MuseumDescriptionPopupConfig MuseumDescriptionPopupConfig { get; init; } = new();
+    public MuseumUiOverlayConfig MuseumUiOverlayConfig { get; init; } = new();
+}
+
+public record MuseumUiOverlayConfig
+{
+    public string ColorModulation { get; init; } = "#a88a85";
 }
 
 public record MuseumDescriptionPopupConfig
 {
-    public float MeshRotationSpeed { get; init; } = new();
-    public int FontSize { get; init; } = 14;
+    public Vector3I MeshRotationSpeed { get; init; } = new(1, 10, 1);
+    public FontConfig TitleFontConfig { get; init; } =
+        new()
+        {
+            FontSize = 24,
+            FontName = "Madame Donatella",
+            TextColor = $"#{Colors.WhiteSmoke.ToHtml()}",
+        };
+    public FontConfig BodyFontConfig { get; init; } = new() { FontName = "Buira-Regular" };
+}
 
+public record FontConfig
+{
     // without file extension
     public string FontName { get; init; } = "";
-    public Color TextColor { get; init; }
+    public int FontSize { get; init; } = 24;
+    public string TextColor { get; init; } = "#000000";
+
+    public void Apply(TextLabel label)
+    {
+        var fontPath = FontCollection.FontPath(FontName);
+        label.Apply(
+            new()
+            {
+                BaseColor = new(TextColor),
+                BaseFontSize = FontSize,
+                FontPath = fontPath,
+            }
+        );
+    }
 }
 
 public record MuseumPointerConfig
 {
     public float ScanRange { get; init; } = 100;
     public float ScanConeRadius { get; init; } = 1f;
-    public float MagnetStrength { get; init; } = 600f;
+    public float MagnetStrength { get; init; } = 600f * 0;
     public float MagnetEnergyCapacity { get; init; } = 0.5f;
     public float MagnetEnergyConsumptionRate { get; init; } = 1f;
     public float Sensitivity { get; init; } = 1.5f;
+    public string ColorModulation { get; init; } = "#281815";
 }
 
 public record MuseumPlacerConfig
@@ -91,27 +122,44 @@ public record MuseumPlacerConfig
     public string OtherSkeletonsParentName { get; init; } = "placeholders_others_skeletons";
     public string DiggablesParentName { get; init; } = "placeholders_diggables";
 
+    public MuseumPlacerTransforms Front { get; init; } = new();
+    public MuseumPlacerTransforms Sides { get; init; } = new();
+
+    public float CounterViewportWidth { get; init; } = 64;
+    public float CounterViewportHeight { get; init; } = 64;
+    public FontConfig CounterFontConfig { get; init; } = new() { FontName = "ArthurGothicRegular" };
+    public DynamicSkeletonVisualsConfig DynamicSkeletonVisualsConfig { get; init; } = new();
+}
+
+public record MuseumPlacerTransforms
+{
     public Dictionary<string, Vector3I> RotationsDegrees { get; init; } =
         new()
         {
-            ["Мамонт"] = new(0, -75, 0),
+            ["Mammuthus_primigenius"] = new(0, -75, 0),
             [MeshCollection.SKELETONS] = new(0, -105, 0),
-            [MeshCollection.OTHERS] = Vector3I.Zero,
+            [MeshCollection.OTHERS] = new(-90, 0, 0),
         };
     public Dictionary<string, float> Scales { get; init; } =
         new()
         {
-            ["Мамонт"] = 1.5f,
+            ["Mammuthus_primigenius"] = 1.5f,
             [MeshCollection.SKELETONS] = 1,
             [MeshCollection.OTHERS] = 1,
         };
     public Dictionary<string, Vector3I> Offsets { get; init; } =
         new()
         {
-            ["Мамонт"] = Vector3I.Zero,
+            ["Mammuthus_primigenius"] = Vector3I.Zero,
             [MeshCollection.SKELETONS] = Vector3I.Zero,
             [MeshCollection.OTHERS] = Vector3I.Zero,
         };
+}
+
+public record DynamicSkeletonVisualsConfig
+{
+    public float RotationDegrees { get; init; } = 720;
+    public float TransitionDuration { get; init; } = 8;
 }
 
 public record MuseumCameraConfig
@@ -256,10 +304,10 @@ public record RemnantsSizeConfig
     public Dictionary<string, Size> Sizes { get; init; } =
         new()
         {
-            ["Мамонт"] = new(10.0f, 12.0f),
-            ["deer"] = new(10, 12),
-            ["bear"] = new(3, 4),
-            ["Others"] = new(0.5f, 1.5f),
+            ["Mammuthus_primigenius"] = new(10.0f, 12.0f),
+            ["Megaloceros_giganteus"] = new(10, 12),
+            ["Ursus_spelaeus"] = new(3, 4),
+            ["Crocodylus_niloticus"] = new(0.5f, 1.5f),
         };
 }
 
@@ -268,7 +316,7 @@ public record Size(float Min = 0.5f, float Max = 1.5f);
 public sealed record RemnantsConfig
 {
     public Dictionary<string, int> TypeWeights { get; init; } = new() { ["Common"] = 20 };
-    public int SkeletonPieceProbabilityWeight { get; init; } = 10;
+    public float SkeletonPieceProbabilityWeight { get; init; } = 10;
 }
 
 public sealed record ControlsConfig

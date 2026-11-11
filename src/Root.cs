@@ -24,6 +24,8 @@ public class Root : Node
         bool isMuseum = Array.IndexOf(args, "--museum") != -1;
         _ = new DebugUI(this, false);
 
+        Animations.Init(a => Update += a);
+
         if (isMuseum)
         {
             AddChild(new MuseumRoot(this));

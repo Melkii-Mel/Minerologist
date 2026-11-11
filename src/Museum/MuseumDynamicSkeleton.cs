@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -12,9 +13,13 @@ public class MuseumDynamicSkeleton
     private readonly Dictionary<string, MeshInstance> _meshes;
     private readonly Dictionary<MeshInstance, MeshInstance> _silhouetteOverlays = [];
     private readonly Spatial _skeletonParent;
-    private readonly ModelPlacement _placement;
+    public ModelPlacement Placement { get; }
+
+    public Transform ExternalTransform { get; }
 
     public MuseumPlacerConfig MuseumPlacerConfig => Config.Instance.MuseumConfig.MuseumPlacerConfig;
+
+    public Spatial AnimationPivot { get; }
 
     // TODO: Juicify
     public MuseumDynamicSkeleton(
@@ -40,18 +45,17 @@ public class MuseumDynamicSkeleton
 
         parent.AddChild(_skeletonParent);
 
-        _placement = new ModelPlacement(
+        Placement = new ModelPlacement(
             parent,
             _dynamicSkeletonPlaceholder,
             [.. model.Values],
-            new Vector3(0.5f, 0f, 0.5f)
+            new Vector3(0.5f, 0f, 0.5f),
+            pivots: 1
         );
 
-        _placement.Apply(
-            SelectRelevant(MuseumPlacerConfig.Scales),
-            SelectRelevant(MuseumPlacerConfig.RotationsDegrees).ToGdVector3(),
-            SelectRelevant(MuseumPlacerConfig.Offsets).ToGdVector3() / 100
-        );
+        AnimationPivot = Placement.Pivots[0];
+
+        UpdateModelTransform();
 
         // reparent meshes under _placement.Content, keeping their local transforms
 
@@ -59,22 +63,26 @@ public class MuseumDynamicSkeleton
         {
             var copy = (MeshInstance)mesh.Value.Duplicate();
             _meshes[mesh.Key] = copy;
-            _placement.Content.AddChild(copy);
+            Placement.Content.AddChild(copy);
             ApplyShader(copy);
         }
 
         Reveal(revealedParts);
 
-        var initialScale = _placement.Anchor.Scale;
-        var clock = 0f;
+        var initialScale = Placement.Anchor.Scale;
         root.Root.Update += delta =>
         {
-            var rot = _placement.Anchor.Rotation;
-            var scale = _placement.Anchor.Scale;
-            rot.y += delta;
-            scale.y += Mathf.Sin(clock) * delta;
-            _placement.Anchor.Rotation = rot;
+            UpdateModelTransform();
         };
+    }
+
+    private void UpdateModelTransform()
+    {
+        Placement.Apply(
+            SelectRelevant(MuseumPlacerConfig.Front.Scales),
+            SelectRelevant(MuseumPlacerConfig.Front.RotationsDegrees).ToGdVector3(),
+            SelectRelevant(MuseumPlacerConfig.Front.Offsets).ToGdVector3() / 100
+        );
     }
 
     // TODO: Juicify
@@ -104,13 +112,16 @@ public class MuseumDynamicSkeleton
         return SelectRelevant(values, _skeletonName);
     }
 
-    public static T SelectRelevant<T>(Dictionary<string, T> values, string skeletonName)
+    public static T SelectRelevant<T>(Dictionary<string, T> values, string name)
     {
-        if (values.TryGetValue(skeletonName, out var v))
+        if (values.TryGetValue(name, out var v))
         {
             return v;
         }
-        if (values.TryGetValue(MeshCollection.SKELETONS, out v))
+        if (
+            MeshCollection.Skeletons.ContainsKey(name)
+            && values.TryGetValue(MeshCollection.SKELETONS, out v)
+        )
         {
             return v;
         }

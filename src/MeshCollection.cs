@@ -139,6 +139,7 @@ public static class MeshCollection
     private static void LoadFile(string filePath, MeshGroup destination, string? prefix)
     {
         var scene = GD.Load<PackedScene>(filePath);
+        GD.Print(filePath);
         var spatial = (Spatial)scene.Instance();
         if (spatial.GetChildCount() == 0)
         {

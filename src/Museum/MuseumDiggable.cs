@@ -13,7 +13,8 @@ public class MuseumDiggable(
             (MeshInstance?)MeshCollection.OtherDiggablesFlat.Get(diggableName)?.Duplicate()
         ).ToArrayNullable(),
         diggableName,
-        root.State.OtherDiggablesAmounts
+        root.State.OtherDiggablesAmounts,
+        root
     )
 {
     public override string GroupName => "Left";

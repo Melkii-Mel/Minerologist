@@ -131,12 +131,9 @@ public class Player
             isOppositeDirection ? PlayerStatsConfig.Deceleration : 0
         );
         HVelocity += direction * acceleration * delta;
-        var config = Config.Instance;
-        var expConfig = config.ExpConfig;
-        var f = expConfig.F;
-        var maxVelocityy = f.MaxVelocity;
 
         var maxVelocity = Config.Instance.ExpConfig.F.MaxVelocity.Calculate(Session.Upgrades.Level);
+
         if (HVelocity.LengthSquared() > maxVelocity * maxVelocity)
         {
             HVelocity = HVelocity.Normalized() * (float)maxVelocity;

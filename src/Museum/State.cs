@@ -30,20 +30,37 @@ public record MuseumState
             .Keys.ToDictionary(k => k, _ => 0);
     }
 
-    public static MuseumState LoadOrCreate()
+    public static MuseumState LoadOrCreate(MuseumRoot root)
     {
-        var state = Load();
-        if (state != null)
+        var state = Load() ?? new MuseumState();
+
+        state.SkeletonsAmounts ??= new();
+        state.OtherDiggablesAmounts ??= new();
+
+        foreach (
+            var key in MeshCollection
+                .Skeletons.Keys.Concat(root.DescriptionsCollection.SkeletonDescriptions.Keys)
+                .Except(["NotCollected"])
+        )
         {
-            return state;
+            if (!state.SkeletonsAmounts.ContainsKey(key))
+            {
+                state.SkeletonsAmounts[key] = 0;
+            }
         }
-        state = new()
-        {
-            SkeletonsAmounts = MeshCollection.Skeletons.Keys.ToDictionary(k => k, _ => 0),
-            OtherDiggablesAmounts = MeshCollection
+
+        foreach (
+            var key in MeshCollection
                 .OtherDiggables.SelectMany(d => d.Value.Keys)
-                .ToDictionary(d => d, _ => 0),
-        };
+                .Concat(root.DescriptionsCollection.OtherDescriptions.Keys)
+        )
+        {
+            if (!state.OtherDiggablesAmounts.ContainsKey(key))
+            {
+                state.OtherDiggablesAmounts[key] = 0;
+            }
+        }
+
         return state;
     }
 

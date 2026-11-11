@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using Godot;
 
-// TODO: Dark silhouette shader until discovered
 public abstract class StaticMuseumItem
 {
     public abstract string GroupName { get; }
+
     private const string InvisibleShaderCode =
         @"
         shader_type spatial;
@@ -17,6 +17,7 @@ public abstract class StaticMuseumItem
         }";
 
     private static readonly Shader InvisibleShader = new() { Code = InvisibleShaderCode };
+
     private static readonly ShaderMaterial InvisibleShaderMaterial = new()
     {
         Shader = InvisibleShader,
@@ -26,98 +27,162 @@ public abstract class StaticMuseumItem
         Config.Instance.MuseumConfig.MuseumPlacerConfig;
 
     public MeshInstance MeshInstance { get; }
+
     private readonly List<MeshInstance> _silhouette = [];
+
+    public MuseumRoot Root { get; }
+
+    public ModelPlacement? ModelPlacement { get; }
 
     private readonly MeshInstance _placeholder;
     private readonly string _name;
     private readonly Dictionary<string, int> _amounts;
     private readonly IReadOnlyCollection<MeshInstance> _meshes;
+
     private TextLabel? _label;
+    private Viewport? _counterViewport;
 
     public StaticMuseumItem(
         MeshInstance placeholder,
         Spatial parent,
         IReadOnlyCollection<MeshInstance>? meshes,
         string name,
-        Dictionary<string, int> amounts
+        Dictionary<string, int> amounts,
+        MuseumRoot root
     )
     {
+        Root = root;
+        Root.Root.Update += Update;
         _placeholder = placeholder;
         _name = name;
         _amounts = amounts;
+
         MeshInstance = (MeshInstance)_placeholder.Duplicate();
 
-        CreateText();
-
-        // MeshInstance.MaterialOverride = InvisibleShaderMaterial;
+        MeshInstance.MaterialOverride = InvisibleShaderMaterial;
         MeshInstance.CreateTrimeshCollision();
         MeshInstance.GetChildOfType<StaticBody>()!.AddToGroup(GroupName);
 
+        CreateText();
+
         if (meshes != null)
         {
-            var placement = new ModelPlacement(
+            ModelPlacement = new ModelPlacement(
                 parent,
                 placeholder,
                 meshes,
                 ModelPlacementAnchorPresets.Bottom
             );
-            placement.Apply(
-                MuseumDynamicSkeleton.SelectRelevant(MuseumPlacerConfig.Scales, name),
-                MuseumDynamicSkeleton
-                    .SelectRelevant(MuseumPlacerConfig.RotationsDegrees, name)
-                    .ToGdVector3(),
-                MuseumDynamicSkeleton.SelectRelevant(MuseumPlacerConfig.Offsets, name).ToGdVector3()
-                    / 100
-            );
+
             foreach (var mesh in meshes)
             {
-                placement.Content.AddChild(mesh);
-            }
-            _meshes = meshes;
-            foreach (var mesh in meshes ?? [])
-            {
+                ModelPlacement.Content.AddChild(mesh);
+
                 _silhouette.Add(SilhouetteOverlay.Create(mesh, mixLevel: 0.8f));
+
                 mesh.Visible = false;
             }
+
+            _meshes = meshes;
+
+            UpdateModelTransform();
         }
         else
         {
             Out.Error($"Model for {name} not found");
             _meshes = [];
         }
+
+        UpdateNumber();
     }
 
-    private void SetNumber(int number)
+    private void Update(float _)
     {
-        if (number > 0)
+        UpdateModelTransform();
+    }
+
+    private void UpdateModelTransform()
+    {
+        ModelPlacement?.Apply(
+            MuseumDynamicSkeleton.SelectRelevant(MuseumPlacerConfig.Sides.Scales, _name),
+            MuseumDynamicSkeleton
+                .SelectRelevant(MuseumPlacerConfig.Sides.RotationsDegrees, _name)
+                .ToGdVector3(),
+            MuseumDynamicSkeleton
+                .SelectRelevant(MuseumPlacerConfig.Sides.Offsets, _name)
+                .ToGdVector3() / 100
+        );
+    }
+
+    private void SetCount(int count)
+    {
+        if (count > 0)
         {
             foreach (var silhouette in _silhouette)
             {
                 SilhouetteOverlay.SetMixLevel(silhouette, 0);
             }
+
             foreach (var mesh in _meshes)
             {
                 mesh.Visible = true;
             }
         }
-        _label?.BbcodeText = $"x{number}";
+
+        _label?.Set("count", count.ToString());
     }
 
-    public void InceraseNumber()
+    public void UpdateNumber()
     {
-        SetNumber(_amounts[_name]);
+        if (_amounts.TryGetValue(_name, out var count))
+        {
+            SetCount(count);
+        }
+        else
+        {
+            Out.Error($"Amount for {_name} not found");
+        }
     }
 
     private void CreateText()
     {
-        var plane = MeshInstance.GetChildOfTypeByName<MeshInstance>("counter_plane");
+        var plane = MeshInstance.GetChildOfTypeByNameRegex<MeshInstance>("^counter_plane");
+
         if (plane is null)
         {
+            Out.Error("counter_plane not found");
             return;
         }
-        var viewport = new Viewport { Size = new Vector2(1024, 512) };
-        var label = new TextLabel();
-        viewport.AddChild(label.Node);
-        plane.MaterialOverride = new SpatialMaterial { AlbedoTexture = viewport.GetTexture() };
+
+        _counterViewport = new Viewport
+        {
+            Size = new Vector2(
+                MuseumPlacerConfig.CounterViewportWidth,
+                MuseumPlacerConfig.CounterViewportHeight
+            ),
+            TransparentBg = true,
+            RenderTargetUpdateMode = Viewport.UpdateMode.Always,
+        };
+
+        var label = new RichTextLabel
+        {
+            RectPosition = Vector2.Zero,
+            RectSize = _counterViewport.Size,
+            SizeFlagsHorizontal = (int)Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = (int)Control.SizeFlags.ExpandFill,
+        };
+
+        _label = new(label) { BbcodeText = "\n[center]x{count}[/center]" };
+        MuseumPlacerConfig.CounterFontConfig.Apply(_label);
+
+        _counterViewport.AddChild(_label.Node);
+        Root.AddChild(_counterViewport);
+
+        plane.MaterialOverride = new SpatialMaterial
+        {
+            AlbedoTexture = _counterViewport.GetTexture(),
+            FlagsTransparent = true,
+            ParamsCullMode = Material3D.CullMode.Disabled,
+        };
     }
 }

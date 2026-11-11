@@ -159,11 +159,13 @@ public class TextLabel
     private static DynamicFontData? LoadFontData(string? path)
     {
         if (string.IsNullOrEmpty(path))
+        {
             return null;
+        }
 
         if (!ResourceLoader.Exists(path))
         {
-            GD.PushWarning($"TextLabel: font not found: {path}");
+            Out.Error($"Font not found: {path}");
             return null;
         }
 
