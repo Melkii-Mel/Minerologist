@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Godot;
 
@@ -20,5 +21,10 @@ public static class FontCollection
             Out.Error($"Font path is null or empty for name {fontName}");
         }
         return fontPath;
+    }
+
+    internal static string FontPath(object fontName)
+    {
+        throw new NotImplementedException();
     }
 }

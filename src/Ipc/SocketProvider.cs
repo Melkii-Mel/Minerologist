@@ -35,12 +35,18 @@ public static class SocketProvider
         throw new Exception();
     }
 
-    public static DealerSocket CreateDealer(uint seed, int timeoutMs = 300, int attempts = -1)
+    public static DealerSocket CreateDealer(
+        uint seed,
+        int timeoutMs = 300,
+        int attempts = -1,
+        string? host = null
+    )
     {
+        host ??= "localhost";
         foreach (var port in attempts < 1 ? Generate(seed) : Generate(seed).Take(attempts))
         {
             var dealer = new DealerSocket();
-            dealer.Connect($"tcp://localhost:{port}");
+            dealer.Connect($"tcp://{host}:{port}");
 
             dealer.SendFrame("minerologist");
 

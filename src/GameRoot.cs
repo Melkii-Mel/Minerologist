@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Godot;
 
-public class GameRoot(Root root) : Node
+public class GameRoot(Root root, string? host) : Node
 {
     public Root Root { get; } = root;
 
@@ -11,13 +11,11 @@ public class GameRoot(Root root) : Node
 
     public override void _Ready()
     {
-        AddChild(SceneLoader.Instantiate<Node>("Environment"));
-
         EntityVariantsContainer.Init();
 
         _sessionDispatcher = new JoypadSessionDispatcher<SessionContainer>(
             id => new SessionContainer(id, this),
-            includeKeyboardInput: true
+            includeKeyboardInput: !Root.NoKeyboard
         );
         _sessionDispatcher.SessionAdded += (sessions, _) =>
             SessionResizer.ResizeAllSessions(sessions, this);
@@ -26,6 +24,6 @@ public class GameRoot(Root root) : Node
 
         _sessionDispatcher.ListenForChanges();
 
-        _ = new MuseumCommunicator(this);
+        _ = new MuseumCommunicator(this, host);
     }
 }

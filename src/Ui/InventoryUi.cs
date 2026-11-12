@@ -41,10 +41,6 @@ public class InventoryUi
         var text = new RichTextLabel();
         _inventoryTextureRect.MouseFilter = Control.MouseFilterEnum.Ignore;
         _session.RootUi.AddChild(_inventoryTextureRect);
-        _inventoryTextureRect.RectPosition = new(
-            (UiSize.x - _inventoryTextureRect.RectSize.x) / 2,
-            UiSize.y - _inventoryTextureRect.RectSize.y - INVENTORY_MARGIN_BOTTOM
-        );
         _inventoryTextureRect.AddChild(text);
         text.SetAnchorsAndMarginsPreset(Control.LayoutPreset.CenterRight);
         text.MarginLeft = -TEXT_MARGIN_LEFT;
@@ -93,6 +89,16 @@ public class InventoryUi
 
     private void Update(float delta)
     {
+        _inventoryTextureRect.RectPosition = new(
+            (UiSize.x - _inventoryTextureRect.RectSize.x * _inventoryTextureRect.RectScale.x) / 2,
+            UiSize.y
+                - _inventoryTextureRect.RectSize.y * _inventoryTextureRect.RectScale.y
+                - INVENTORY_MARGIN_BOTTOM
+        );
+        _inventoryTextureRect.RectScale =
+            Vector2.One
+            * UiSize.x
+            / _session.SessionContainer.Root.GetViewport().GetVisibleRect().Size.x;
         _amountTextLabel.RectPosition = _amountTextLabel.RectPosition with
         {
             y = (_inventoryTextureRect.RectSize.y - _amountTextLabel.RectSize.y * 3) / 2,

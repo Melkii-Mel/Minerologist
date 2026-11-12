@@ -29,7 +29,8 @@ public class SessionContainer : ISession
     {
         _viewportContainer = new ViewportContainer();
         Root.AddChild(_viewportContainer);
-        _viewport = new Viewport();
+        _viewport = new Viewport() { OwnWorld = true };
+        _viewport.AddChild(SceneLoader.Instantiate<Node>("Environment"));
         _viewportContainer.AddChild(_viewport);
         _localRoot3d = new Spatial();
         _localRootUi = new Control();

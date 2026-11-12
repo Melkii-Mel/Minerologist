@@ -91,7 +91,6 @@ public class Player
             0
         );
         PlayerNode.Rotation += new Vector3(0, -Spin.x * sensitivityY, 0);
-        Spin = Vector2.Zero;
     }
 
     private Vector3 UpdatePosition()

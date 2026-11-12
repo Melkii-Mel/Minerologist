@@ -13,6 +13,7 @@ public class PlayerLevelUi
 
     private readonly CircularProgressBar _progressBar;
     private readonly RichTextLabel _lvlTextLabel;
+    private readonly TextLabel _textLabel;
 
     public PlayerLevelUi(Session session)
     {
@@ -26,22 +27,44 @@ public class PlayerLevelUi
         );
         session.RootUi.AddChild(_progressBar);
         _lvlTextLabel = new();
-        _lvlTextLabel.AddColorOverride("default_color", new(UiConfig.TextColor));
-        _lvlTextLabel.FitContentHeight = true;
         _progressBar.AddChild(_lvlTextLabel);
+        _textLabel = new TextLabel(
+            _lvlTextLabel,
+            new()
+            {
+                BaseColor = new(UiConfig.TextColor),
+                BaseFontSize = UiConfig.TextFontSize,
+                FontPath = FontCollection.FontPath(UiConfig.FontName),
+            }
+        )
+        {
+            BbcodeText = "[center]{lvl}",
+        };
         _lvlTextLabel.SetAnchorsAndMarginsPreset(Control.LayoutPreset.VcenterWide);
         _lvlTextLabel.MarginLeft = -UiConfig.Radius / 2;
         _lvlTextLabel.MarginRight = UiConfig.Radius / 2;
-        _lvlTextLabel.BbcodeEnabled = true;
+        _lvlTextLabel.FitContentHeight = true;
+        _lvlTextLabel.ScrollActive = false;
+        _lvlTextLabel.MarginTop = -UiConfig.TextFontSize / 2;
+        _textLabel.Set("lvl", "1");
 
-        _progressBar.RectPosition = new Vector2(100, session.RootUi.RectSize.y - 100);
+        _progressBar.RectPosition = new Vector2(
+            UiConfig.OffsetX,
+            session.RootUi.RectSize.y - UiConfig.OffsetY
+        );
     }
 
     private void Update(float delta)
     {
+        var scale =
+            _session.RootUi.RectSize.x / _session.SessionContainer.Root.GetViewport().Size.x;
+        _progressBar.RectPosition = new Vector2(
+            UiConfig.OffsetX * scale,
+            _session.RootUi.RectSize.y - UiConfig.OffsetY * scale
+        );
+        _progressBar.RectScale = Vector2.One * scale;
         _progressBar.SetProgress((float)_uiExp);
-        _lvlTextLabel.BbcodeText = $"[center]{(float)_uiLvl}";
-        _lvlTextLabel.PushAlign(RichTextLabel.Align.Center);
+        _textLabel.Set("lvl", _uiLvl.ToString());
 
         var targetUiExp = Upgrades.CurrentExp / Upgrades.CurrentExpReq;
         var lvl = Upgrades.Level;

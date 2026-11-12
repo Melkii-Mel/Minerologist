@@ -171,7 +171,7 @@ public record MuseumCameraConfig
         new()
         {
             ["Left"] = new() { Rotation = new(-35, 90, 0), Offset = new(-200, 120, 50) },
-            ["Front"] = new() { Rotation = new(10, 0, 0), Offset = new(-170, -30, 0) },
+            ["Front"] = new() { Rotation = new(-50, 0, 0), Offset = new(-170, 200, 0) },
             ["Right"] = new() { Rotation = new(-35, -90, 0), Offset = new(-200, 100, -50) },
             ["Back"] = new(),
         };
@@ -246,8 +246,12 @@ public record ExpUiConfig
     public string BgColor { get; init; } = "#DBA25D";
     public string MainColor { get; init; } = "#FFDF94";
     public string TextColor { get; init; } = "#4A1E00";
-    public float Radius { get; init; } = 30;
-    public float Width { get; init; } = 8;
+    public float Radius { get; init; } = 60;
+    public float Width { get; init; } = 24;
+    public float OffsetX { get; init; } = 200;
+    public float OffsetY { get; init; } = 200;
+    public float TextFontSize { get; init; } = 36;
+    public string FontName { get; init; } = "Wander Over Yonder Regular";
 }
 
 public record ConeCasterConfig
@@ -321,9 +325,11 @@ public sealed record RemnantsConfig
 
 public sealed record ControlsConfig
 {
-    public float DiggingCameraSensitivityMultiplier { get; init; } = 0.5f;
-    public float CameraSensitivityX { get; init; } = 0.002f;
-    public float CameraSensitivityY { get; init; } = 0.002f;
+    public float DiggingCameraSensitivityMultiplier { get; init; } = 1.0f;
+    public float CameraSensitivityX { get; init; } = 0.052f;
+    public float CameraSensitivityY { get; init; } = 0.052f;
+    public float MouseCameraSensitivityX { get; init; } = 0.052f;
+    public float MouseCameraSensitivityY { get; init; } = 0.052f;
     public int CameraMinAngleDegreesY { get; init; } = -90;
     public int CameraMaxAngleDegreesY { get; init; } = 90;
     public int CoyoteTime { get; init; } = 250;

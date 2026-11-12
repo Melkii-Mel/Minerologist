@@ -54,14 +54,23 @@ public class JoypadSessionDispatcher<TSession>(
 
     private void DisconnectDevice(int deviceId)
     {
-        var session = _deviceIdSessionMap[deviceId];
-        _disconnectedSessions.Add(session);
+        if (!_deviceIdSessionMap.TryGetValue(deviceId, out var session))
+        {
+            return;
+        }
+
         _deviceIdSessionMap.Remove(deviceId);
+        _disconnectedSessions.Add(session);
         session.Freeze();
     }
 
     private void AssignToNextSession(int deviceId)
     {
+        if (_deviceIdSessionMap.ContainsKey(deviceId))
+        {
+            return;
+        }
+
         TSession session;
         if (_disconnectedSessions.Count > 0)
         {

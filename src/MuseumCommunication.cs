@@ -24,7 +24,7 @@ public class MuseumCommunicator
     private const float DELAY = 0.1f;
     private float _timer = 0;
 
-    public MuseumCommunicator(GameRoot root)
+    public MuseumCommunicator(GameRoot root, string? host = null)
     {
         MuseumCommunication.CurrentSkeleton = MeshCollection.Skeletons.Keys.First();
         MuseumCommunication.RemainingSkeletonPieces =
@@ -32,7 +32,7 @@ public class MuseumCommunicator
             .. MeshCollection.Skeletons.Values.First().Keys,
         ];
 
-        _socket = SocketProvider.CreateDealer(Config.Instance.ServerConfig.PortSeed);
+        _socket = SocketProvider.CreateDealer(Config.Instance.ServerConfig.PortSeed, host: host);
         root.Root.Update += Update;
 
         PollSocket(false);

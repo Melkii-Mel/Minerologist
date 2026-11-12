@@ -9,6 +9,8 @@ public class Root : Node
     public event Action<InputEvent>? Input;
     public event Action<InputEvent>? UnhandledInput;
 
+    public bool NoKeyboard { get; private set; }
+
     public override void _Ready()
     {
         Console.OutputEncoding = Encoding.UTF8;
@@ -21,7 +23,14 @@ public class Root : Node
         SoundPlayer.Init(this);
 
         var args = System.Environment.GetCommandLineArgs();
+        NoKeyboard = Array.IndexOf(args, "--no-keyboard") != -1;
         bool isMuseum = Array.IndexOf(args, "--museum") != -1;
+        var hostIndex = Array.IndexOf(args, "--host");
+        string? host = null;
+        if (hostIndex != -1)
+        {
+            host = args[hostIndex + 1];
+        }
         _ = new DebugUI(this, false);
 
         Animations.Init(a => Update += a);
@@ -32,7 +41,7 @@ public class Root : Node
         }
         else
         {
-            AddChild(new GameRoot(this));
+            AddChild(new GameRoot(this, host));
         }
     }
 
